@@ -31,6 +31,8 @@ builder.Services.AddDbContext<MatFileDbContext>((serviceProvider, options) =>
            .AddInterceptors(serviceProvider.GetRequiredService<AuditInterceptor>()));
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<RoleService>();
 
 // Schlüssel im Volume -> Cookies und damit Sitzungen überleben einen Container-Neustart.
 builder.Services.AddDataProtection()
@@ -53,6 +55,11 @@ builder.Services.AddAuthentication(MatFileClaims.AuthenticationScheme)
         options.ExpireTimeSpan = TimeSpan.FromDays(settings.SessionLifetimeDays);
         options.SlidingExpiration = true;
         options.Events.OnValidatePrincipal = AuthService.ValidatePrincipalAsync;
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.Redirect("/Error?code=403");
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddAuthorizationBuilder()
@@ -79,6 +86,8 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Login");
     options.Conventions.AllowAnonymousToPage("/Error");
     options.Conventions.AllowAnonymousToPage("/SetLanguage");
+    options.Conventions.AuthorizeFolder("/Admin/Users", MatFilePolicies.ManageUsers);
+    options.Conventions.AuthorizeFolder("/Admin/Roles", MatFilePolicies.ManageRoles);
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization(options =>

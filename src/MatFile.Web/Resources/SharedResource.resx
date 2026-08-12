@@ -124,4 +124,72 @@
   <data name="Error.CodeTitle"><value>Error {0}</value></data>
   <data name="Error.RequestId"><value>Request id</value></data>
   <data name="Error.Home"><value>Go to start page</value></data>
+
+  <data name="Common.New"><value>New</value></data>
+  <data name="Common.Edit"><value>Edit</value></data>
+  <data name="Common.Search"><value>Search</value></data>
+  <data name="Common.Reset"><value>Reset</value></data>
+  <data name="Common.All"><value>All</value></data>
+  <data name="Common.Never"><value>never</value></data>
+  <data name="Common.NotFound"><value>The record was not found.</value></data>
+  <data name="Common.NothingSelected"><value>Please select at least one entry.</value></data>
+  <data name="Common.ConfirmDelete"><value>Delete the selected entries permanently?</value></data>
+
+  <data name="Admin.Title"><value>Administration</value></data>
+  <data name="Admin.Users"><value>Users</value></data>
+  <data name="Admin.Roles"><value>Roles</value></data>
+
+  <data name="Pagination.Label"><value>Pagination</value></data>
+  <data name="Pagination.Summary"><value>Page {0} of {1} · {2} entries</value></data>
+  <data name="Pagination.PageSize"><value>Entries per page</value></data>
+
+  <data name="User.Username"><value>Username</value></data>
+  <data name="User.DisplayName"><value>Display name</value></data>
+  <data name="User.Email"><value>Email</value></data>
+  <data name="User.Roles"><value>Roles</value></data>
+  <data name="User.Status"><value>Status</value></data>
+  <data name="User.Active"><value>Active</value></data>
+  <data name="User.Inactive"><value>Inactive</value></data>
+  <data name="User.Locked"><value>Locked</value></data>
+  <data name="User.Unlock"><value>Unlock</value></data>
+  <data name="User.LastLogin"><value>Last sign-in</value></data>
+  <data name="User.Password"><value>Password</value></data>
+  <data name="User.PasswordKeep"><value>Leave empty to keep the current password.</value></data>
+  <data name="User.IsActive"><value>Account is active</value></data>
+  <data name="User.MustChangePassword"><value>Require password change at next sign-in</value></data>
+  <data name="User.Empty"><value>No users found.</value></data>
+  <data name="User.New.Title"><value>New user</value></data>
+  <data name="User.Edit.Title"><value>Edit user</value></data>
+  <data name="User.Deleted"><value>{0} user(s) deleted.</value></data>
+  <data name="User.Unlocked"><value>The account was unlocked.</value></data>
+  <data name="User.Error.UsernameRequired"><value>Please enter a username.</value></data>
+  <data name="User.Error.UsernameTaken"><value>This username is already taken.</value></data>
+  <data name="User.Error.EmailInvalid"><value>Please enter a valid email address.</value></data>
+  <data name="User.Error.PasswordRequired"><value>A password is required for a new user.</value></data>
+  <data name="User.Error.SelfDelete"><value>You cannot delete your own account.</value></data>
+  <data name="User.Error.SelfDeactivate"><value>You cannot deactivate your own account.</value></data>
+  <data name="User.Error.LastAdministrator"><value>The last active administrator must keep their permissions.</value></data>
+
+  <data name="Role.Name"><value>Name</value></data>
+  <data name="Role.Description"><value>Description</value></data>
+  <data name="Role.Permissions"><value>Permissions</value></data>
+  <data name="Role.UserCount"><value>Users</value></data>
+  <data name="Role.System"><value>System</value></data>
+  <data name="Role.SystemHint"><value>This is a system role. Name and permissions are fixed; only the description can be changed.</value></data>
+  <data name="Role.Empty"><value>No roles found.</value></data>
+  <data name="Role.New.Title"><value>New role</value></data>
+  <data name="Role.Edit.Title"><value>Edit role</value></data>
+  <data name="Role.Deleted"><value>{0} role(s) deleted.</value></data>
+  <data name="Role.Error.NameRequired"><value>Please enter a name.</value></data>
+  <data name="Role.Error.NameTaken"><value>A role with this name already exists.</value></data>
+  <data name="Role.Error.SystemRole"><value>System roles cannot be deleted.</value></data>
+  <data name="Role.Error.InUse"><value>The role is still assigned to users.</value></data>
+
+  <data name="Permission.UseExplorer"><value>Use file explorer</value></data>
+  <data name="Permission.ManageUsers"><value>Manage users</value></data>
+  <data name="Permission.ManageRoles"><value>Manage roles</value></data>
+  <data name="Permission.ManageRoots"><value>Manage root paths</value></data>
+  <data name="Permission.ManageMounts"><value>Manage mounts</value></data>
+  <data name="Permission.ManageSettings"><value>Manage settings</value></data>
+  <data name="Permission.ViewActivityLog"><value>View activity log</value></data>
 </root>

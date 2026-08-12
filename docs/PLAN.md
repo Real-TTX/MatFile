@@ -137,9 +137,21 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 - Icons wo sinnvoll, durchgängig mobil optimiert.
 
 ### Wiederverwendbare Controls
-`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`, `_ConfirmDialog` —
-alle als Razor-Partials/TagHelper mit eigener **Instanz-Id**, damit mehrere gleiche
-Controls auf einer Seite kollisionsfrei funktionieren.
+
+Umgesetzt als **TagHelper** im Ordner `Controls/`, jeweils mit eigener **Instanz-Id**,
+damit mehrere gleiche Controls auf einer Seite kollisionsfrei funktionieren:
+
+| Tag | Zweck |
+|---|---|
+| `<mf-table>` | Tabelle; Spalten inkl. Sortierlinks aus `columns`, Zeilen als Inhalt |
+| `<mf-pagination>` | Seitenwechsel, hängt direkt unter der Tabelle |
+| `<mf-toolbar>` | Leiste über der Liste (Suche, Filter, Seitengröße) |
+| `<mf-field>` | Formularfeld mit Beschriftung, Hinweis und Validierungsmeldung |
+| `<mf-actions>` / `<mf-actions-gap>` | Buttonzeile positiv → negativ, Delete abgesetzt |
+| `<mf-tabbar>` | Tab-Leiste |
+| `<mf-icon>` | Inline-SVG-Icons ohne externe Bibliothek |
+
+Sortier- und Seitenparameter lassen sich über `param-prefix` je Control trennen.
 
 ### Mehrsprachigkeit
 

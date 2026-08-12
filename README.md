@@ -18,8 +18,10 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 |---|---|---|
 | M0 | Grundgerüst, Docker, CI, Versionierung | ✅ |
 | M1 | Datenbank, Anmeldung, Rollen, Sessions, Mehrsprachigkeit | ✅ |
-| M2 | Designsystem, Controls, Admin-CRUD | offen |
+| M2 | Designsystem, Controls, Admin-CRUD | ✅ |
 | M3–M9 | Roots, Explorer, Dateioperationen, Preview, Mounts, Feinschliff | offen |
+
+Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).
 
 ## Schnellstart
 

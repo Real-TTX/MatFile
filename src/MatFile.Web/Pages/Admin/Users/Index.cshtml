@@ -1,0 +1,114 @@
+@page
+@using MatFile.Web.Controls
+@model MatFile.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = L["Admin.Users"].Value;
+}
+
+<div class="mf-page">
+    <h1>@L["Admin.Users"]</h1>
+    <partial name="/Pages/Admin/_AdminTabs.cshtml" />
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="mf-alert mf-alert-success" role="status">@Model.StatusMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="mf-alert mf-alert-error" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <mf-toolbar>
+        <form method="get" class="mf-toolbar-form">
+            <div class="mf-toolbar-search">
+                <mf-icon name="search" />
+                <input type="search" name="search" value="@Model.Search"
+                       placeholder="@L["Common.Search"]" aria-label="@L["Common.Search"]" />
+            </div>
+
+            <select name="status" aria-label="@L["User.Status"]" data-auto-submit>
+                <option value="" selected="@(string.IsNullOrEmpty(Model.Status))">@L["Common.All"]</option>
+                <option value="active" selected="@(Model.Status == "active")">@L["User.Active"]</option>
+                <option value="inactive" selected="@(Model.Status == "inactive")">@L["User.Inactive"]</option>
+            </select>
+
+            <select name="pageSize" aria-label="@L["Pagination.PageSize"]" data-auto-submit>
+                @foreach (var size in ListQuery.PageSizes)
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+
+            <input type="hidden" name="sort" value="@Model.Sort" />
+            <input type="hidden" name="dir" value="@Model.Dir" />
+
+            <button type="submit" class="mf-btn">
+                <mf-icon name="search" />@L["Common.Search"]
+            </button>
+            <a class="mf-btn mf-btn-quiet" asp-page="./Index">@L["Common.Reset"]</a>
+        </form>
+    </mf-toolbar>
+
+    <form method="post">
+        <mf-table id="users" columns="Model.Columns" sort="@Model.Sort" dir="@Model.Dir"
+                  empty-text="@L["User.Empty"]">
+            @foreach (var user in Model.Result.Items)
+            {
+                <tr>
+                    <td class="mf-col-select">
+                        <input type="checkbox" name="SelectedIds" value="@user.Id"
+                               aria-label="@user.Username" />
+                    </td>
+                    <td>
+                        <a asp-page="./Edit" asp-route-id="@user.Id" asp-route-returnUrl="@Model.CurrentUrl">@user.Username</a>
+                    </td>
+                    <td>@user.DisplayName</td>
+                    <td class="mf-muted">@user.Email</td>
+                    <td>
+                        @foreach (var role in user.Roles)
+                        {
+                            <span class="mf-chip">@role</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!user.IsActive)
+                        {
+                            <span class="mf-status mf-status-off">@L["User.Inactive"]</span>
+                        }
+                        else if (user.IsLocked)
+                        {
+                            <span class="mf-status mf-status-warn">@L["User.Locked"]</span>
+                            <button type="submit" class="mf-btn mf-btn-quiet mf-btn-tiny"
+                                    asp-page-handler="Unlock" asp-route-id="@user.Id">@L["User.Unlock"]</button>
+                        }
+                        else
+                        {
+                            <span class="mf-status mf-status-on">@L["User.Active"]</span>
+                        }
+                    </td>
+                    <td>@(user.LastLoginDate?.ToLocalTime().ToString("g") ?? L["Common.Never"].Value)</td>
+                    <td class="mf-col-actions">
+                        <a class="mf-btn mf-btn-quiet mf-btn-icon" title="@L["Common.Edit"]"
+                           asp-page="./Edit" asp-route-id="@user.Id" asp-route-returnUrl="@Model.CurrentUrl">
+                            <mf-icon name="pencil" />
+                        </a>
+                    </td>
+                </tr>
+            }
+        </mf-table>
+
+        <mf-pagination page="@Model.Result.Page" page-count="@Model.Result.PageCount"
+                       total="@Model.Result.TotalCount" />
+
+        <mf-actions>
+            <a class="mf-btn mf-btn-primary" asp-page="./Edit" asp-route-returnUrl="@Model.CurrentUrl">
+                <mf-icon name="plus" />@L["Common.New"]
+            </a>
+            <mf-actions-gap />
+            <button type="submit" class="mf-btn mf-btn-danger" asp-page-handler="Delete"
+                    data-confirm="@L["Common.ConfirmDelete"]">
+                <mf-icon name="trash" />@L["Common.Delete"]
+            </button>
+        </mf-actions>
+    </form>
+</div>

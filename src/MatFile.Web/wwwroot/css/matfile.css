@@ -443,9 +443,341 @@ a:hover {
     color: var(--mf-text);
 }
 
+/* --- Icons --- */
+
+.mf-icon {
+    flex: 0 0 auto;
+    vertical-align: -2px;
+}
+
+/* --- Seitenrahmen für Listen und Formulare --- */
+
+.mf-page {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.mf-page-form {
+    max-width: 820px;
+}
+
+.mf-page h1 {
+    margin: 0 0 var(--mf-space-3);
+    font-size: 22px;
+}
+
+.mf-small {
+    font-size: 12px;
+}
+
+/* --- Tab-Leiste --- */
+
+.mf-tabbar {
+    display: flex;
+    gap: var(--mf-space-1);
+    margin-bottom: var(--mf-space-4);
+    border-bottom: 1px solid var(--mf-border);
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.mf-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    padding: 8px var(--mf-space-3);
+    border-bottom: 2px solid transparent;
+    color: var(--mf-text-muted);
+    white-space: nowrap;
+}
+
+.mf-tab:hover {
+    color: var(--mf-text);
+    text-decoration: none;
+}
+
+.mf-tab.is-active {
+    border-bottom-color: var(--mf-accent);
+    color: var(--mf-accent);
+    font-weight: 600;
+}
+
+.mf-tab-badge {
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--mf-surface-alt);
+    font-size: 11px;
+}
+
+/* --- Werkzeugleiste über der Liste --- */
+
+.mf-toolbar {
+    margin-bottom: var(--mf-space-3);
+    padding: var(--mf-space-3);
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-lg);
+}
+
+.mf-toolbar-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--mf-space-2);
+}
+
+.mf-toolbar-search {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    flex: 1 1 220px;
+    min-width: 180px;
+    padding: 0 10px;
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface);
+    color: var(--mf-text-muted);
+}
+
+.mf-toolbar-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    color: var(--mf-text);
+    font: inherit;
+}
+
+.mf-toolbar-search input:focus {
+    outline: none;
+}
+
+.mf-toolbar-form select {
+    padding: 8px 10px;
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface);
+    color: var(--mf-text);
+    font: inherit;
+}
+
+/* --- Tabelle --- */
+
+.mf-table-wrap {
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-lg);
+    overflow-x: auto;
+}
+
+.mf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.mf-table th,
+.mf-table td {
+    padding: 10px var(--mf-space-3);
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--mf-border);
+}
+
+.mf-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--mf-surface-alt);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mf-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    white-space: nowrap;
+}
+
+.mf-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.mf-table tbody tr:hover {
+    background: var(--mf-surface-alt);
+}
+
+.mf-th-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: inherit;
+}
+
+.mf-th-sort:hover {
+    color: var(--mf-text);
+    text-decoration: none;
+}
+
+.mf-th-sort.is-active {
+    color: var(--mf-accent);
+}
+
+.mf-th-arrow {
+    font-size: 9px;
+}
+
+.mf-table-empty td {
+    padding: var(--mf-space-6) var(--mf-space-3);
+    text-align: center;
+    color: var(--mf-text-muted);
+}
+
+.mf-col-select,
+.mf-col-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.mf-col-number {
+    text-align: right;
+}
+
+/* --- Seitenwechsel --- */
+
+.mf-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mf-space-2);
+    padding: var(--mf-space-2) var(--mf-space-1);
+    font-size: 13px;
+    color: var(--mf-text-muted);
+}
+
+.mf-pagination-pages {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.mf-pagination-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    border: 1px solid transparent;
+    border-radius: var(--mf-radius);
+    color: var(--mf-text);
+}
+
+.mf-pagination-link:hover {
+    background: var(--mf-surface-alt);
+    text-decoration: none;
+}
+
+.mf-pagination-link.is-active {
+    background: var(--mf-accent);
+    color: #fff;
+}
+
+.mf-pagination-link.is-disabled {
+    color: var(--mf-border);
+    pointer-events: none;
+}
+
+.mf-pagination-gap {
+    padding: 0 var(--mf-space-1);
+}
+
+/* --- Status und Auswahl --- */
+
+.mf-status {
+    display: inline-block;
+    padding: 1px var(--mf-space-2);
+    border-radius: var(--mf-radius);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.mf-status-on {
+    background: rgba(22, 163, 74, 0.14);
+    color: var(--mf-success);
+}
+
+.mf-status-off {
+    background: var(--mf-surface-alt);
+    color: var(--mf-text-muted);
+}
+
+.mf-status-warn {
+    background: rgba(217, 119, 6, 0.14);
+    color: var(--mf-warning);
+}
+
+.mf-check {
+    display: flex;
+    align-items: baseline;
+    gap: var(--mf-space-2);
+    padding: 3px 0;
+    cursor: pointer;
+}
+
+.mf-check input {
+    flex: 0 0 auto;
+}
+
+.mf-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mf-checklist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2px var(--mf-space-4);
+}
+
+/* --- Formularraster --- */
+
+.mf-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0 var(--mf-space-4);
+}
+
+.mf-field-wide {
+    grid-column: 1 / -1;
+}
+
+.mf-btn-icon {
+    padding: 5px;
+}
+
+.mf-btn-tiny {
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
 @media (max-width: 640px) {
     .mf-content {
         padding: var(--mf-space-4) var(--mf-space-3);
+    }
+
+    .mf-toolbar-form > .mf-btn,
+    .mf-toolbar-form select {
+        flex: 1 1 auto;
+    }
+
+    .mf-table thead th {
+        position: static;
+    }
+
+    .mf-pagination {
+        justify-content: center;
     }
 
     .mf-topbar {

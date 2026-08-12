@@ -124,4 +124,72 @@
   <data name="Error.CodeTitle"><value>Fehler {0}</value></data>
   <data name="Error.RequestId"><value>Request-Id</value></data>
   <data name="Error.Home"><value>Zur Startseite</value></data>
+
+  <data name="Common.New"><value>Neu</value></data>
+  <data name="Common.Edit"><value>Bearbeiten</value></data>
+  <data name="Common.Search"><value>Suchen</value></data>
+  <data name="Common.Reset"><value>Zurücksetzen</value></data>
+  <data name="Common.All"><value>Alle</value></data>
+  <data name="Common.Never"><value>nie</value></data>
+  <data name="Common.NotFound"><value>Der Datensatz wurde nicht gefunden.</value></data>
+  <data name="Common.NothingSelected"><value>Bitte mindestens einen Eintrag auswählen.</value></data>
+  <data name="Common.ConfirmDelete"><value>Ausgewählte Einträge endgültig löschen?</value></data>
+
+  <data name="Admin.Title"><value>Verwaltung</value></data>
+  <data name="Admin.Users"><value>Benutzer</value></data>
+  <data name="Admin.Roles"><value>Rollen</value></data>
+
+  <data name="Pagination.Label"><value>Seitenwechsel</value></data>
+  <data name="Pagination.Summary"><value>Seite {0} von {1} · {2} Einträge</value></data>
+  <data name="Pagination.PageSize"><value>Einträge pro Seite</value></data>
+
+  <data name="User.Username"><value>Benutzername</value></data>
+  <data name="User.DisplayName"><value>Anzeigename</value></data>
+  <data name="User.Email"><value>E-Mail</value></data>
+  <data name="User.Roles"><value>Rollen</value></data>
+  <data name="User.Status"><value>Status</value></data>
+  <data name="User.Active"><value>Aktiv</value></data>
+  <data name="User.Inactive"><value>Inaktiv</value></data>
+  <data name="User.Locked"><value>Gesperrt</value></data>
+  <data name="User.Unlock"><value>Entsperren</value></data>
+  <data name="User.LastLogin"><value>Letzte Anmeldung</value></data>
+  <data name="User.Password"><value>Kennwort</value></data>
+  <data name="User.PasswordKeep"><value>Leer lassen, um das bisherige Kennwort zu behalten.</value></data>
+  <data name="User.IsActive"><value>Konto ist aktiv</value></data>
+  <data name="User.MustChangePassword"><value>Kennwortwechsel bei der nächsten Anmeldung verlangen</value></data>
+  <data name="User.Empty"><value>Keine Benutzer gefunden.</value></data>
+  <data name="User.New.Title"><value>Neuer Benutzer</value></data>
+  <data name="User.Edit.Title"><value>Benutzer bearbeiten</value></data>
+  <data name="User.Deleted"><value>{0} Benutzer gelöscht.</value></data>
+  <data name="User.Unlocked"><value>Das Konto wurde entsperrt.</value></data>
+  <data name="User.Error.UsernameRequired"><value>Bitte einen Benutzernamen eingeben.</value></data>
+  <data name="User.Error.UsernameTaken"><value>Dieser Benutzername ist bereits vergeben.</value></data>
+  <data name="User.Error.EmailInvalid"><value>Bitte eine gültige E-Mail-Adresse eingeben.</value></data>
+  <data name="User.Error.PasswordRequired"><value>Für einen neuen Benutzer wird ein Kennwort benötigt.</value></data>
+  <data name="User.Error.SelfDelete"><value>Das eigene Konto kann nicht gelöscht werden.</value></data>
+  <data name="User.Error.SelfDeactivate"><value>Das eigene Konto kann nicht deaktiviert werden.</value></data>
+  <data name="User.Error.LastAdministrator"><value>Der letzte aktive Administrator muss seine Rechte behalten.</value></data>
+
+  <data name="Role.Name"><value>Name</value></data>
+  <data name="Role.Description"><value>Beschreibung</value></data>
+  <data name="Role.Permissions"><value>Rechte</value></data>
+  <data name="Role.UserCount"><value>Benutzer</value></data>
+  <data name="Role.System"><value>System</value></data>
+  <data name="Role.SystemHint"><value>Dies ist eine Systemrolle. Name und Rechte sind fest vorgegeben, nur die Beschreibung lässt sich ändern.</value></data>
+  <data name="Role.Empty"><value>Keine Rollen gefunden.</value></data>
+  <data name="Role.New.Title"><value>Neue Rolle</value></data>
+  <data name="Role.Edit.Title"><value>Rolle bearbeiten</value></data>
+  <data name="Role.Deleted"><value>{0} Rolle(n) gelöscht.</value></data>
+  <data name="Role.Error.NameRequired"><value>Bitte einen Namen eingeben.</value></data>
+  <data name="Role.Error.NameTaken"><value>Eine Rolle mit diesem Namen existiert bereits.</value></data>
+  <data name="Role.Error.SystemRole"><value>Systemrollen können nicht gelöscht werden.</value></data>
+  <data name="Role.Error.InUse"><value>Die Rolle ist noch Benutzern zugewiesen.</value></data>
+
+  <data name="Permission.UseExplorer"><value>Explorer verwenden</value></data>
+  <data name="Permission.ManageUsers"><value>Benutzer verwalten</value></data>
+  <data name="Permission.ManageRoles"><value>Rollen verwalten</value></data>
+  <data name="Permission.ManageRoots"><value>Root-Pfade verwalten</value></data>
+  <data name="Permission.ManageMounts"><value>Mounts verwalten</value></data>
+  <data name="Permission.ManageSettings"><value>Einstellungen verwalten</value></data>
+  <data name="Permission.ViewActivityLog"><value>Protokoll einsehen</value></data>
 </root>

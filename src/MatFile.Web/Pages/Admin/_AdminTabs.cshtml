@@ -1,0 +1,27 @@
+@using MatFile.Web.Controls
+@using MatFile.Web.Data
+@{
+    var current = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+
+    var tabs = new List<TabItem>();
+
+    if (User.HasPermission(Permission.ManageUsers))
+    {
+        tabs.Add(new TabItem(
+            L["Admin.Users"],
+            Url.Page("/Admin/Users/Index")!,
+            current.StartsWith("/Admin/Users", StringComparison.OrdinalIgnoreCase),
+            "users"));
+    }
+
+    if (User.HasPermission(Permission.ManageRoles))
+    {
+        tabs.Add(new TabItem(
+            L["Admin.Roles"],
+            Url.Page("/Admin/Roles/Index")!,
+            current.StartsWith("/Admin/Roles", StringComparison.OrdinalIgnoreCase),
+            "shield"));
+    }
+}
+
+<mf-tabbar id="admin" items="tabs" />

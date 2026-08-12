@@ -37,6 +37,13 @@
 
             @if (User.Identity?.IsAuthenticated == true)
             {
+                if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles))
+                {
+                    <a class="mf-btn mf-btn-quiet" asp-page="/Admin/Index">
+                        <mf-icon name="settings" />@L["Admin.Title"]
+                    </a>
+                }
+
                 <span class="mf-user" title="@User.Identity.Name">@User.GetDisplayName()</span>
                 <a class="mf-btn mf-btn-quiet" asp-page="/Account/ChangePassword">@L["Layout.ChangePassword"]</a>
                 <form method="post" asp-page="/Logout" class="mf-inline-form">
@@ -56,6 +63,7 @@
         </footer>
     </div>
 
+    <script src="~/js/matfile.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
