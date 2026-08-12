@@ -57,8 +57,45 @@ export const api = {
     deleteBookmark: id => request(`/api/bookmarks/${id}`, { method: 'DELETE' }),
 
     tabs: () => request('/api/tabs'),
-    saveTabs: tabs => send('/api/tabs', 'PUT', tabs)
+    saveTabs: tabs => send('/api/tabs', 'PUT', tabs),
+
+    // --- Dateioperationen ---
+    createFolder: (rootId, path, name) => send('/api/fs/folder', 'POST', { rootId, path, name }),
+    rename: (rootId, path, newName) => send('/api/fs/rename', 'POST', { rootId, path, newName }),
+    remove: (rootId, paths) => send('/api/fs/delete', 'POST', { rootId, paths }),
+
+    transfer: (sourceRootId, paths, targetRootId, targetPath, move, overwrite) =>
+        send('/api/fs/transfer', 'POST', { sourceRootId, paths, targetRootId, targetPath, move, overwrite }),
+
+    compress: (rootId, paths, targetPath, name) =>
+        send('/api/fs/compress', 'POST', { rootId, paths, targetPath, name }),
+
+    extract: (rootId, path, targetPath) => send('/api/fs/extract', 'POST', { rootId, path, targetPath }),
+
+    zipUrl: (rootId, paths) =>
+        `/api/fs/zip?rootId=${encodeURIComponent(rootId)}&`
+        + paths.map(p => `path=${encodeURIComponent(p)}`).join('&'),
+
+    // --- Upload ---
+    uploadBegin: (rootId, path, name, size, overwrite) =>
+        send('/api/fs/upload/begin', 'POST', { rootId, path, name, size, overwrite }),
+
+    uploadChunk: (uploadId, offset, blob) => request(
+        `/api/fs/upload/chunk?uploadId=${encodeURIComponent(uploadId)}&offset=${offset}`,
+        { method: 'POST', body: blob, headers: { 'Content-Type': 'application/octet-stream' } }),
+
+    uploadFinish: uploadId => request(`/api/fs/upload/finish?uploadId=${encodeURIComponent(uploadId)}`, { method: 'POST' }),
+    uploadAbort: uploadId => request(`/api/fs/upload/abort?uploadId=${encodeURIComponent(uploadId)}`, { method: 'POST' }),
+
+    // --- Jobs ---
+    jobs: () => request('/api/jobs'),
+    cancelJob: token => request(`/api/jobs/${encodeURIComponent(token)}/cancel`, { method: 'POST' })
 };
+
+/** Fehlercode der API auf einen Übersetzungsschlüssel abbilden: access_denied -> ErrorAccessDenied */
+export function errorKey(code) {
+    return 'Error' + String(code || '').replace(/(^|_)(\w)/g, (match, prefix, letter) => letter.toUpperCase());
+}
 
 /** Dateigröße in einer lesbaren Einheit. */
 export function formatSize(bytes) {
@@ -116,6 +153,11 @@ const icons = {
     grid: "<rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/>",
     list: "<line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/>",
     download: "<path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/><polyline points='7 10 12 15 17 10'/><line x1='12' y1='15' x2='12' y2='3'/>",
+    upload: "<path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/><polyline points='17 8 12 3 7 8'/><line x1='12' y1='3' x2='12' y2='15'/>",
+    archive: "<polyline points='21 8 21 21 3 21 3 8'/><rect x='1' y='3' width='22' height='5'/><line x1='10' y1='12' x2='14' y2='12'/>",
+    pencil: "<path d='M12 20h9'/><path d='M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'/>",
+    trash: "<polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/>",
+    refresh: "<polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/>",
     hard: "<line x1='22' y1='12' x2='2' y2='12'/><path d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/>",
     lock: "<rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/>",
     users: "<path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/>",

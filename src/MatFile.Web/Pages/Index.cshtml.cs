@@ -36,7 +36,21 @@ public class IndexModel : PageModel
             "Explorer.Download", "Explorer.Open", "Explorer.CopyPath", "Explorer.Copied",
             "Explorer.Properties", "Explorer.SelectAll", "Explorer.Path", "Explorer.Sidebar",
             "Explorer.Close", "Explorer.Error", "Explorer.ErrorNotFound", "Explorer.ErrorAccess",
-            "Explorer.ErrorUnavailable"
+            "Explorer.ErrorUnavailable",
+
+            // Dateioperationen
+            "Explorer.Upload", "Explorer.NewFolder", "Explorer.NewFolderName", "Explorer.Rename",
+            "Explorer.Delete", "Explorer.Cut", "Explorer.Copy", "Explorer.Paste",
+            "Explorer.Compress", "Explorer.Extract", "Explorer.DownloadZip",
+            "Explorer.Save", "Explorer.Cancel", "Explorer.Overwrite", "Explorer.OverwriteQuestion",
+            "Explorer.DeleteQuestionOne", "Explorer.DeleteQuestionMany",
+            "Explorer.CutDone", "Explorer.CopyDone", "Explorer.SelectedWithSize",
+            "Explorer.Transfers", "Explorer.UploadFailed", "Explorer.JobFailed",
+            "Explorer.JobCopy", "Explorer.JobMove", "Explorer.JobDelete", "Explorer.JobZip",
+            "Explorer.JobUnzip", "Explorer.JobUpload",
+            "Explorer.StateCompleted", "Explorer.StateFailed", "Explorer.StateCancelled",
+            "Explorer.ErrorConflict", "Explorer.ErrorAccessDenied", "Explorer.ErrorInvalidName",
+            "Explorer.ErrorInvalidPath", "Explorer.ErrorTargetInsideSource", "Explorer.ErrorRootNotFound"
         ];
 
         var bundle = keys.ToDictionary(

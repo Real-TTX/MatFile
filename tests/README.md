@@ -26,7 +26,15 @@ docker compose -f docker-compose.dev.yml up -d
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up -d
 .\tests\test-explorer.ps1
+
+# Zuruecksetzen, dann Dateioperationen, Upload und Jobs (M5)
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+.\tests\test-operations.ps1
 ```
+
+`test-operations.ps1` arbeitet bewusst in einem containerinternen Ordner (`/storage/optest`),
+damit `sample-data/` aus dem Repo nicht mit Testdateien verschmutzt wird.
 
 ## Oberflächenprüfung im Browser
 
@@ -51,6 +59,7 @@ mit `-SeedPassword <kennwort>` übergeben.
 | `test-admin.ps1` | Adminnavigation, Liste mit Toolbar/Sortierung/Suche/Pagination, Benutzer anlegen/löschen, doppelter Benutzername, Rollen anlegen/löschen, Schutz von Systemrollen und des eigenen Kontos, Rechteprüfung für Nicht-Administratoren, Adminbereich auf Deutsch |
 | `test-storage.ps1` | Root-Pfade anlegen inkl. Pfadprüfungen (relativ, fehlend, Datenverzeichnis, doppelter Name), Rechtematrix je Rolle, Listing-API, Sortierung Ordner vor Dateien, ausgeblendete Symlinks nach außen, blockierte Pfadausbrüche, Sichtbarkeit je Rolle, API ohne Anmeldung gesperrt |
 
+| `test-operations.ps1` | Ordner anlegen/umbenennen, Namenskonflikte, Upload in Teilstücken inkl. Fortsetzen bei falschem Offset, Kopieren/Verschieben als Job, Kopie mit neuem Namen, Zielordner im Quellordner, Komprimieren, ZIP-Download, Entpacken, **Zip-Slip blockiert**, Löschen, Rechteprüfung ohne Schreib-/Upload-/Löschrecht, fremde Jobs nicht abbrechbar |
 | `test-explorer.ps1` | Explorer als Startseite, eingebettete Übersetzungen, ES-Module, Anzeigeeinstellungen inkl. Normalisierung, Favoriten anlegen/löschen/nicht doppelt, angeheftete Tabs mit Filterung fremder Roots, Download inkl. Range-Anfrage, Ordner nicht herunterladbar, Pfadausbruch blockiert, Download ohne Recht gesperrt, Zustand je Benutzer getrennt |
 
 `test-storage.ps1` legt über `docker exec` Testdaten unter `/storage/internal` im Container an

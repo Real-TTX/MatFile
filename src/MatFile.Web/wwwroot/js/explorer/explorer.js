@@ -1,5 +1,7 @@
-// MatFile Explorer - Tabs, Navigation, Auswahl und Kontextmenü.
-import { api, t, formatSize, formatDate, fileType, icon, rootIcon } from './api.js';
+// MatFile Explorer - Tabs, Navigation, Auswahl, Kontextmenü und Dateioperationen.
+import { api, t, formatSize, formatDate, fileType, icon, rootIcon, errorKey } from './api.js';
+import { askName, askConfirm, showFacts, flash } from './dialogs.js';
+import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 
 const el = {
     roots: document.getElementById('mfx-roots'),
@@ -16,6 +18,8 @@ const el = {
     forward: document.getElementById('mfx-forward'),
     up: document.getElementById('mfx-up'),
     refresh: document.getElementById('mfx-refresh'),
+    upload: document.getElementById('mfx-upload'),
+    newFolder: document.getElementById('mfx-newfolder'),
     hidden: document.getElementById('mfx-hidden'),
     view: document.getElementById('mfx-view'),
     sidebarToggle: document.getElementById('mfx-sidebar-toggle')
@@ -27,7 +31,8 @@ const state = {
     settings: { viewMode: 'list', sortKey: 'name', sortDir: 'asc', showHidden: false, sidebarWidth: 260 },
     tabs: [],
     active: 0,
-    filter: ''
+    filter: '',
+    clipboard: null
 };
 
 const activeTab = () => state.tabs[state.active];
@@ -555,8 +560,27 @@ function sortHeader(key, label, extraClass) {
 }
 
 function renderList(entries) {
+    const tab = activeTab();
+
     const head = document.createElement('div');
     head.className = 'mfx-list-head';
+
+    const selectAllCell = document.createElement('span');
+    selectAllCell.className = 'mfx-head-cell mfx-cell-check';
+    const selectAllBox = document.createElement('input');
+    selectAllBox.type = 'checkbox';
+    selectAllBox.setAttribute('aria-label', t('SelectAll'));
+    selectAllBox.checked = entries.length > 0 && entries.every(entry => tab.selection.has(entry.path));
+    selectAllBox.addEventListener('change', () => {
+        if (selectAllBox.checked) {
+            selectAll();
+        } else {
+            clearSelection();
+        }
+    });
+    selectAllCell.appendChild(selectAllBox);
+    head.appendChild(selectAllCell);
+
     head.appendChild(sortHeader('name', t('Name'), 'mfx-cell-name'));
     head.appendChild(sortHeader('size', t('Size'), 'mfx-cell-size'));
     head.appendChild(sortHeader('modified', t('Modified'), 'mfx-cell-date'));
@@ -575,6 +599,17 @@ function renderList(entries) {
         row.dataset.path = entry.path;
         row.dataset.index = index;
         row.setAttribute('role', 'row');
+
+        const check = document.createElement('span');
+        check.className = 'mfx-cell mfx-cell-check';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = tab.selection.has(entry.path);
+        box.setAttribute('aria-label', entry.name);
+        box.addEventListener('mousedown', event => event.stopPropagation());
+        box.addEventListener('change', () => toggleSelection(entry.path));
+        check.appendChild(box);
+        row.appendChild(check);
 
         const name = document.createElement('span');
         name.className = 'mfx-cell mfx-cell-name';
@@ -651,24 +686,32 @@ function renderStatus() {
     }
 
     const entries = visibleEntries(tab);
-    const parts = [t('Items').replace('{0}', entries.length)];
 
     if (tab.selection.size > 0) {
         const selectedSize = entries
             .filter(entry => tab.selection.has(entry.path) && !entry.isDirectory)
             .reduce((sum, entry) => sum + entry.size, 0);
 
-        let text = t('Selected').replace('{0}', tab.selection.size);
-        if (selectedSize > 0) {
-            text += ` · ${formatSize(selectedSize)}`;
-        }
+        const selection = document.createElement('span');
+        selection.className = 'mfx-status-selection';
+        selection.textContent = selectedSize > 0
+            ? t('SelectedWithSize').replace('{0}', tab.selection.size).replace('{1}', formatSize(selectedSize))
+            : t('Selected').replace('{0}', tab.selection.size);
 
-        parts.push(text);
+        el.status.appendChild(selection);
     }
 
     const info = document.createElement('span');
-    info.textContent = parts.join('  ·  ');
+    info.textContent = t('Items').replace('{0}', entries.length);
     el.status.appendChild(info);
+
+    if (state.clipboard) {
+        const clip = document.createElement('span');
+        clip.className = 'mfx-status-clip';
+        clip.textContent = (state.clipboard.move ? t('CutDone') : t('CopyDone'))
+            .replace('{0}', state.clipboard.paths.length);
+        el.status.appendChild(clip);
+    }
 }
 
 function renderToolbarState() {
@@ -677,6 +720,10 @@ function renderToolbarState() {
     el.back.disabled = !tab || tab.historyIndex <= 0;
     el.forward.disabled = !tab || tab.historyIndex >= tab.history.length - 1;
     el.up.disabled = !tab || tab.parentPath === null || tab.parentPath === undefined;
+
+    const rights = permissions();
+    el.upload.disabled = !rights.canUpload;
+    el.newFolder.disabled = !rights.canWrite;
 }
 
 function applySettingsToToolbar() {
@@ -696,8 +743,20 @@ function applySelection() {
     }
 
     el.listing.querySelectorAll('.mfx-row').forEach(row => {
-        row.classList.toggle('is-selected', tab.selection.has(row.dataset.path));
+        const selected = tab.selection.has(row.dataset.path);
+        row.classList.toggle('is-selected', selected);
+
+        const box = row.querySelector('.mfx-cell-check input');
+        if (box) {
+            box.checked = selected;
+        }
     });
+
+    const all = el.listing.querySelector('.mfx-list-head .mfx-cell-check input');
+    if (all) {
+        const entries = visibleEntries(tab);
+        all.checked = entries.length > 0 && entries.every(entry => tab.selection.has(entry.path));
+    }
 }
 
 function selectSingle(path) {
@@ -829,62 +888,177 @@ async function copyPath(entry) {
     }
 }
 
-function flash(text) {
-    const note = document.createElement('div');
-    note.className = 'mfx-flash';
-    note.textContent = text;
-    document.body.appendChild(note);
-    setTimeout(() => note.remove(), 2000);
-}
-
 function showProperties(entry) {
     const tab = activeTab();
-    const dialog = document.createElement('dialog');
-    dialog.className = 'mfx-dialog';
-
-    const title = document.createElement('h2');
-    title.textContent = entry ? entry.name : tabTitle(tab);
-    dialog.appendChild(title);
-
-    const facts = document.createElement('dl');
-    facts.className = 'mf-facts';
-
-    const add = (label, value) => {
-        const dt = document.createElement('dt');
-        dt.textContent = label;
-        const dd = document.createElement('dd');
-        dd.textContent = value;
-        facts.appendChild(dt);
-        facts.appendChild(dd);
-    };
-
-    add(t('Type'), entry && !entry.isDirectory ? (fileType(entry.name) || t('File')) : t('Folder'));
-    add(t('Path'), `${tab.rootName}/${entry ? entry.path : tab.path}`.replace(/\/+$/, ''));
+    const facts = [
+        [t('Type'), entry && !entry.isDirectory ? (fileType(entry.name) || t('File')) : t('Folder')],
+        [t('Path'), `${tab.rootName}/${entry ? entry.path : tab.path}`.replace(/\/+$/, '')]
+    ];
 
     if (entry && !entry.isDirectory) {
-        add(t('Size'), formatSize(entry.size));
+        facts.push([t('Size'), formatSize(entry.size)]);
     }
 
     if (entry) {
-        add(t('Modified'), formatDate(entry.modified));
+        facts.push([t('Modified'), formatDate(entry.modified)]);
     }
 
-    dialog.appendChild(facts);
+    showFacts(entry ? entry.name : tabTitle(tab), facts);
+}
 
-    const actions = document.createElement('div');
-    actions.className = 'mf-actions';
+// ---------------------------------------------------------------- Dateioperationen
 
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.className = 'mf-btn mf-btn-primary';
-    close.textContent = t('Close');
-    close.addEventListener('click', () => dialog.close());
-    actions.appendChild(close);
-    dialog.appendChild(actions);
+function permissions() {
+    const tab = activeTab();
+    return (tab && tab.permissions) || {};
+}
 
-    dialog.addEventListener('close', () => dialog.remove());
-    document.body.appendChild(dialog);
-    dialog.showModal();
+async function reload() {
+    const tab = activeTab();
+    if (tab) {
+        await navigate(tab, tab.rootId, tab.path, false);
+    }
+}
+
+function handleError(error) {
+    flash(t(errorKey(error && error.code), t('Error')), true);
+}
+
+async function newFolder() {
+    const tab = activeTab();
+    const name = await askName(t('NewFolder'), t('Name'), t('NewFolderName'));
+    if (!name) {
+        return;
+    }
+
+    try {
+        await api.createFolder(tab.rootId, tab.path, name);
+        await reload();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function renameEntry(entry) {
+    const tab = activeTab();
+    const name = await askName(t('Rename'), t('Name'), entry.name);
+    if (!name || name === entry.name) {
+        return;
+    }
+
+    try {
+        await api.rename(tab.rootId, entry.path, name);
+        await reload();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function deleteSelected() {
+    const tab = activeTab();
+    const entries = selectedEntries();
+    if (entries.length === 0) {
+        return;
+    }
+
+    const message = entries.length === 1
+        ? t('DeleteQuestionOne').replace('{0}', entries[0].name)
+        : t('DeleteQuestionMany').replace('{0}', entries.length);
+
+    if (!await askConfirm(t('Delete'), message, t('Delete'), true)) {
+        return;
+    }
+
+    try {
+        trackJob(await api.remove(tab.rootId, entries.map(e => e.path)));
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+function setClipboard(move) {
+    const tab = activeTab();
+    const entries = selectedEntries();
+    if (entries.length === 0) {
+        return;
+    }
+
+    state.clipboard = { rootId: tab.rootId, paths: entries.map(e => e.path), move };
+    flash(move ? t('CutDone').replace('{0}', entries.length) : t('CopyDone').replace('{0}', entries.length));
+    renderListing();
+}
+
+async function paste() {
+    const tab = activeTab();
+    if (!state.clipboard) {
+        return;
+    }
+
+    try {
+        const job = await api.transfer(
+            state.clipboard.rootId, state.clipboard.paths, tab.rootId, tab.path, state.clipboard.move, false);
+
+        trackJob(job);
+
+        if (state.clipboard.move) {
+            state.clipboard = null;
+        }
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function compressSelected() {
+    const tab = activeTab();
+    const entries = selectedEntries();
+    if (entries.length === 0) {
+        return;
+    }
+
+    const suggestion = entries.length === 1 ? entries[0].name.replace(/\.[^.]+$/, '') : tabTitle(tab);
+    const name = await askName(t('Compress'), t('Name'), `${suggestion}.zip`);
+    if (!name) {
+        return;
+    }
+
+    try {
+        trackJob(await api.compress(tab.rootId, entries.map(e => e.path), tab.path, name));
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function extractEntry(entry) {
+    const tab = activeTab();
+
+    try {
+        trackJob(await api.extract(tab.rootId, entry.path, tab.path));
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+function downloadZip() {
+    const tab = activeTab();
+    const entries = selectedEntries();
+    if (entries.length === 0) {
+        return;
+    }
+
+    window.location.href = api.zipUrl(tab.rootId, entries.map(e => e.path));
+}
+
+function chooseUpload() {
+    const tab = activeTab();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.addEventListener('change', () => {
+        if (input.files.length > 0) {
+            uploadFiles([...input.files], tab.rootId, tab.path);
+        }
+    });
+    input.click();
 }
 
 async function addBookmark(entry) {
@@ -904,20 +1078,46 @@ async function addBookmark(entry) {
 
 function entryMenu(entry) {
     const tab = activeTab();
-    const canDownload = tab.permissions && tab.permissions.canDownload;
+    const rights = permissions();
+    const multiple = tab.selection.size > 1;
+    const isArchive = !entry.isDirectory && /\.zip$/i.test(entry.name);
     const items = [];
 
     if (entry.isDirectory) {
         items.push({ label: t('Open'), icon: 'folder', action: () => openEntry(entry) });
         items.push({ label: t('NewTab'), icon: 'plus', action: () => openTab(tab.rootId, entry.path) });
+    }
+
+    items.push({
+        label: entry.isDirectory || multiple ? t('DownloadZip') : t('Download'),
+        icon: 'download',
+        disabled: !rights.canDownload,
+        action: () => (entry.isDirectory || multiple ? downloadZip() : openEntry(entry))
+    });
+
+    items.push('-');
+    items.push({ label: t('Cut'), icon: 'file', disabled: !rights.canDelete, action: () => setClipboard(true) });
+    items.push({ label: t('Copy'), icon: 'file', disabled: !rights.canRead, action: () => setClipboard(false) });
+    items.push({ label: t('Paste'), icon: 'file', disabled: !state.clipboard || !rights.canWrite, action: () => paste() });
+
+    items.push('-');
+    items.push({
+        label: t('Rename'),
+        icon: 'pencil',
+        disabled: !rights.canWrite || multiple,
+        action: () => renameEntry(entry)
+    });
+    items.push({ label: t('Delete'), icon: 'trash', danger: true, disabled: !rights.canDelete, action: () => deleteSelected() });
+
+    items.push('-');
+    items.push({ label: t('Compress'), icon: 'archive', disabled: !rights.canWrite, action: () => compressSelected() });
+
+    if (isArchive) {
+        items.push({ label: t('Extract'), icon: 'archive', disabled: !rights.canWrite, action: () => extractEntry(entry) });
+    }
+
+    if (entry.isDirectory) {
         items.push({ label: t('AddBookmark'), icon: 'star', action: () => addBookmark(entry) });
-    } else {
-        items.push({
-            label: t('Download'),
-            icon: 'download',
-            disabled: !canDownload,
-            action: () => openEntry(entry)
-        });
     }
 
     items.push('-');
@@ -928,12 +1128,16 @@ function entryMenu(entry) {
 }
 
 function folderMenu() {
-    const tab = activeTab();
+    const rights = permissions();
 
     return [
-        { label: t('Refresh'), icon: 'settings', action: () => navigate(tab, tab.rootId, tab.path, false) },
+        { label: t('Upload'), icon: 'upload', disabled: !rights.canUpload, action: () => chooseUpload() },
+        { label: t('NewFolder'), icon: 'folder', disabled: !rights.canWrite, action: () => newFolder() },
+        '-',
+        { label: t('Paste'), icon: 'file', disabled: !state.clipboard || !rights.canWrite, action: () => paste() },
         { label: t('SelectAll'), icon: 'list', action: () => selectAll() },
         '-',
+        { label: t('Refresh'), icon: 'refresh', action: () => reload() },
         { label: t('AddBookmark'), icon: 'star', action: () => addBookmark(null) },
         { label: t('Properties'), icon: 'settings', action: () => showProperties(null) }
     ];
@@ -1014,7 +1218,8 @@ document.addEventListener('keydown', event => {
         return;
     }
 
-    if (event.target.matches('input, textarea, select')) {
+    // Bei Eingaben nicht eingreifen. Ohne Fokus ist das Ziel das Dokument selbst.
+    if (event.target instanceof Element && event.target.matches('input, textarea, select')) {
         return;
     }
 
@@ -1023,9 +1228,50 @@ document.addEventListener('keydown', event => {
         return;
     }
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
+    if (document.querySelector('dialog[open]')) {
+        return;
+    }
+
+    if (event.ctrlKey || event.metaKey) {
+        const key = event.key.toLowerCase();
+
+        if (key === 'a') {
+            event.preventDefault();
+            selectAll();
+            return;
+        }
+
+        if (key === 'c') {
+            event.preventDefault();
+            setClipboard(false);
+            return;
+        }
+
+        if (key === 'x') {
+            event.preventDefault();
+            setClipboard(true);
+            return;
+        }
+
+        if (key === 'v') {
+            event.preventDefault();
+            paste();
+            return;
+        }
+    }
+
+    if (event.key === 'F2') {
+        const selected = selectedEntries();
+        if (selected.length === 1) {
+            event.preventDefault();
+            renameEntry(selected[0]);
+        }
+        return;
+    }
+
+    if (event.key === 'Delete') {
         event.preventDefault();
-        selectAll();
+        deleteSelected();
         return;
     }
 
@@ -1162,5 +1408,48 @@ el.backdrop.addEventListener('click', () => {
     el.sidebar.classList.remove('is-open');
     el.backdrop.hidden = true;
 });
+
+el.upload.addEventListener('click', chooseUpload);
+el.newFolder.addEventListener('click', newFolder);
+
+// Dateien per Drag & Drop in den aktuellen Ordner hochladen
+['dragenter', 'dragover'].forEach(name => {
+    el.listing.addEventListener(name, event => {
+        if (!event.dataTransfer || !event.dataTransfer.types.includes('Files')) {
+            return;
+        }
+
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        el.listing.classList.add('is-dropping');
+    });
+});
+
+['dragleave', 'dragend'].forEach(name => {
+    el.listing.addEventListener(name, event => {
+        if (event.target === el.listing) {
+            el.listing.classList.remove('is-dropping');
+        }
+    });
+});
+
+el.listing.addEventListener('drop', event => {
+    if (!event.dataTransfer || event.dataTransfer.files.length === 0) {
+        return;
+    }
+
+    event.preventDefault();
+    el.listing.classList.remove('is-dropping');
+
+    const tab = activeTab();
+    if (!tab || !permissions().canUpload) {
+        flash(t('ErrorAccessDenied'), true);
+        return;
+    }
+
+    uploadFiles([...event.dataTransfer.files], tab.rootId, tab.path);
+});
+
+onTransfersFinished(() => reload());
 
 init();

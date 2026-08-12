@@ -253,7 +253,14 @@ public sealed class StorageRootService
     // ---------------------------------------------------------------- Zugriff im Explorer
 
     /// <summary>Alle Roots, die der Benutzer sehen darf, mit den effektiven Rechten.</summary>
-    public async Task<List<AccessibleRoot>> GetAccessibleRootsAsync(ClaimsPrincipal user)
+    public Task<List<AccessibleRoot>> GetAccessibleRootsAsync(ClaimsPrincipal user)
+        => user.GetUserId() is { } userId ? GetAccessibleRootsAsync(userId) : Task.FromResult(new List<AccessibleRoot>());
+
+    /// <summary>
+    /// Gleiche Auflösung ohne Anmeldekontext - wird von Hintergrundjobs gebraucht,
+    /// die keinen ClaimsPrincipal haben.
+    /// </summary>
+    public async Task<List<AccessibleRoot>> GetAccessibleRootsAsync(long userId)
     {
         var roots = await _db.StorageRoot.AsNoTracking()
             .Where(r => r.IsEnabled)
@@ -261,21 +268,20 @@ public sealed class StorageRootService
             .ThenBy(r => r.Name)
             .ToListAsync();
 
-        if (user.HasPermission(Permission.ManageRoots))
-        {
-            return roots.Select(r => new AccessibleRoot(
-                r.Id, r.Name, r.StorageType, r.DisplayIcon, r.SortOrder, RootPermissions.Full)).ToList();
-        }
-
-        if (user.GetUserId() is not { } userId)
-        {
-            return [];
-        }
-
         var roleIds = await _db.UserRole.Where(ur => ur.UserId == userId).Select(ur => ur.RoleId).ToListAsync();
         if (roleIds.Count == 0)
         {
             return [];
+        }
+
+        var managesRoots = await _db.Role
+            .Where(r => roleIds.Contains(r.Id))
+            .AnyAsync(r => (r.Permissions & Permission.ManageRoots) == Permission.ManageRoots);
+
+        if (managesRoots)
+        {
+            return roots.Select(r => new AccessibleRoot(
+                r.Id, r.Name, r.StorageType, r.DisplayIcon, r.SortOrder, RootPermissions.Full)).ToList();
         }
 
         var access = await _db.RootAccess.AsNoTracking()
@@ -300,10 +306,16 @@ public sealed class StorageRootService
     }
 
     /// <summary>Root samt Provider und Rechten - oder null, wenn kein Zugriff besteht.</summary>
-    public async Task<(StorageRoot Root, IStorageProvider Provider, RootPermissions Permissions)?> OpenAsync(
+    public Task<(StorageRoot Root, IStorageProvider Provider, RootPermissions Permissions)?> OpenAsync(
         ClaimsPrincipal user, long rootId)
+        => user.GetUserId() is { } userId
+            ? OpenAsync(userId, rootId)
+            : Task.FromResult<(StorageRoot, IStorageProvider, RootPermissions)?>(null);
+
+    public async Task<(StorageRoot Root, IStorageProvider Provider, RootPermissions Permissions)?> OpenAsync(
+        long userId, long rootId)
     {
-        var accessible = await GetAccessibleRootsAsync(user);
+        var accessible = await GetAccessibleRootsAsync(userId);
         var match = accessible.FirstOrDefault(r => r.Id == rootId);
         if (match is null)
         {

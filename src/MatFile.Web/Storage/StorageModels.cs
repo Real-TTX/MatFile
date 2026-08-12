@@ -67,4 +67,13 @@ public class StorageException : Exception
 
     public static StorageException RootUnavailable(string basePath)
         => new("root_unavailable", $"Root path is not available: {basePath}");
+
+    public static StorageException InvalidName(string name)
+        => new("invalid_name", $"Name is not allowed: {name}");
+
+    public static StorageException Conflict(string path)
+        => new("conflict", $"Target already exists: {path}");
+
+    public static StorageException AccessDenied()
+        => new("access_denied", "Not allowed for this storage location.");
 }

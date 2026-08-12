@@ -167,6 +167,29 @@ Sortier- und Seitenparameter lassen sich über `param-prefix` je Control trennen
 - Daten in der Datenbank (Rollennamen, Root-Namen) werden **nicht** übersetzt.
 - Datums- und Zahlenformate folgen der gewählten Kultur (ICU im Container aktiv).
 
+### Visueller Abgleich mit dem Mockup
+
+Referenz: [`docs/mockups/Mockup-Sample1.png`](mockups/Mockup-Sample1.png) — als Richtung zu verstehen,
+nicht als Pixelvorgabe.
+
+Bereits übernommen:
+
+- Aufbau und Reihenfolge des Rechtsklick-Menüs (Öffnen · Herunterladen · Ausschneiden/Kopieren/Einfügen ·
+  Umbenennen/Löschen · Komprimieren/Entpacken · Eigenschaften), Löschen in Rot
+- Checkbox-Spalte in der Liste inklusive „alles auswählen" in der Kopfzeile
+- Statuszeile mit „x ausgewählt (Größe)" und „n Einträge"
+- Dunkles Design mit blauem Akzent, Seitenleiste mit Favoriten
+
+Noch offen (eigener Feinschliff-Durchgang, siehe M8):
+
+| Punkt | Milestone |
+|---|---|
+| App-Icon mit „M" statt Ordnersymbol, komplettes Favicon-Set | M8 |
+| Detailbereich rechts mit Vorschau und den Reitern Details/Aktivität | M6 |
+| Seitenleiste um „Übersicht/Home" und den Abschnitt „Verbindungen" mit Statuspunkt | M7 |
+| Tabs in die Kopfzeile, globale Suche und Benutzer-Avatar oben rechts | M8 |
+| Mehrere Ansichtsmodi im Umschalter, Menü „Teilen" | M8 / später |
+
 ### Icon
 Eigenes SVG-Logo (Ordner + Datei, Farbverlauf), daraus generiert:
 `favicon.ico` (16/32/48), `favicon.svg`, `apple-touch-icon.png` (180),
@@ -228,7 +251,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), Admin-CRUD für User & Rollen | Admin-Bereich nach Guidelines nutzbar |
 | **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API (`/api/fs/roots`, `/api/fs/list`) | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks, **Download** (aus M5 vorgezogen) | Navigation komplett |
-| **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
+| **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Komprimieren, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Thumbnail-Cache, Overlay-Viewer | Medien direkt im Browser |
 | **M7** | Remote-Provider SFTP, FTP, WebDAV, SMB (+ NFS via OS-Mount), Mount-Verwaltung im UI, persistent vs. nur Sitzung, Credential-Verschlüsselung | Externe Freigaben eingebunden |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |

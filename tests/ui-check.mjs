@@ -163,10 +163,54 @@ const menu = await evaluate(`(() => ({
     selected: document.querySelectorAll('.mfx-row.is-selected').length
 }))()`);
 
+// Ordner ueber die Oberflaeche anlegen und wieder loeschen
+await evaluate(`document.body.click(); document.querySelector('#mfx-newfolder').click(); true;`);
+await sleep(500);
+
+const folderName = 'UI-Check-Ordner';
+const dialog = await evaluate(`(() => {
+    const box = document.querySelector('dialog[open]');
+    if (!box) return null;
+    const input = box.querySelector('input[type=text]');
+    input.value = ${JSON.stringify(folderName)};
+    box.querySelector('.mf-btn-primary').click();
+    return true;
+})()`);
+await sleep(1200);
+
+const created = await evaluate(`[...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent)`);
+
+// Wieder aufraeumen: Zeile auswaehlen, Entf, bestaetigen
+await evaluate(`(() => {
+    const row = [...document.querySelectorAll('.mfx-row')]
+        .find(r => r.querySelector('.mfx-name')?.textContent === ${JSON.stringify(folderName)});
+    if (!row) return false;
+    row.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    return true;
+})()`);
+await sleep(500);
+
+await evaluate(`(() => {
+    const box = document.querySelector('dialog[open]');
+    if (!box) return false;
+    box.querySelector('.mf-btn-danger').click();
+    return true;
+})()`);
+await sleep(2500);
+
+const afterDelete = await evaluate(`[...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent)`);
+const operations = {
+    dialogOpened: dialog === true,
+    createdFolder: created.includes(folderName),
+    deletedFolder: !afterDelete.includes(folderName),
+    entries: afterDelete
+};
+
 const shot = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(OUT, Buffer.from(shot.data, 'base64'));
 
-console.log(JSON.stringify({ report, afterOpen, menu, consoleErrors, failedRequests }, null, 2));
+console.log(JSON.stringify({ report, afterOpen, menu, operations, consoleErrors, failedRequests }, null, 2));
 
 socket.close();
 edge.kill();

@@ -107,6 +107,148 @@ public sealed class LocalStorageProvider : IStorageProvider
         return Task.FromResult(stream);
     }
 
+    // ---------------------------------------------------------------- Schreibend
+
+    public Task<Stream> OpenWriteAsync(string relativePath, bool overwrite, CancellationToken cancellationToken = default)
+    {
+        var fullPath = Resolve(relativePath);
+
+        if (!overwrite && File.Exists(fullPath))
+        {
+            throw StorageException.Conflict(PathGuard.Normalize(relativePath));
+        }
+
+        var directory = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        Stream stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None,
+            bufferSize: 64 * 1024, useAsync: true);
+
+        return Task.FromResult(stream);
+    }
+
+    public Task<StorageEntry> CreateDirectoryAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var fullPath = Resolve(normalized);
+
+        if (Directory.Exists(fullPath) || File.Exists(fullPath))
+        {
+            throw StorageException.Conflict(normalized);
+        }
+
+        var info = Directory.CreateDirectory(fullPath);
+        return Task.FromResult(ToEntry(info, normalized));
+    }
+
+    public Task<StorageEntry> RenameAsync(string relativePath, string newName, CancellationToken cancellationToken = default)
+    {
+        if (!PathGuard.IsValidName(newName))
+        {
+            throw StorageException.InvalidName(newName);
+        }
+
+        var normalized = PathGuard.Normalize(relativePath);
+        var source = Resolve(normalized);
+        var targetPath = PathGuard.Combine(PathGuard.GetParent(normalized), newName);
+        var target = Resolve(targetPath);
+
+        if (Directory.Exists(target) || File.Exists(target))
+        {
+            throw StorageException.Conflict(targetPath);
+        }
+
+        if (Directory.Exists(source))
+        {
+            Directory.Move(source, target);
+            return Task.FromResult(ToEntry(new DirectoryInfo(target), targetPath));
+        }
+
+        if (File.Exists(source))
+        {
+            File.Move(source, target);
+            return Task.FromResult(ToEntry(new FileInfo(target), targetPath));
+        }
+
+        throw StorageException.NotFound(normalized);
+    }
+
+    public Task MoveAsync(string sourcePath, string targetPath, bool overwrite, CancellationToken cancellationToken = default)
+    {
+        var source = Resolve(sourcePath);
+        var target = Resolve(targetPath);
+
+        var directory = Path.GetDirectoryName(target);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        if (Directory.Exists(source))
+        {
+            if (Directory.Exists(target))
+            {
+                throw StorageException.Conflict(PathGuard.Normalize(targetPath));
+            }
+
+            Directory.Move(source, target);
+            return Task.CompletedTask;
+        }
+
+        if (!File.Exists(source))
+        {
+            throw StorageException.NotFound(PathGuard.Normalize(sourcePath));
+        }
+
+        if (File.Exists(target) && !overwrite)
+        {
+            throw StorageException.Conflict(PathGuard.Normalize(targetPath));
+        }
+
+        File.Move(source, target, overwrite);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+
+        if (normalized.Length == 0)
+        {
+            // Der Root selbst wird nie gelöscht.
+            throw StorageException.InvalidPath(normalized);
+        }
+
+        var fullPath = Resolve(normalized);
+
+        if (Directory.Exists(fullPath))
+        {
+            Directory.Delete(fullPath, recursive: true);
+            return Task.CompletedTask;
+        }
+
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+            return Task.CompletedTask;
+        }
+
+        throw StorageException.NotFound(normalized);
+    }
+
+    private string Resolve(string? relativePath)
+    {
+        if (!PathGuard.TryResolve(_basePath, relativePath, out var fullPath))
+        {
+            throw StorageException.InvalidPath(PathGuard.Normalize(relativePath));
+        }
+
+        return fullPath;
+    }
+
     private static StorageEntry ToEntry(FileSystemInfo info, string relativePath)
     {
         var isDirectory = info is DirectoryInfo;
