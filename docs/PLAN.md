@@ -13,6 +13,7 @@
 | Frontend | **Razor Pages + Vanilla JS (ES-Module) + Alpine.js**, kein Node-Build |
 | Styling | **Eigenes CSS-Designsystem** (CSS-Variablen, Light/Dark), angelehnt an Synology FileStation / Finder |
 | Remote-Zugriff | **In-Process-Provider** (SFTP/FTP/WebDAV/SMB) **+ optionaler OS-Mount** (NFS, alternativ SMB) |
+| Sprachen | **Englisch (Standard)** und **Deutsch**, umschaltbar im UI (.resx-Ressourcen) |
 | Datenbank | SQLite (Logik) + JSON (Konfiguration) |
 | Container-Port | **2222** |
 | Deployment | Docker, Volume für `/data` |
@@ -140,6 +141,17 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 alle als Razor-Partials/TagHelper mit eigener **Instanz-Id**, damit mehrere gleiche
 Controls auf einer Seite kollisionsfrei funktionieren.
 
+### Mehrsprachigkeit
+
+- Alle Oberflächentexte liegen in `Resources/SharedResource.resx` (neutral = **Englisch**)
+  und `SharedResource.de.resx` (**Deutsch**). Keine festen Strings in Views oder Services.
+- Reihenfolge der Spracherkennung: **Culture-Cookie → Accept-Language → Englisch**.
+- Angemeldete Benutzer bekommen ihre Wahl in `UserSetting` (`Language`) gespeichert;
+  beim Anmelden wird daraus das Cookie gesetzt, die Sprache folgt also dem Konto.
+- Umschalter (EN/DE) sitzt in der Topbar und funktioniert auch auf der Anmeldeseite.
+- Daten in der Datenbank (Rollennamen, Root-Namen) werden **nicht** übersetzt.
+- Datums- und Zahlenformate folgen der gewählten Kultur (ICU im Container aktiv).
+
 ### Icon
 Eigenes SVG-Logo (Ordner + Datei, Farbverlauf), daraus generiert:
 `favicon.ico` (16/32/48), `favicon.svg`, `apple-touch-icon.png` (180),
@@ -197,7 +209,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | # | Inhalt | Ergebnis |
 |---|---|---|
 | **M0** | Repo-Skeleton, Branches `main`/`dev`, .gitignore, Solution, Dockerfile, Compose dev/release, GitHub Action, Versionierung | Container startet auf `:2222`, zeigt Platzhalterseite |
-| **M1** | EF Core + SQLite, alle Tabellen, Audit-Interceptor, Seed-Admin, Login/Logout, DB-gestützte Session (restart-fest), Rollen & Policies | Anmeldung funktioniert, Session überlebt Neustart |
+| **M1** | EF Core + SQLite, alle Tabellen, Audit-Interceptor, Seed-Admin, Login/Logout, DB-gestützte Session (restart-fest), Rollen & Policies, **Mehrsprachigkeit EN/DE** | Anmeldung funktioniert, Session überlebt Neustart |
 | **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), Admin-CRUD für User & Rollen | Admin-Bereich nach Guidelines nutzbar |
 | **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks | Navigation komplett |
@@ -216,5 +228,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.
 - **Rollen** starten mit `Admin` und `User`; feinere Rechte laufen über `RootAccess` je Root/Mount.
 - Kein Node/npm im Build — Alpine.js wird als Vendor-Datei mitgeliefert (offline-tauglich).
+- SQLite kann `DateTimeOffset` nicht vergleichen — alle Zeitstempel liegen als UTC-`DateTime`
+  in der Datenbank (globaler Value-Converter im DbContext).
 - Freigabe-Links (Public Share) sind **nicht** Teil dieses Plans; das Datenmodell lässt sie
   aber später leicht ergänzen.

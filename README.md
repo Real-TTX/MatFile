@@ -8,6 +8,7 @@ keinen komfortablen Zugriff auf Dateien bieten.
 - Explorer-Bedienung: Sidebar, **Tabs**, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
+- Oberfläche in **Englisch (Standard)** und **Deutsch**, im UI umschaltbar
 
 Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 
@@ -16,7 +17,7 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | Meilenstein | Inhalt | Status |
 |---|---|---|
 | M0 | Grundgerüst, Docker, CI, Versionierung | ✅ |
-| M1 | Datenbank, Anmeldung, Rollen, Sessions | offen |
+| M1 | Datenbank, Anmeldung, Rollen, Sessions, Mehrsprachigkeit | ✅ |
 | M2 | Designsystem, Controls, Admin-CRUD | offen |
 | M3–M9 | Roots, Explorer, Dateioperationen, Preview, Mounts, Feinschliff | offen |
 
@@ -39,7 +40,20 @@ Anschließend erreichbar unter **http://localhost:2222** (Health-Check: `/health
 | `ASPNETCORE_HTTP_PORTS` | `2222` | Port im Container |
 | `MATFILE_DATA` | `/data` | Datenverzeichnis (SQLite, Config, Keys, Thumbnails) |
 | `PUID` / `PGID` | – | Optional: als unprivilegierter Benutzer laufen |
+| `MATFILE_ADMIN_PASSWORD` | – | Startkennwort für `admin` beim ersten Start; ohne Angabe wird eines erzeugt und ins Log geschrieben |
 | `TZ` | `Europe/Berlin` | Zeitzone |
+
+### Erste Anmeldung
+
+Beim ersten Start wird der Benutzer `admin` angelegt. Das Startkennwort steht im Log:
+
+```bash
+docker compose -f docker-compose.dev.yml logs matfile | grep Startkennwort
+```
+
+Nach der Anmeldung verlangt MatFile sofort ein eigenes Kennwort. Die Oberfläche startet
+auf Englisch; über den Schalter `EN | DE` in der Kopfzeile lässt sich Deutsch wählen –
+die Auswahl wird am Benutzerkonto gespeichert.
 
 Das Volume `/data` enthält:
 

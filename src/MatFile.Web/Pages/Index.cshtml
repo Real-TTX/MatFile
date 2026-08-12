@@ -1,41 +1,66 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Start";
+    ViewData["Title"] = L["Index.Title"].Value;
 }
 
 <div class="mf-container">
     <div class="mf-card">
-        <h1>MatFile läuft</h1>
-        <p class="mf-muted">
-            Grundgerüst steht (M0). Anmeldung, Rollen und der Explorer folgen in den nächsten Meilensteinen.
-        </p>
+        <h1>@L["Index.Welcome", Model.DisplayName]</h1>
+        <p class="mf-muted">@L["Index.Intro"]</p>
 
         <dl class="mf-facts">
-            <dt>Version</dt>
-            <dd class="mf-mono">@Model.Version</dd>
+            <dt>@L["Index.User"]</dt>
+            <dd class="mf-mono">@Model.Username</dd>
 
-            <dt>Kanal</dt>
-            <dd>@Model.Channel</dd>
-
-            <dt>Umgebung</dt>
-            <dd>@Model.Environment</dd>
-
-            <dt>Datenverzeichnis</dt>
-            <dd class="mf-mono">@Model.DataDirectory</dd>
-
-            <dt>Schreibrechte</dt>
+            <dt>@L["Index.Roles"]</dt>
             <dd>
-                <span class="mf-dot @(Model.DataWritable ? "mf-dot-ok" : "mf-dot-error")"></span>
-                @(Model.DataWritable ? "verfügbar" : "nicht verfügbar")
+                @foreach (var role in Model.Roles)
+                {
+                    <span class="mf-chip">@role</span>
+                }
             </dd>
 
-            <dt>Gestartet</dt>
-            <dd>@Model.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</dd>
+            <dt>@L["Index.Permissions"]</dt>
+            <dd>
+                @foreach (var permission in Model.Permissions)
+                {
+                    <span class="mf-chip">@permission</span>
+                }
+            </dd>
+
+            <dt>@L["Index.SessionValidUntil"]</dt>
+            <dd>@(Model.SessionExpires?.ToLocalTime().ToString("g") ?? "-")</dd>
+
+            <dt>@L["Index.ActiveSessions"]</dt>
+            <dd>@Model.ActiveSessionCount</dd>
+        </dl>
+    </div>
+
+    <div class="mf-card mf-card-spaced">
+        <h2>@L["Index.System"]</h2>
+        <dl class="mf-facts">
+            <dt>@L["Index.Version"]</dt>
+            <dd class="mf-mono">@Model.Version</dd>
+
+            <dt>@L["Index.Channel"]</dt>
+            <dd>@Model.Channel</dd>
+
+            <dt>@L["Index.Environment"]</dt>
+            <dd>@Model.Environment</dd>
+
+            <dt>@L["Index.DataDirectory"]</dt>
+            <dd class="mf-mono">@Model.DataDirectory</dd>
+
+            <dt>@L["Index.Database"]</dt>
+            <dd>
+                <span class="mf-dot @(Model.DatabaseReady ? "mf-dot-ok" : "mf-dot-error")"></span>
+                @(Model.DatabaseReady ? L["Index.DatabaseConnected"] : L["Index.DatabaseUnavailable"])
+            </dd>
         </dl>
 
         <div class="mf-actions">
-            <a class="mf-btn mf-btn-primary" href="/healthz">Health prüfen</a>
+            <a class="mf-btn mf-btn-primary" href="/healthz">@L["Index.CheckHealth"]</a>
         </div>
     </div>
 </div>

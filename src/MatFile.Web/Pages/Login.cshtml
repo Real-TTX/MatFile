@@ -1,0 +1,38 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = L["Login.Title"].Value;
+}
+
+<div class="mf-auth">
+    <div class="mf-card">
+        <img class="mf-auth-logo" src="~/icons/matfile.svg" alt="" />
+        <h1>@L["Login.Title"]</h1>
+        <p class="mf-muted">@L["Login.Subtitle"]</p>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="mf-alert mf-alert-error" role="alert">@Model.ErrorMessage</div>
+        }
+
+        <form method="post" class="mf-form">
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="mf-field">
+                <label asp-for="Input.Username">@L["Login.Username"]</label>
+                <input asp-for="Input.Username" autocomplete="username" autofocus required />
+                <span asp-validation-for="Input.Username" class="mf-field-error"></span>
+            </div>
+
+            <div class="mf-field">
+                <label asp-for="Input.Password">@L["Login.Password"]</label>
+                <input asp-for="Input.Password" type="password" autocomplete="current-password" required />
+                <span asp-validation-for="Input.Password" class="mf-field-error"></span>
+            </div>
+
+            <div class="mf-actions">
+                <button type="submit" class="mf-btn mf-btn-primary">@L["Login.Submit"]</button>
+            </div>
+        </form>
+    </div>
+</div>

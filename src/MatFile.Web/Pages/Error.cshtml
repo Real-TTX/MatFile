@@ -1,10 +1,10 @@
 @page
 @model ErrorModel
 @{
-    ViewData["Title"] = "Fehler";
+    ViewData["Title"] = Model.Title;
 }
 
-<div class="mf-container">
+<div class="mf-container mf-container-narrow">
     <div class="mf-card">
         <h1>@Model.Title</h1>
         <p class="mf-muted">@Model.Message</p>
@@ -12,13 +12,13 @@
         @if (Model.ShowRequestId)
         {
             <dl class="mf-facts">
-                <dt>Request-Id</dt>
+                <dt>@L["Error.RequestId"]</dt>
                 <dd class="mf-mono">@Model.RequestId</dd>
             </dl>
         }
 
         <div class="mf-actions">
-            <a class="mf-btn mf-btn-primary" href="/">Zur Startseite</a>
+            <a class="mf-btn mf-btn-primary" href="/">@L["Error.Home"]</a>
         </div>
     </div>
 </div>

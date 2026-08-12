@@ -266,9 +266,195 @@ a:hover {
     font-size: 13px;
 }
 
+/* --- Anmeldung --- */
+
+.mf-auth {
+    width: 100%;
+    max-width: 400px;
+    margin: 6vh auto 0;
+}
+
+.mf-auth-logo {
+    width: 56px;
+    height: 56px;
+    margin-bottom: var(--mf-space-3);
+    border-radius: 13px;
+}
+
+.mf-container-narrow {
+    max-width: 520px;
+}
+
+.mf-card-spaced {
+    margin-top: var(--mf-space-4);
+}
+
+.mf-card h2 {
+    margin: 0 0 var(--mf-space-2);
+    font-size: 17px;
+}
+
+/* --- Formulare --- */
+
+.mf-form {
+    margin-top: var(--mf-space-4);
+}
+
+.mf-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mf-space-1);
+    margin-bottom: var(--mf-space-4);
+}
+
+.mf-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mf-text-muted);
+}
+
+.mf-field input,
+.mf-field select,
+.mf-field textarea {
+    padding: 9px 11px;
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface);
+    color: var(--mf-text);
+    font: inherit;
+}
+
+.mf-field input:focus,
+.mf-field select:focus,
+.mf-field textarea:focus {
+    outline: 2px solid var(--mf-accent);
+    outline-offset: -1px;
+    border-color: var(--mf-accent);
+}
+
+.mf-field-hint {
+    font-size: 12px;
+    color: var(--mf-text-muted);
+}
+
+.mf-field-error {
+    font-size: 12px;
+    color: var(--mf-danger);
+}
+
+.mf-field-error:empty {
+    display: none;
+}
+
+.mf-inline-form {
+    display: inline;
+    margin: 0;
+}
+
+/* --- Hinweise --- */
+
+.mf-alert {
+    margin: var(--mf-space-4) 0 0;
+    padding: var(--mf-space-3);
+    border: 1px solid var(--mf-border);
+    border-left-width: 3px;
+    border-radius: var(--mf-radius);
+    font-size: 14px;
+}
+
+.mf-alert-error {
+    border-left-color: var(--mf-danger);
+    color: var(--mf-danger);
+}
+
+.mf-alert-warning {
+    border-left-color: var(--mf-warning);
+    color: var(--mf-warning);
+}
+
+.mf-alert-success {
+    border-left-color: var(--mf-success);
+    color: var(--mf-success);
+}
+
+/* --- Kleinteile --- */
+
+.mf-chip {
+    display: inline-block;
+    margin: 0 var(--mf-space-1) var(--mf-space-1) 0;
+    padding: 1px var(--mf-space-2);
+    border-radius: var(--mf-radius);
+    background: var(--mf-accent-soft);
+    color: var(--mf-accent);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.mf-user {
+    color: var(--mf-text-muted);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 30vw;
+}
+
+/* --- Sprachauswahl --- */
+
+.mf-lang {
+    display: inline-flex;
+    margin: 0;
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    overflow: hidden;
+}
+
+.mf-lang-btn {
+    padding: 4px 9px;
+    border: 0;
+    background: transparent;
+    color: var(--mf-text-muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mf-lang-btn:hover {
+    background: var(--mf-surface-alt);
+    color: var(--mf-text);
+}
+
+.mf-lang-btn.is-active {
+    background: var(--mf-accent);
+    color: #fff;
+}
+
+.mf-btn-quiet {
+    padding: 5px 10px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--mf-text-muted);
+    font-size: 14px;
+}
+
+.mf-btn-quiet:hover {
+    background: var(--mf-surface-alt);
+    color: var(--mf-text);
+}
+
 @media (max-width: 640px) {
     .mf-content {
         padding: var(--mf-space-4) var(--mf-space-3);
+    }
+
+    .mf-topbar {
+        gap: var(--mf-space-2);
+        padding: 0 var(--mf-space-3);
+    }
+
+    .mf-user {
+        display: none;
     }
 
     .mf-facts {

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="Common.Save"><value>Speichern</value></data>
+  <data name="Common.Back"><value>Zurück</value></data>
+  <data name="Common.Delete"><value>Löschen</value></data>
+  <data name="Common.Cancel"><value>Abbrechen</value></data>
+  <data name="Common.Language"><value>Sprache</value></data>
+  <data name="Common.Yes"><value>Ja</value></data>
+  <data name="Common.No"><value>Nein</value></data>
+
+  <data name="Layout.ChangePassword"><value>Kennwort</value></data>
+  <data name="Layout.Logout"><value>Abmelden</value></data>
+
+  <data name="Login.Title"><value>Anmelden</value></data>
+  <data name="Login.Subtitle"><value>Bitte mit dem lokalen Konto anmelden.</value></data>
+  <data name="Login.Username"><value>Benutzername</value></data>
+  <data name="Login.Password"><value>Kennwort</value></data>
+  <data name="Login.Submit"><value>Anmelden</value></data>
+  <data name="Login.UsernameRequired"><value>Bitte den Benutzernamen eingeben.</value></data>
+  <data name="Login.PasswordRequired"><value>Bitte das Kennwort eingeben.</value></data>
+  <data name="Login.Invalid"><value>Benutzername oder Kennwort ist falsch.</value></data>
+  <data name="Login.Locked"><value>Das Konto ist gesperrt. Bitte in {0} Minute(n) erneut versuchen.</value></data>
+
+  <data name="ChangePassword.Title"><value>Kennwort ändern</value></data>
+  <data name="ChangePassword.Forced"><value>Bitte vergib ein eigenes Kennwort, bevor du weiterarbeitest.</value></data>
+  <data name="ChangePassword.Current"><value>Aktuelles Kennwort</value></data>
+  <data name="ChangePassword.New"><value>Neues Kennwort</value></data>
+  <data name="ChangePassword.Confirm"><value>Neues Kennwort bestätigen</value></data>
+  <data name="ChangePassword.Hint"><value>Mindestens {0} Zeichen.</value></data>
+  <data name="ChangePassword.CurrentRequired"><value>Bitte das aktuelle Kennwort eingeben.</value></data>
+  <data name="ChangePassword.NewRequired"><value>Bitte ein neues Kennwort eingeben.</value></data>
+  <data name="ChangePassword.ConfirmRequired"><value>Bitte das neue Kennwort bestätigen.</value></data>
+  <data name="ChangePassword.Mismatch"><value>Die Kennwörter stimmen nicht überein.</value></data>
+  <data name="ChangePassword.CurrentWrong"><value>Das aktuelle Kennwort ist falsch.</value></data>
+  <data name="ChangePassword.TooShort"><value>Das neue Kennwort muss mindestens {0} Zeichen haben.</value></data>
+  <data name="ChangePassword.SameAsOld"><value>Das neue Kennwort muss sich vom bisherigen unterscheiden.</value></data>
+  <data name="ChangePassword.NotSignedIn"><value>Nicht angemeldet.</value></data>
+  <data name="ChangePassword.UserNotFound"><value>Benutzer nicht gefunden.</value></data>
+  <data name="ChangePassword.Success"><value>Das Kennwort wurde geändert. Andere Sitzungen wurden abgemeldet.</value></data>
+
+  <data name="Index.Title"><value>Start</value></data>
+  <data name="Index.Welcome"><value>Willkommen, {0}</value></data>
+  <data name="Index.Intro"><value>Anmeldung, Rollen und Sitzungen stehen (M1). Der Explorer folgt in den nächsten Meilensteinen.</value></data>
+  <data name="Index.User"><value>Benutzer</value></data>
+  <data name="Index.Roles"><value>Rollen</value></data>
+  <data name="Index.Permissions"><value>Rechte</value></data>
+  <data name="Index.SessionValidUntil"><value>Sitzung gültig bis</value></data>
+  <data name="Index.ActiveSessions"><value>Aktive Sitzungen</value></data>
+  <data name="Index.System"><value>System</value></data>
+  <data name="Index.Version"><value>Version</value></data>
+  <data name="Index.Channel"><value>Kanal</value></data>
+  <data name="Index.Environment"><value>Umgebung</value></data>
+  <data name="Index.DataDirectory"><value>Datenverzeichnis</value></data>
+  <data name="Index.Database"><value>Datenbank</value></data>
+  <data name="Index.DatabaseConnected"><value>verbunden</value></data>
+  <data name="Index.DatabaseUnavailable"><value>nicht erreichbar</value></data>
+  <data name="Index.CheckHealth"><value>Health prüfen</value></data>
+
+  <data name="Error.Title"><value>Es ist ein Fehler aufgetreten</value></data>
+  <data name="Error.Message"><value>Die Anfrage konnte nicht verarbeitet werden.</value></data>
+  <data name="Error.NotFoundTitle"><value>Seite nicht gefunden</value></data>
+  <data name="Error.NotFoundMessage"><value>Die aufgerufene Adresse existiert nicht.</value></data>
+  <data name="Error.ForbiddenTitle"><value>Kein Zugriff</value></data>
+  <data name="Error.ForbiddenMessage"><value>Für diesen Bereich fehlen die nötigen Rechte.</value></data>
+  <data name="Error.CodeTitle"><value>Fehler {0}</value></data>
+  <data name="Error.RequestId"><value>Request-Id</value></data>
+  <data name="Error.Home"><value>Zur Startseite</value></data>
+</root>

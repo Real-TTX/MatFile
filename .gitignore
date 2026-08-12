@@ -14,7 +14,8 @@ publish/
 *.suo
 
 # Runtime data (never commit NAS data or the local database)
-data/
+# Nur das Datenverzeichnis im Repo-Wurzelverzeichnis - nicht src/MatFile.Web/Data!
+/data/
 *.db
 *.db-shm
 *.db-wal
