@@ -22,6 +22,15 @@
             current.StartsWith("/Admin/Roles", StringComparison.OrdinalIgnoreCase),
             "shield"));
     }
+
+    if (User.HasPermission(Permission.ManageRoots))
+    {
+        tabs.Add(new TabItem(
+            L["Admin.Roots"],
+            Url.Page("/Admin/Roots/Index")!,
+            current.StartsWith("/Admin/Roots", StringComparison.OrdinalIgnoreCase),
+            "hard-drive"));
+    }
 }
 
 <mf-tabbar id="admin" items="tabs" />

@@ -20,6 +20,11 @@ public class IndexModel : PageModel
             return RedirectToPage("/Admin/Roles/Index");
         }
 
+        if (User.HasPermission(Permission.ManageRoots))
+        {
+            return RedirectToPage("/Admin/Roots/Index");
+        }
+
         return Forbid();
     }
 }

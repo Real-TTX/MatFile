@@ -37,7 +37,8 @@
 
             @if (User.Identity?.IsAuthenticated == true)
             {
-                if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles))
+                if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles)
+                    || User.HasPermission(Permission.ManageRoots))
                 {
                     <a class="mf-btn mf-btn-quiet" asp-page="/Admin/Index">
                         <mf-icon name="settings" />@L["Admin.Title"]

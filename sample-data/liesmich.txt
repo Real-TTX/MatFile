@@ -1,0 +1,2 @@
+Beispieldatei für den MatFile-Explorer.
+Dieser Ordner wird von docker-compose.dev.yml nach /storage/sample gemountet.

@@ -192,4 +192,40 @@
   <data name="Permission.ManageMounts"><value>Manage mounts</value></data>
   <data name="Permission.ManageSettings"><value>Manage settings</value></data>
   <data name="Permission.ViewActivityLog"><value>View activity log</value></data>
+
+  <data name="Admin.Roots"><value>Root paths</value></data>
+
+  <data name="Root.Name"><value>Name</value></data>
+  <data name="Root.Type"><value>Type</value></data>
+  <data name="Root.Path"><value>Path in the container</value></data>
+  <data name="Root.PathHint"><value>Absolute path of a mounted volume, for example /storage/tank. Only this folder and everything below it becomes visible.</value></data>
+  <data name="Root.Icon"><value>Icon</value></data>
+  <data name="Root.SortOrder"><value>Sort order</value></data>
+  <data name="Root.IsEnabled"><value>Root path is enabled</value></data>
+  <data name="Root.Status"><value>Status</value></data>
+  <data name="Root.Available"><value>Available</value></data>
+  <data name="Root.Missing"><value>Path missing</value></data>
+  <data name="Root.Disabled"><value>Disabled</value></data>
+  <data name="Root.Roles"><value>Roles</value></data>
+  <data name="Root.Access"><value>Access per role</value></data>
+  <data name="Root.AccessHint"><value>Roles without any right do not see this root path. Administrators always have full access.</value></data>
+  <data name="Root.Empty"><value>No root paths configured yet.</value></data>
+  <data name="Root.New.Title"><value>New root path</value></data>
+  <data name="Root.Edit.Title"><value>Edit root path</value></data>
+  <data name="Root.Deleted"><value>{0} root path(s) deleted.</value></data>
+  <data name="Root.NotYetSupported"><value>not available yet</value></data>
+  <data name="Root.Error.NameRequired"><value>Please enter a name.</value></data>
+  <data name="Root.Error.NameTaken"><value>A root path with this name already exists.</value></data>
+  <data name="Root.Error.PathRequired"><value>Please enter a path.</value></data>
+  <data name="Root.Error.PathNotAbsolute"><value>Please enter an absolute path, for example /storage/tank.</value></data>
+  <data name="Root.Error.PathMissing"><value>This path does not exist in the container. Mount the volume first.</value></data>
+  <data name="Root.Error.PathIsDataDirectory"><value>The MatFile data directory cannot be shared.</value></data>
+  <data name="Root.Error.TypeNotSupported"><value>This storage type is not supported yet.</value></data>
+
+  <data name="Access.CanRead"><value>Read</value></data>
+  <data name="Access.CanWrite"><value>Write</value></data>
+  <data name="Access.CanDelete"><value>Delete</value></data>
+  <data name="Access.CanUpload"><value>Upload</value></data>
+  <data name="Access.CanDownload"><value>Download</value></data>
+  <data name="Access.CanShare"><value>Share</value></data>
 </root>

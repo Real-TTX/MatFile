@@ -192,4 +192,40 @@
   <data name="Permission.ManageMounts"><value>Mounts verwalten</value></data>
   <data name="Permission.ManageSettings"><value>Einstellungen verwalten</value></data>
   <data name="Permission.ViewActivityLog"><value>Protokoll einsehen</value></data>
+
+  <data name="Admin.Roots"><value>Root-Pfade</value></data>
+
+  <data name="Root.Name"><value>Name</value></data>
+  <data name="Root.Type"><value>Typ</value></data>
+  <data name="Root.Path"><value>Pfad im Container</value></data>
+  <data name="Root.PathHint"><value>Absoluter Pfad eines eingehängten Volumes, zum Beispiel /storage/tank. Nur dieser Ordner und alles darunter wird sichtbar.</value></data>
+  <data name="Root.Icon"><value>Symbol</value></data>
+  <data name="Root.SortOrder"><value>Sortierung</value></data>
+  <data name="Root.IsEnabled"><value>Root-Pfad ist aktiv</value></data>
+  <data name="Root.Status"><value>Status</value></data>
+  <data name="Root.Available"><value>Verfügbar</value></data>
+  <data name="Root.Missing"><value>Pfad fehlt</value></data>
+  <data name="Root.Disabled"><value>Deaktiviert</value></data>
+  <data name="Root.Roles"><value>Rollen</value></data>
+  <data name="Root.Access"><value>Zugriff je Rolle</value></data>
+  <data name="Root.AccessHint"><value>Rollen ohne jedes Recht sehen diesen Root-Pfad nicht. Administratoren haben immer vollen Zugriff.</value></data>
+  <data name="Root.Empty"><value>Noch keine Root-Pfade angelegt.</value></data>
+  <data name="Root.New.Title"><value>Neuer Root-Pfad</value></data>
+  <data name="Root.Edit.Title"><value>Root-Pfad bearbeiten</value></data>
+  <data name="Root.Deleted"><value>{0} Root-Pfad(e) gelöscht.</value></data>
+  <data name="Root.NotYetSupported"><value>noch nicht verfügbar</value></data>
+  <data name="Root.Error.NameRequired"><value>Bitte einen Namen eingeben.</value></data>
+  <data name="Root.Error.NameTaken"><value>Ein Root-Pfad mit diesem Namen existiert bereits.</value></data>
+  <data name="Root.Error.PathRequired"><value>Bitte einen Pfad eingeben.</value></data>
+  <data name="Root.Error.PathNotAbsolute"><value>Bitte einen absoluten Pfad angeben, zum Beispiel /storage/tank.</value></data>
+  <data name="Root.Error.PathMissing"><value>Dieser Pfad existiert im Container nicht. Bitte zuerst das Volume einhängen.</value></data>
+  <data name="Root.Error.PathIsDataDirectory"><value>Das Datenverzeichnis von MatFile kann nicht freigegeben werden.</value></data>
+  <data name="Root.Error.TypeNotSupported"><value>Dieser Speichertyp wird noch nicht unterstützt.</value></data>
+
+  <data name="Access.CanRead"><value>Lesen</value></data>
+  <data name="Access.CanWrite"><value>Schreiben</value></data>
+  <data name="Access.CanDelete"><value>Löschen</value></data>
+  <data name="Access.CanUpload"><value>Hochladen</value></data>
+  <data name="Access.CanDownload"><value>Herunterladen</value></data>
+  <data name="Access.CanShare"><value>Freigeben</value></data>
 </root>

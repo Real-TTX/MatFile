@@ -99,8 +99,11 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 
 ## 4. Sicherheit
 
-- **PathGuard**: jeder Pfad wird kanonisiert und gegen den Root geprüft (kein `..`-Ausbruch,
-  Symlink-Auflösung optional blockierbar). Zentral, ohne Ausnahme für alle Provider.
+- **PathGuard**: jeder Pfad wird kanonisiert und gegen den Root geprüft. Blockiert werden
+  `..`-Segmente, absolute Pfade, ungültige Zeichen und Symlinks, deren Ziel den Root verlässt;
+  solche Einträge erscheinen erst gar nicht im Listing. Zentral, ohne Ausnahme für alle Provider.
+- Ein Root darf **nicht** auf das MatFile-Datenverzeichnis zeigen oder es enthalten
+  (dort liegen Datenbank und Schlüssel) — wird beim Speichern abgelehnt.
 - **Credentials** der Remote-Verbindungen mit ASP.NET DataProtection verschlüsselt;
   Keys im Volume → überleben Restart. Session-Mounts speichern *nie* Zugangsdaten in der DB.
 - **Login-Rate-Limit** + Lockout, Anti-Forgery auf allen POSTs, Secure/HttpOnly/SameSite-Cookie.
@@ -223,7 +226,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M0** | Repo-Skeleton, Branches `main`/`dev`, .gitignore, Solution, Dockerfile, Compose dev/release, GitHub Action, Versionierung | Container startet auf `:2222`, zeigt Platzhalterseite |
 | **M1** | EF Core + SQLite, alle Tabellen, Audit-Interceptor, Seed-Admin, Login/Logout, DB-gestützte Session (restart-fest), Rollen & Policies, **Mehrsprachigkeit EN/DE** | Anmeldung funktioniert, Session überlebt Neustart |
 | **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), Admin-CRUD für User & Rollen | Admin-Bereich nach Guidelines nutzbar |
-| **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
+| **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API (`/api/fs/roots`, `/api/fs/list`) | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks | Navigation komplett |
 | **M5** | Datei-Operationen: Upload (chunked/resumable), Download, ZIP-Download, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Kontextmenü, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Thumbnail-Cache, Overlay-Viewer | Medien direkt im Browser |

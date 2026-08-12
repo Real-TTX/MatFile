@@ -1,9 +1,11 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using MatFile.Web;
+using MatFile.Web.Api;
 using MatFile.Web.Data;
 using MatFile.Web.Security;
 using MatFile.Web.Services;
+using MatFile.Web.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -33,6 +35,8 @@ builder.Services.AddDbContext<MatFileDbContext>((serviceProvider, options) =>
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<StorageRootService>();
+builder.Services.AddSingleton<StorageProviderFactory>();
 
 // Schlüssel im Volume -> Cookies und damit Sitzungen überleben einen Container-Neustart.
 builder.Services.AddDataProtection()
@@ -88,6 +92,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/SetLanguage");
     options.Conventions.AuthorizeFolder("/Admin/Users", MatFilePolicies.ManageUsers);
     options.Conventions.AuthorizeFolder("/Admin/Roles", MatFilePolicies.ManageRoles);
+    options.Conventions.AuthorizeFolder("/Admin/Roots", MatFilePolicies.ManageRoots);
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization(options =>
@@ -144,6 +149,7 @@ app.Use(async (context, next) =>
 
 app.MapStaticAssets().AllowAnonymous();
 app.MapRazorPages().WithStaticAssets();
+app.MapFileSystemEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {
