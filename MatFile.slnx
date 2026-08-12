@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MatFile.Web/MatFile.Web.csproj" />
+  </Folder>
+</Solution>

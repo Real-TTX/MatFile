@@ -1,0 +1,17 @@
+{
+  "name": "MatFile",
+  "short_name": "MatFile",
+  "description": "Datei-Explorer für NAS-Systeme",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12161f",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/icons/matfile.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

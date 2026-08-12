@@ -1,0 +1,34 @@
+name: matfile
+
+services:
+  matfile:
+    image: ${MATFILE_IMAGE:-matfile:local}
+    container_name: matfile
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        MATFILE_VERSION: ${MATFILE_VERSION:-}
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "2222"
+      MATFILE_DATA: /data
+      TZ: Europe/Berlin
+      # PUID: "1000"
+      # PGID: "1000"
+    volumes:
+      # Konfiguration, SQLite-Datenbank, Session-Keys, Thumbnails
+      - matfile-data:/data
+      # NAS-Volumes hier einhängen und anschließend im UI als Root-Pfad anlegen:
+      # - /mnt/tank:/storage/tank
+    # Nur nötig, wenn SMB/NFS direkt im Container gemountet werden sollen:
+    # cap_add:
+    #   - SYS_ADMIN
+    # devices:
+    #   - /dev/fuse
+
+volumes:
+  matfile-data:

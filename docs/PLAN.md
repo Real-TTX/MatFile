@@ -1,0 +1,220 @@
+# MatFile — Implementierungsplan
+
+> Web-basierter Datei-Explorer / File-Manager für NAS-Systeme (TrueNAS & Co.),
+> die von Haus aus keinen komfortablen Dateizugriff bieten.
+
+---
+
+## 1. Entscheidungen (abgestimmt)
+
+| Thema | Entscheidung |
+|---|---|
+| Backend | ASP.NET Core 10 (SDK 10.0.203 lokal vorhanden) |
+| Frontend | **Razor Pages + Vanilla JS (ES-Module) + Alpine.js**, kein Node-Build |
+| Styling | **Eigenes CSS-Designsystem** (CSS-Variablen, Light/Dark), angelehnt an Synology FileStation / Finder |
+| Remote-Zugriff | **In-Process-Provider** (SFTP/FTP/WebDAV/SMB) **+ optionaler OS-Mount** (NFS, alternativ SMB) |
+| Datenbank | SQLite (Logik) + JSON (Konfiguration) |
+| Container-Port | **2222** |
+| Deployment | Docker, Volume für `/data` |
+
+---
+
+## 2. Architektur-Überblick
+
+```
+Browser
+  │  Razor Pages (Server-Rendering: Admin-CRUD, Login, App-Shell)
+  │  JSON-API  (/api/fs/*)  ← Explorer-Interaktion via Fetch + Alpine
+  │  Streaming (/files/*)   ← Download, Preview, Range-Requests
+  ▼
+ASP.NET Core 10  (Kestrel :2222)
+  ├─ Auth        Cookie → SessionToken → UserSession (SQLite)
+  ├─ Services    UserService, RoleService, RootService, MountService,
+  │              FileService, ArchiveService, PreviewService, JobService
+  ├─ Storage     IStorageProvider
+  │                ├─ LocalProvider      (Root-Paths, OS-Mounts)
+  │                ├─ SftpProvider       (SSH.NET)
+  │                ├─ FtpProvider        (FluentFTP)
+  │                ├─ WebDavProvider     (HttpClient)
+  │                └─ SmbProvider        (SMBLibrary)
+  └─ Data        EF Core + SQLite  (/data/matfile.db)
+
+Volume /data
+  ├─ matfile.db          SQLite
+  ├─ config/*.json       Konfiguration
+  ├─ keys/               DataProtection-Keys (Session/Cookies überleben Restart)
+  ├─ thumbs/             Thumbnail-Cache
+  └─ temp/               Chunk-Uploads, ZIP-Staging
+```
+
+### Projektstruktur (flach gehalten — keine tiefen Verschachtelungen)
+
+```
+MatFile/
+├─ src/MatFile.Web/
+│  ├─ Program.cs
+│  ├─ Pages/                 Login, Explorer, Admin/{Users,Roles,Roots,Mounts,Sessions,Log}
+│  ├─ Pages/Shared/Controls/ _Table, _Pagination, _FormLayout, _TabBar, _Toolbar, _Confirm
+│  ├─ Api/                   FsEndpoints, UploadEndpoints, StreamEndpoints, JobEndpoints
+│  ├─ Services/              Business-Logik (mehrere Funktionen je Klasse erlaubt)
+│  ├─ Storage/               IStorageProvider + Implementierungen + PathGuard
+│  ├─ Data/                  MatFileDbContext, Entities, AuditInterceptor, Seed
+│  └─ wwwroot/               css/, js/explorer/, js/vendor/alpine.min.js, icons/
+├─ docker/                   Dockerfile, entrypoint.sh
+├─ .github/workflows/        docker-build.yml
+├─ docs/                     PLAN.md, ARCHITECTURE.md
+├─ docker-compose.yml        Release
+├─ docker-compose.dev.yml    Development
+└─ MatFile.sln
+```
+
+---
+
+## 3. Datenmodell (SQLite)
+
+**Konventionen:** Tabellen PascalCase · PK immer `Id` (BIGINT, Autoincrement) ·
+jeder Datensatz mit `CreateDate`, `CreateUserId`, `UpdateDate`, `UpdateUserId`
+(automatisch über EF-Core-`SaveChanges`-Interceptor) · sicherheitsrelevante
+Schlüssel zusätzlich als `Token` (UUID).
+
+| Tabelle | Felder (Kern) |
+|---|---|
+| `User` | Username, DisplayName, Email, PasswordHash (PBKDF2), IsActive, LastLoginDate |
+| `Role` | Name, Description, IsSystem, Permissions (Flags) |
+| `UserRole` | UserId, RoleId |
+| `UserSession` | **Token (UUID)**, UserId, ExpiresDate, LastActivityDate, IpAddress, UserAgent, IsRevoked |
+| `StorageRoot` | Name, Type (Local/Smb/Nfs/Sftp/Ftp/WebDav), DisplayIcon, BasePath, SortOrder, IsEnabled, Persistence (Persistent/Session), SettingsJson, SecretEncrypted |
+| `RootAccess` | StorageRootId, RoleId, CanRead/CanWrite/CanDelete/CanUpload/CanDownload/CanShare |
+| `Bookmark` | UserId, Name, StorageRootId, RelativePath, DisplayIcon, SortOrder |
+| `ExplorerTab` | UserId, Title, StorageRootId, RelativePath, SortOrder, IsPersistent, IsActive |
+| `UserSetting` | UserId, SettingKey, SettingValue (View-Modus, Sortierung, Theme, Sidebar-Breite) |
+| `JobTask` | **Token (UUID)**, UserId, JobType (Zip/Unzip/Copy/Move/Delete/Upload), Status, ProgressPercent, PayloadJson, ResultPath, ErrorMessage |
+| `ActivityLog` | UserId, ActionType, StorageRootId, TargetPath, DetailsJson, IpAddress |
+
+**JSON-Konfiguration** (`/data/config/matfile.json`): Upload-Limits, Chunk-Größe,
+Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivformate.
+
+---
+
+## 4. Sicherheit
+
+- **PathGuard**: jeder Pfad wird kanonisiert und gegen den Root geprüft (kein `..`-Ausbruch,
+  Symlink-Auflösung optional blockierbar). Zentral, ohne Ausnahme für alle Provider.
+- **Credentials** der Remote-Verbindungen mit ASP.NET DataProtection verschlüsselt;
+  Keys im Volume → überleben Restart. Session-Mounts speichern *nie* Zugangsdaten in der DB.
+- **Login-Rate-Limit** + Lockout, Anti-Forgery auf allen POSTs, Secure/HttpOnly/SameSite-Cookie.
+- **Autorisierung** zweistufig: Rolle (globale Fähigkeiten) → `RootAccess` (pro Root/Mount).
+- Upload-Größenlimit, MIME-Sniffing-Schutz (`X-Content-Type-Options`), Downloads immer
+  mit `Content-Disposition: attachment` außer bei explizitem Preview.
+
+---
+
+## 5. UI-Konzept
+
+### Explorer (Hauptanwendung)
+- **Sidebar** (Finder/Explorer-Stil): Home-/Root-Paths, aktive Mounts, Favoriten/Bookmarks,
+  zuletzt verwendet. Ein-/ausklappbar, per Drag sortierbar, auf Mobile als Off-Canvas.
+- **Tab-Leiste** wie Windows Explorer: `+`, Schließen, Mittelklick, Drag-Reorder,
+  Kontextmenü „Tab anheften/persistent machen" → gespeichert in `ExplorerTab`.
+- **Toolbar**: Zurück/Vor/Hoch, Breadcrumb-Pfad, Suche, Sortierung, Ansicht (Liste/Kacheln), Upload, Neu.
+- **Dateiliste**: Mehrfachauswahl (Klick, Ctrl+Klick, Shift+Klick, Rubber-Band, Ctrl+A),
+  Spalten sortierbar, Inline-Rename, Drag&Drop (intern verschieben, extern hochladen).
+- **Kontextmenü (Rechtsklick)**: Öffnen · Vorschau · Download · Umbenennen · Kopieren ·
+  Ausschneiden · Einfügen · Als ZIP herunterladen · Entpacken · Neuer Ordner ·
+  Zu Favoriten · Eigenschaften · *(Abstand)* Löschen.
+- **Tastatur**: F2, Entf, Ctrl+C/X/V, Ctrl+A, Enter, Backspace, Pfeiltasten, F5.
+- **Vorschau-Overlay**: Bild, Video/Audio (echtes Streaming per HTTP-Range), PDF, Text/Code,
+  Blättern mit Pfeiltasten.
+- **Transfer-Panel** unten rechts: laufende Uploads/Jobs mit Fortschritt und Abbruch.
+
+### Admin-Bereich (nach den CRUD-Guidelines)
+- Liste + **separate Unterseite** zum Erstellen/Bearbeiten.
+- Über der Tabelle eine **Toolbar**: Suchtext, Filter, Sortierung.
+- Listen-Aktionen **unterhalb**, linksbündig; **Delete mit Abstand** abgesetzt.
+- Direkt unter der Tabelle nur die **Pagination**.
+- Button-Reihenfolge positiv → negativ: `Speichern · Zurück · ⟨Spacer⟩ · Löschen`.
+- Icons wo sinnvoll, durchgängig mobil optimiert.
+
+### Wiederverwendbare Controls
+`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`, `_ConfirmDialog` —
+alle als Razor-Partials/TagHelper mit eigener **Instanz-Id**, damit mehrere gleiche
+Controls auf einer Seite kollisionsfrei funktionieren.
+
+### Icon
+Eigenes SVG-Logo (Ordner + Datei, Farbverlauf), daraus generiert:
+`favicon.ico` (16/32/48), `favicon.svg`, `apple-touch-icon.png` (180),
+PWA-Icons 192/512 + `site.webmanifest`.
+
+---
+
+## 6. Docker & Betrieb
+
+**Dockerfile** (Multi-Stage): `sdk:10.0` → publish → `aspnet:10.0` (Debian).
+Im Runtime-Image zusätzlich `cifs-utils`, `nfs-common` (nur für optionalen OS-Mount),
+`ca-certificates`, `tzdata`. `ffmpeg` optional per Build-Arg (Video-Thumbnails).
+
+```yaml
+services:
+  matfile:
+    image: matfile:local
+    ports: ["2222:2222"]
+    environment:
+      ASPNETCORE_HTTP_PORTS: "2222"
+      MATFILE_DATA: "/data"
+    volumes:
+      - matfile-data:/data
+      - /mnt/tank:/storage/tank        # Beispiel: NAS-Volume
+    # für NFS/SMB-OS-Mounts optional:
+    # cap_add: [SYS_ADMIN]
+    # devices: ["/dev/fuse"]
+```
+
+- `docker-compose.yml` → Release, `docker-compose.dev.yml` → Development.
+- **Test-Workflow: Container neu bauen und Stack redeployen** (kein `dotnet watch`).
+- Healthcheck auf `/healthz`, Non-Root-User wo möglich (bei OS-Mounts nicht möglich → dokumentiert).
+
+---
+
+## 7. Git, CI & Versionierung
+
+- Branches: **`main`** (Release) und **`dev`** (Development).
+- GitHub Action `docker-build.yml`: Build + Push nach GHCR, Buildx-Cache, Tag-Berechnung:
+
+| Kontext | Schema | Beispiel |
+|---|---|---|
+| `main` | `<major>.<minor>.<run_number>-<yyyyMMdd>` | `1.0.42-20260812` |
+| `dev` | `nightly-<run_number>-<yyyyMMdd>` | `nightly-118-20260812` |
+| lokal | `local-<yyyyMMdd>` | `local-20260812` |
+
+`Major`/`Minor` liegen in `version.props` im Repo, Buildnummer = `github.run_number`.
+Version wird als Build-Arg ins Image und in die UI (Footer/About) durchgereicht.
+Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-Author-Trailer.
+
+---
+
+## 8. Meilensteine
+
+| # | Inhalt | Ergebnis |
+|---|---|---|
+| **M0** | Repo-Skeleton, Branches `main`/`dev`, .gitignore, Solution, Dockerfile, Compose dev/release, GitHub Action, Versionierung | Container startet auf `:2222`, zeigt Platzhalterseite |
+| **M1** | EF Core + SQLite, alle Tabellen, Audit-Interceptor, Seed-Admin, Login/Logout, DB-gestützte Session (restart-fest), Rollen & Policies | Anmeldung funktioniert, Session überlebt Neustart |
+| **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), Admin-CRUD für User & Rollen | Admin-Bereich nach Guidelines nutzbar |
+| **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
+| **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks | Navigation komplett |
+| **M5** | Datei-Operationen: Upload (chunked/resumable), Download, ZIP-Download, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Kontextmenü, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
+| **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Thumbnail-Cache, Overlay-Viewer | Medien direkt im Browser |
+| **M7** | Remote-Provider SFTP, FTP, WebDAV, SMB (+ NFS via OS-Mount), Mount-Verwaltung im UI, persistent vs. nur Sitzung, Credential-Verschlüsselung | Externe Freigaben eingebunden |
+| **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
+| **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
+
+---
+
+## 9. Offene Punkte / Annahmen
+
+- **NFS** wird nur über OS-Mount unterstützt (kein brauchbarer .NET-Client) → benötigt
+  `CAP_SYS_ADMIN` im Container; ohne diese Capability blendet das UI NFS mit Hinweis aus.
+- **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.
+- **Rollen** starten mit `Admin` und `User`; feinere Rechte laufen über `RootAccess` je Root/Mount.
+- Kein Node/npm im Build — Alpine.js wird als Vendor-Datei mitgeliefert (offline-tauglich).
+- Freigabe-Links (Public Share) sind **nicht** Teil dieses Plans; das Datenmodell lässt sie
+  aber später leicht ergänzen.

@@ -1,0 +1,37 @@
+@using MatFile.Web.Services
+@inject AppInfo AppInfo
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>@ViewData["Title"] &middot; MatFile</title>
+    <link rel="icon" href="~/icons/matfile.svg" type="image/svg+xml" />
+    <link rel="manifest" href="~/site.webmanifest" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="stylesheet" href="~/css/matfile.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+    <div class="mf-app">
+        <header class="mf-topbar">
+            <a class="mf-brand" href="/">
+                <img src="~/icons/matfile.svg" alt="" />
+                <span>MatFile</span>
+            </a>
+            <span class="mf-spacer"></span>
+            <span class="mf-badge" title="@AppInfo.Channel">@AppInfo.Version</span>
+        </header>
+
+        <main class="mf-content">
+            @RenderBody()
+        </main>
+
+        <footer class="mf-footer">
+            MatFile @AppInfo.Version &middot; @AppInfo.Channel
+        </footer>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

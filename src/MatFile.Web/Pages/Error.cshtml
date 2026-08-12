@@ -1,0 +1,24 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Fehler";
+}
+
+<div class="mf-container">
+    <div class="mf-card">
+        <h1>@Model.Title</h1>
+        <p class="mf-muted">@Model.Message</p>
+
+        @if (Model.ShowRequestId)
+        {
+            <dl class="mf-facts">
+                <dt>Request-Id</dt>
+                <dd class="mf-mono">@Model.RequestId</dd>
+            </dl>
+        }
+
+        <div class="mf-actions">
+            <a class="mf-btn mf-btn-primary" href="/">Zur Startseite</a>
+        </div>
+    </div>
+</div>

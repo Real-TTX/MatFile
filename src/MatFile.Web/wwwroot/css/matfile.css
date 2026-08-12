@@ -1,0 +1,282 @@
+/* MatFile Designsystem - Basis-Tokens.
+   Wird in M2 um Controls (Table, Pagination, Form, TabBar) erweitert. */
+
+:root {
+    color-scheme: light dark;
+
+    /* Farben */
+    --mf-accent: #3b82f6;
+    --mf-accent-hover: #2563eb;
+    --mf-accent-soft: rgba(59, 130, 246, 0.12);
+    --mf-danger: #dc2626;
+    --mf-danger-hover: #b91c1c;
+    --mf-success: #16a34a;
+    --mf-warning: #d97706;
+
+    --mf-bg: #f4f6fa;
+    --mf-surface: #ffffff;
+    --mf-surface-alt: #eef1f7;
+    --mf-border: #d8dee9;
+    --mf-text: #1b2432;
+    --mf-text-muted: #5c6880;
+
+    /* Abstände */
+    --mf-space-1: 4px;
+    --mf-space-2: 8px;
+    --mf-space-3: 12px;
+    --mf-space-4: 16px;
+    --mf-space-5: 24px;
+    --mf-space-6: 32px;
+
+    /* Form */
+    --mf-radius: 8px;
+    --mf-radius-lg: 14px;
+    --mf-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+
+    /* Typografie */
+    --mf-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mf-font-mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, monospace;
+    --mf-font-size: 15px;
+
+    /* Layout */
+    --mf-topbar-height: 52px;
+    --mf-sidebar-width: 260px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --mf-accent-soft: rgba(59, 130, 246, 0.2);
+        --mf-bg: #12161f;
+        --mf-surface: #1a2030;
+        --mf-surface-alt: #222a3c;
+        --mf-border: #303a50;
+        --mf-text: #e7ecf5;
+        --mf-text-muted: #9aa7bf;
+        --mf-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: var(--mf-font);
+    font-size: var(--mf-font-size);
+    line-height: 1.5;
+    color: var(--mf-text);
+    background: var(--mf-bg);
+    -webkit-text-size-adjust: 100%;
+}
+
+a {
+    color: var(--mf-accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- App-Rahmen --- */
+
+.mf-app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.mf-topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-3);
+    height: var(--mf-topbar-height);
+    padding: 0 var(--mf-space-4);
+    background: var(--mf-surface);
+    border-bottom: 1px solid var(--mf-border);
+}
+
+.mf-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    font-weight: 600;
+    color: var(--mf-text);
+}
+
+.mf-brand:hover {
+    text-decoration: none;
+}
+
+.mf-brand img {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+}
+
+.mf-spacer {
+    flex: 1 1 auto;
+}
+
+.mf-badge {
+    display: inline-block;
+    padding: 2px var(--mf-space-2);
+    border: 1px solid var(--mf-border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--mf-text-muted);
+    white-space: nowrap;
+}
+
+.mf-content {
+    flex: 1 1 auto;
+    padding: var(--mf-space-5) var(--mf-space-4);
+}
+
+.mf-container {
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.mf-card {
+    padding: var(--mf-space-5);
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-lg);
+    box-shadow: var(--mf-shadow);
+}
+
+.mf-card h1 {
+    margin: 0 0 var(--mf-space-2);
+    font-size: 22px;
+}
+
+.mf-muted {
+    color: var(--mf-text-muted);
+}
+
+.mf-mono {
+    font-family: var(--mf-font-mono);
+    font-size: 13px;
+}
+
+/* --- Definitionsliste (Statuswerte) --- */
+
+.mf-facts {
+    display: grid;
+    grid-template-columns: minmax(140px, max-content) 1fr;
+    gap: var(--mf-space-2) var(--mf-space-4);
+    margin: var(--mf-space-4) 0 0;
+}
+
+.mf-facts dt {
+    color: var(--mf-text-muted);
+}
+
+.mf-facts dd {
+    margin: 0;
+}
+
+/* --- Buttons: Reihenfolge positiv -> negativ, Delete abgesetzt --- */
+
+.mf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--mf-space-2);
+    margin-top: var(--mf-space-5);
+}
+
+.mf-actions .mf-actions-gap {
+    flex: 1 1 auto;
+    min-width: var(--mf-space-6);
+}
+
+.mf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    padding: 7px 14px;
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface);
+    color: var(--mf-text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.mf-btn:hover {
+    background: var(--mf-surface-alt);
+    text-decoration: none;
+}
+
+.mf-btn-primary {
+    border-color: transparent;
+    background: var(--mf-accent);
+    color: #fff;
+}
+
+.mf-btn-primary:hover {
+    background: var(--mf-accent-hover);
+}
+
+.mf-btn-danger {
+    border-color: transparent;
+    background: var(--mf-danger);
+    color: #fff;
+}
+
+.mf-btn-danger:hover {
+    background: var(--mf-danger-hover);
+}
+
+/* --- Statuspunkt --- */
+
+.mf-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: var(--mf-space-2);
+    border-radius: 50%;
+    background: var(--mf-text-muted);
+    vertical-align: baseline;
+}
+
+.mf-dot-ok {
+    background: var(--mf-success);
+}
+
+.mf-dot-error {
+    background: var(--mf-danger);
+}
+
+.mf-footer {
+    padding: var(--mf-space-4);
+    text-align: center;
+    color: var(--mf-text-muted);
+    font-size: 13px;
+}
+
+@media (max-width: 640px) {
+    .mf-content {
+        padding: var(--mf-space-4) var(--mf-space-3);
+    }
+
+    .mf-facts {
+        grid-template-columns: 1fr;
+        gap: var(--mf-space-1) 0;
+    }
+
+    .mf-facts dd {
+        margin-bottom: var(--mf-space-2);
+    }
+}

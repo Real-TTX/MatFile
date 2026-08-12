@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- Zentrale Versionsbasis für MatFile.
+       Buildnummer und Datum kommen aus der CI (siehe .github/workflows/docker-build.yml). -->
+  <PropertyGroup>
+    <MatFileMajor>1</MatFileMajor>
+    <MatFileMinor>0</MatFileMinor>
+  </PropertyGroup>
+
+</Project>

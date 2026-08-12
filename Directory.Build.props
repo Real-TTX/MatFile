@@ -1,0 +1,29 @@
+<Project>
+
+  <Import Project="$(MSBuildThisFileDirectory)version.props" />
+
+  <PropertyGroup>
+    <MatFileBuildDate>$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</MatFileBuildDate>
+
+    <!-- Ohne Vorgabe (lokaler Build) gilt: local-<builddate>.
+         Release:     <major>.<minor>.<buildnumber>-<builddate>
+         Development: nightly-<buildnumber>-<builddate> -->
+    <MatFileVersion Condition="'$(MatFileVersion)' == ''">local-$(MatFileBuildDate)</MatFileVersion>
+
+    <Version>$(MatFileMajor).$(MatFileMinor).0</Version>
+    <InformationalVersion>$(MatFileVersion)</InformationalVersion>
+    <Product>MatFile</Product>
+    <Company>Matthias Schmoldt</Company>
+    <Authors>Matthias Schmoldt</Authors>
+    <Copyright>Copyright © Matthias Schmoldt</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

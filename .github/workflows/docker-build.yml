@@ -1,0 +1,102 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Version bestimmen
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_DATE=$(date -u +%Y%m%d)
+          BUILD_NUMBER=${{ github.run_number }}
+
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            MAJOR=$(sed -n 's:.*<MatFileMajor>\(.*\)</MatFileMajor>.*:\1:p' version.props | tr -d '[:space:]')
+            MINOR=$(sed -n 's:.*<MatFileMinor>\(.*\)</MatFileMinor>.*:\1:p' version.props | tr -d '[:space:]')
+            VERSION="${MAJOR}.${MINOR}.${BUILD_NUMBER}-${BUILD_DATE}"
+            CHANNEL="release"
+            EXTRA_TAG="latest"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            VERSION="nightly-${BUILD_NUMBER}-${BUILD_DATE}"
+            CHANNEL="nightly"
+            EXTRA_TAG="nightly"
+          else
+            VERSION="pr-${{ github.event.number }}-${BUILD_NUMBER}-${BUILD_DATE}"
+            CHANNEL="pr"
+            EXTRA_TAG=""
+          fi
+
+          IMAGE="${{ env.REGISTRY }}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+
+          TAGS="${IMAGE}:${VERSION}"
+          if [ -n "$EXTRA_TAG" ]; then
+            TAGS="${TAGS}"$'\n'"${IMAGE}:${EXTRA_TAG}"
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "channel=$CHANNEL"
+            echo "image=$IMAGE"
+            echo "tags<<EOF"
+            echo "$TAGS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "MatFile-Version: $VERSION ($CHANNEL)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: .NET einrichten
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build & Test
+        run: |
+          dotnet build MatFile.slnx -c Release -p:MatFileVersion=${{ steps.version.outputs.version }}
+
+      - name: Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      - name: An GHCR anmelden
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image bauen und pushen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.version.outputs.tags }}
+          build-args: |
+            MATFILE_VERSION=${{ steps.version.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=MatFile
+            org.opencontainers.image.description=Datei-Explorer für NAS-Systeme
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

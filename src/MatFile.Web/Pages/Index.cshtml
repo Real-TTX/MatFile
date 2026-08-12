@@ -1,0 +1,41 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Start";
+}
+
+<div class="mf-container">
+    <div class="mf-card">
+        <h1>MatFile läuft</h1>
+        <p class="mf-muted">
+            Grundgerüst steht (M0). Anmeldung, Rollen und der Explorer folgen in den nächsten Meilensteinen.
+        </p>
+
+        <dl class="mf-facts">
+            <dt>Version</dt>
+            <dd class="mf-mono">@Model.Version</dd>
+
+            <dt>Kanal</dt>
+            <dd>@Model.Channel</dd>
+
+            <dt>Umgebung</dt>
+            <dd>@Model.Environment</dd>
+
+            <dt>Datenverzeichnis</dt>
+            <dd class="mf-mono">@Model.DataDirectory</dd>
+
+            <dt>Schreibrechte</dt>
+            <dd>
+                <span class="mf-dot @(Model.DataWritable ? "mf-dot-ok" : "mf-dot-error")"></span>
+                @(Model.DataWritable ? "verfügbar" : "nicht verfügbar")
+            </dd>
+
+            <dt>Gestartet</dt>
+            <dd>@Model.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</dd>
+        </dl>
+
+        <div class="mf-actions">
+            <a class="mf-btn mf-btn-primary" href="/healthz">Health prüfen</a>
+        </div>
+    </div>
+</div>

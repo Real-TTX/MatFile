@@ -1,0 +1,32 @@
+name: matfile-dev
+
+# Entwicklung: Container neu bauen und Stack neu deployen
+#   docker compose -f docker-compose.dev.yml up -d --build
+
+services:
+  matfile:
+    image: matfile:dev
+    container_name: matfile-dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        MATFILE_VERSION: ${MATFILE_VERSION:-}
+        INSTALL_MOUNT_TOOLS: "true"
+        INSTALL_FFMPEG: "false"
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "2222"
+      MATFILE_DATA: /data
+      TZ: Europe/Berlin
+      Logging__LogLevel__Default: Debug
+    volumes:
+      - matfile-dev-data:/data
+      # Testdaten für den Explorer:
+      - ./sample-data:/storage/sample
+
+volumes:
+  matfile-dev-data:
