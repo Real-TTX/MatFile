@@ -42,16 +42,13 @@ Anschließend erreichbar unter **http://localhost:2222** (Health-Check: `/health
 | `ASPNETCORE_HTTP_PORTS` | `2222` | Port im Container |
 | `MATFILE_DATA` | `/data` | Datenverzeichnis (SQLite, Config, Keys, Thumbnails) |
 | `PUID` / `PGID` | – | Optional: als unprivilegierter Benutzer laufen |
-| `MATFILE_ADMIN_PASSWORD` | – | Startkennwort für `admin` beim ersten Start; ohne Angabe wird eines erzeugt und ins Log geschrieben |
+| `MATFILE_ADMIN_PASSWORD` | `admin` | Startkennwort für `admin` beim ersten Start |
 | `TZ` | `Europe/Berlin` | Zeitzone |
 
 ### Erste Anmeldung
 
-Beim ersten Start wird der Benutzer `admin` angelegt. Das Startkennwort steht im Log:
-
-```bash
-docker compose -f docker-compose.dev.yml logs matfile | grep Startkennwort
-```
+Beim ersten Start wird das Konto **`admin` / `admin`** angelegt. Ein anderes Startkennwort
+lässt sich über `MATFILE_ADMIN_PASSWORD` vorgeben.
 
 Nach der Anmeldung verlangt MatFile sofort ein eigenes Kennwort. Die Oberfläche startet
 auf Englisch; über den Schalter `EN | DE` in der Kopfzeile lässt sich Deutsch wählen –

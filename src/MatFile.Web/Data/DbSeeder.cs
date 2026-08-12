@@ -10,6 +10,9 @@ public static class DbSeeder
     public const string AdministratorRole = "Administrator";
     public const string UserRole = "User";
 
+    public const string DefaultAdminUsername = "admin";
+    public const string DefaultAdminPassword = "admin";
+
     public static async Task SeedAsync(IServiceProvider services, ILogger logger)
     {
         using var scope = services.CreateScope();
@@ -29,12 +32,12 @@ public static class DbSeeder
         }
 
         var configured = configuration["MATFILE_ADMIN_PASSWORD"];
-        var generated = string.IsNullOrWhiteSpace(configured);
-        var password = generated ? PasswordHasher.GenerateRandomPassword() : configured!;
+        var useDefault = string.IsNullOrWhiteSpace(configured);
+        var password = useDefault ? DefaultAdminPassword : configured!;
 
         var admin = new User
         {
-            Username = "admin",
+            Username = DefaultAdminUsername,
             DisplayName = "Administrator",
             PasswordHash = hasher.Hash(password),
             IsActive = true,
@@ -47,15 +50,18 @@ public static class DbSeeder
         db.UserRole.Add(new UserRole { UserId = admin.Id, RoleId = adminRole.Id });
         await db.SaveChangesAsync();
 
-        if (generated)
+        if (useDefault)
         {
             logger.LogWarning(
-                "Erster Start: Benutzer 'admin' wurde angelegt. Startkennwort: {Password} - bitte nach der ersten Anmeldung ändern.",
-                password);
+                "Erster Start: Benutzer '{Username}' wurde mit dem Standardkennwort '{Password}' angelegt - "
+                + "es muss bei der ersten Anmeldung geändert werden.",
+                DefaultAdminUsername, DefaultAdminPassword);
         }
         else
         {
-            logger.LogInformation("Erster Start: Benutzer 'admin' mit dem Kennwort aus MATFILE_ADMIN_PASSWORD angelegt.");
+            logger.LogInformation(
+                "Erster Start: Benutzer '{Username}' mit dem Kennwort aus MATFILE_ADMIN_PASSWORD angelegt.",
+                DefaultAdminUsername);
         }
     }
 

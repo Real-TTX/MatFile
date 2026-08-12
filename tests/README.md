@@ -2,23 +2,24 @@
 
 Die Skripte laufen gegen den **laufenden Container** und prüfen die Anwendung von außen
 (HTTP, Cookies, Antiforgery). Beide erwarten eine **frische Datenbank**, weil sie mit dem
-erzeugten Startkennwort von `admin` beginnen.
+Standardkonto `admin` / `admin` beginnen und dessen Kennwort im Verlauf ändern.
 
 ```powershell
 # Stack frisch aufsetzen
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up -d --build
 
-# Startkennwort aus dem Log holen
-$pw = (docker compose -f docker-compose.dev.yml logs --no-log-prefix matfile |
-       Select-String 'Startkennwort: (\S+)').Matches.Groups[1].Value
-
 # Anmeldung, Sitzung, Sprachen (M1)
-.\tests\test-auth.ps1 -SeedPassword $pw
+.\tests\test-auth.ps1
 
 # Danach erneut zuruecksetzen, dann Adminbereich (M2)
-.\tests\test-admin.ps1 -SeedPassword $pw
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+.\tests\test-admin.ps1
 ```
+
+Weicht das Startkennwort ab (z. B. per `MATFILE_ADMIN_PASSWORD` gesetzt), lässt es sich
+mit `-SeedPassword <kennwort>` übergeben.
 
 | Skript | Prüft |
 |---|---|

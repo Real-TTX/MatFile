@@ -48,11 +48,4 @@ public sealed class PasswordHasher
             return false;
         }
     }
-
-    /// <summary>Erzeugt ein zufälliges Startkennwort, wenn keines vorgegeben wurde.</summary>
-    public static string GenerateRandomPassword(int length = 16)
-    {
-        const string alphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        return RandomNumberGenerator.GetString(alphabet, length);
-    }
 }

@@ -1,6 +1,6 @@
 param(
     [string]$BaseUrl = "http://localhost:2222",
-    [Parameter(Mandatory = $true)][string]$SeedPassword,
+    [string]$SeedPassword = "admin",
     [string]$NewPassword = "MatFile-Test-2026"
 )
 
