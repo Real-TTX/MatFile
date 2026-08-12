@@ -309,4 +309,22 @@
   <data name="Explorer.ErrorInvalidPath"><value>This path is not allowed.</value></data>
   <data name="Explorer.ErrorTargetInsideSource"><value>The target folder is inside the source folder.</value></data>
   <data name="Explorer.ErrorRootNotFound"><value>The storage location was not found.</value></data>
+
+  <data name="Explorer.Preview"><value>Preview / stream</value></data>
+  <data name="Explorer.NotPreviewable"><value>No preview available for this file type.</value></data>
+  <data name="Explorer.Truncated"><value>Preview truncated, download the file to see everything.</value></data>
+  <data name="Explorer.Details"><value>Details</value></data>
+  <data name="Explorer.Activity"><value>Activity</value></data>
+  <data name="Explorer.NoActivity"><value>No activity recorded yet.</value></data>
+  <data name="Explorer.NoSelection"><value>Select an entry to see its details.</value></data>
+  <data name="Explorer.ActionLogin"><value>Signed in</value></data>
+  <data name="Explorer.ActionLogout"><value>Signed out</value></data>
+  <data name="Explorer.ActionPasswordChanged"><value>Password changed</value></data>
+  <data name="Explorer.ActionCreateFolder"><value>Folder created</value></data>
+  <data name="Explorer.ActionRename"><value>Renamed</value></data>
+  <data name="Explorer.ActionDelete"><value>Deleted</value></data>
+  <data name="Explorer.ActionCopy"><value>Copied</value></data>
+  <data name="Explorer.ActionMove"><value>Moved</value></data>
+  <data name="Explorer.ActionCompress"><value>Compressed</value></data>
+  <data name="Explorer.ActionExtract"><value>Extracted</value></data>
 </root>

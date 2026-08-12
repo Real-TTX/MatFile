@@ -68,9 +68,16 @@
                     aria-label="@L["Explorer.ViewGrid"]">
                 <mf-icon name="folder" />
             </button>
+            <button type="button" class="mfx-btn" id="mfx-details-toggle" title="@L["Explorer.Details"]"
+                    aria-pressed="false" aria-label="@L["Explorer.Details"]">
+                <mf-icon name="info" />
+            </button>
         </div>
 
-        <div class="mfx-listing" id="mfx-listing" tabindex="0" role="grid" aria-label="Explorer"></div>
+        <div class="mfx-body">
+            <div class="mfx-listing" id="mfx-listing" tabindex="0" role="grid" aria-label="Explorer"></div>
+            <aside class="mfx-details" id="mfx-details" hidden aria-label="@L["Explorer.Details"]"></aside>
+        </div>
 
         <div class="mfx-status" id="mfx-status"></div>
     </div>

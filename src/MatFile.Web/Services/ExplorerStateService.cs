@@ -13,6 +13,7 @@ public class ExplorerSettings
     public string SortKey { get; set; } = "name";
     public string SortDir { get; set; } = "asc";
     public bool ShowHidden { get; set; }
+    public bool ShowDetails { get; set; }
     public int SidebarWidth { get; set; } = 260;
 }
 

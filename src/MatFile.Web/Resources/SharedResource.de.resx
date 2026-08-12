@@ -309,4 +309,22 @@
   <data name="Explorer.ErrorInvalidPath"><value>Dieser Pfad ist nicht erlaubt.</value></data>
   <data name="Explorer.ErrorTargetInsideSource"><value>Der Zielordner liegt innerhalb des Quellordners.</value></data>
   <data name="Explorer.ErrorRootNotFound"><value>Der Speicherort wurde nicht gefunden.</value></data>
+
+  <data name="Explorer.Preview"><value>Vorschau / Streamen</value></data>
+  <data name="Explorer.NotPreviewable"><value>Für diesen Dateityp gibt es keine Vorschau.</value></data>
+  <data name="Explorer.Truncated"><value>Vorschau gekürzt, für den vollständigen Inhalt bitte herunterladen.</value></data>
+  <data name="Explorer.Details"><value>Details</value></data>
+  <data name="Explorer.Activity"><value>Aktivität</value></data>
+  <data name="Explorer.NoActivity"><value>Noch keine Aktivität aufgezeichnet.</value></data>
+  <data name="Explorer.NoSelection"><value>Einen Eintrag auswählen, um Details zu sehen.</value></data>
+  <data name="Explorer.ActionLogin"><value>Angemeldet</value></data>
+  <data name="Explorer.ActionLogout"><value>Abgemeldet</value></data>
+  <data name="Explorer.ActionPasswordChanged"><value>Kennwort geändert</value></data>
+  <data name="Explorer.ActionCreateFolder"><value>Ordner angelegt</value></data>
+  <data name="Explorer.ActionRename"><value>Umbenannt</value></data>
+  <data name="Explorer.ActionDelete"><value>Gelöscht</value></data>
+  <data name="Explorer.ActionCopy"><value>Kopiert</value></data>
+  <data name="Explorer.ActionMove"><value>Verschoben</value></data>
+  <data name="Explorer.ActionCompress"><value>Komprimiert</value></data>
+  <data name="Explorer.ActionExtract"><value>Entpackt</value></data>
 </root>

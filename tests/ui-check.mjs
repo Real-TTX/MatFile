@@ -207,10 +207,67 @@ const operations = {
     entries: afterDelete
 };
 
+// Zurueck auf die oberste Ebene des Roots
+await evaluate(`document.querySelector('.mfx-crumb').click(); true;`);
+await sleep(900);
+
+// Detailbereich einblenden (der Zustand kommt aus den gespeicherten Einstellungen)
+await evaluate(`(() => {
+    const toggle = document.querySelector('#mfx-details-toggle');
+    if (toggle.getAttribute('aria-pressed') !== 'true') { toggle.click(); }
+    return true;
+})()`);
+await sleep(400);
+
+const detailsPanel = await evaluate(`(() => {
+    const row = [...document.querySelectorAll('.mfx-row')]
+        .find(r => /\\.(png|jpe?g|txt|md)$/i.test(r.querySelector('.mfx-name')?.textContent || ''));
+    if (!row) return { found: false };
+    row.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    const panel = document.querySelector('#mfx-details');
+    return {
+        found: true,
+        pressed: document.querySelector('#mfx-details-toggle').getAttribute('aria-pressed'),
+        visible: !panel.hidden,
+        name: panel.querySelector('.mfx-details-name')?.textContent || null,
+        tabs: [...panel.querySelectorAll('.mfx-details-tab')].map(e => e.textContent),
+        facts: [...panel.querySelectorAll('.mfx-details-body dt')].map(e => e.textContent)
+    };
+})()`);
+
+// Vorschau oeffnen
+await evaluate(`(() => {
+    const row = [...document.querySelectorAll('.mfx-row')]
+        .find(r => /\\.(png|jpe?g|txt|md)$/i.test(r.querySelector('.mfx-name')?.textContent || ''));
+    if (!row) return false;
+    row.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    return true;
+})()`);
+await sleep(1200);
+
+const previewState = await evaluate(`(() => {
+    const box = document.querySelector('.mfx-preview');
+    return {
+        open: !box.hidden,
+        title: box.querySelector('.mfx-preview-title')?.textContent || null,
+        content: box.querySelector('.mfx-preview-stage')?.firstElementChild?.tagName || null
+    };
+})()`);
+
 const shot = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(OUT, Buffer.from(shot.data, 'base64'));
 
-console.log(JSON.stringify({ report, afterOpen, menu, operations, consoleErrors, failedRequests }, null, 2));
+// Vorschau mit Escape schliessen
+await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); true;`);
+await sleep(300);
+const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
+
+console.log(JSON.stringify({
+    report, afterOpen, menu, operations,
+    detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
+    consoleErrors, failedRequests
+}, null, 2));
 
 socket.close();
 edge.kill();

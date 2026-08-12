@@ -2,6 +2,7 @@
 import { api, t, formatSize, formatDate, fileType, icon, rootIcon, errorKey } from './api.js';
 import { askName, askConfirm, showFacts, flash } from './dialogs.js';
 import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
+import { openPreview, isPreviewOpen } from './preview.js';
 
 const el = {
     roots: document.getElementById('mfx-roots'),
@@ -22,13 +23,18 @@ const el = {
     newFolder: document.getElementById('mfx-newfolder'),
     hidden: document.getElementById('mfx-hidden'),
     view: document.getElementById('mfx-view'),
+    details: document.getElementById('mfx-details'),
+    detailsToggle: document.getElementById('mfx-details-toggle'),
     sidebarToggle: document.getElementById('mfx-sidebar-toggle')
 };
 
 const state = {
     roots: [],
     bookmarks: [],
-    settings: { viewMode: 'list', sortKey: 'name', sortDir: 'asc', showHidden: false, sidebarWidth: 260 },
+    settings: {
+        viewMode: 'list', sortKey: 'name', sortDir: 'asc',
+        showHidden: false, showDetails: false, sidebarWidth: 260
+    },
     tabs: [],
     active: 0,
     filter: '',
@@ -261,9 +267,18 @@ async function openEntry(entry) {
         return;
     }
 
-    if (tab.permissions && tab.permissions.canDownload) {
-        window.location.href = api.downloadUrl(tab.rootId, entry.path);
+    if (!permissions().canDownload) {
+        flash(t('ErrorAccessDenied'), true);
+        return;
     }
+
+    // Anzeigbare Dateien öffnen die Vorschau, alles andere lädt herunter.
+    if (entry.preview && entry.preview !== 'none') {
+        openPreview(tab.rootId, visibleEntries(tab), entry.path, true);
+        return;
+    }
+
+    window.location.href = api.downloadUrl(tab.rootId, entry.path);
 }
 
 // ---------------------------------------------------------------- Anzeige
@@ -273,6 +288,7 @@ function renderAll() {
     renderBreadcrumb();
     renderListing();
     renderStatus();
+    renderDetails();
     renderToolbarState();
     highlightSidebar();
 }
@@ -714,6 +730,149 @@ function renderStatus() {
     }
 }
 
+// ---------------------------------------------------------------- Detailbereich
+
+let detailsTab = 'details';
+
+function renderDetails() {
+    el.details.hidden = !state.settings.showDetails;
+
+    if (!state.settings.showDetails) {
+        return;
+    }
+
+    const tab = activeTab();
+    el.details.replaceChildren();
+
+    if (!tab) {
+        return;
+    }
+
+    const selected = selectedEntries();
+
+    if (selected.length !== 1) {
+        const empty = document.createElement('div');
+        empty.className = 'mfx-details-empty';
+        empty.textContent = selected.length === 0
+            ? t('NoSelection')
+            : t('Selected').replace('{0}', selected.length);
+        el.details.appendChild(empty);
+        return;
+    }
+
+    const entry = selected[0];
+
+    // Vorschaubild oder großes Symbol
+    const figure = document.createElement('div');
+    figure.className = 'mfx-details-figure';
+
+    if (entry.preview === 'image' && permissions().canDownload) {
+        const image = document.createElement('img');
+        image.src = api.previewUrl(tab.rootId, entry.path);
+        image.alt = entry.name;
+        figure.appendChild(image);
+    } else {
+        figure.appendChild(icon(entry.isDirectory ? 'folder' : 'file', 48));
+    }
+
+    el.details.appendChild(figure);
+
+    const name = document.createElement('div');
+    name.className = 'mfx-details-name';
+    name.textContent = entry.name;
+    el.details.appendChild(name);
+
+    const meta = document.createElement('div');
+    meta.className = 'mfx-details-meta';
+    meta.textContent = entry.isDirectory
+        ? t('Folder')
+        : `${fileType(entry.name) || t('File')} · ${formatSize(entry.size)}`;
+    el.details.appendChild(meta);
+
+    // Reiter Details / Aktivität
+    const tabs = document.createElement('div');
+    tabs.className = 'mfx-details-tabs';
+
+    [['details', t('Details')], ['activity', t('Activity')]].forEach(([key, label]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'mfx-details-tab' + (detailsTab === key ? ' is-active' : '');
+        button.textContent = label;
+        button.addEventListener('click', () => {
+            detailsTab = key;
+            renderDetails();
+        });
+        tabs.appendChild(button);
+    });
+
+    el.details.appendChild(tabs);
+
+    const body = document.createElement('div');
+    body.className = 'mfx-details-body';
+    el.details.appendChild(body);
+
+    if (detailsTab === 'activity') {
+        body.textContent = t('Loading');
+
+        api.activity(tab.rootId, entry.path).then(entries => {
+            body.replaceChildren();
+
+            if (entries.length === 0) {
+                body.textContent = t('NoActivity');
+                return;
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'mfx-activity';
+
+            entries.forEach(item => {
+                const row = document.createElement('li');
+
+                const action = document.createElement('span');
+                action.className = 'mfx-activity-action';
+                action.textContent = t('Action' + item.action, item.action);
+                row.appendChild(action);
+
+                const when = document.createElement('span');
+                when.className = 'mfx-activity-date';
+                when.textContent = `${formatDate(item.date)}${item.user ? ' · ' + item.user : ''}`;
+                row.appendChild(when);
+
+                list.appendChild(row);
+            });
+
+            body.appendChild(list);
+        }).catch(() => {
+            body.textContent = t('Error');
+        });
+
+        return;
+    }
+
+    const facts = document.createElement('dl');
+    facts.className = 'mf-facts';
+
+    const add = (label, value) => {
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        dd.textContent = value;
+        facts.appendChild(dt);
+        facts.appendChild(dd);
+    };
+
+    add(t('Path'), `${tab.rootName}/${entry.path}`);
+    add(t('Type'), entry.isDirectory ? t('Folder') : (fileType(entry.name) || t('File')));
+
+    if (!entry.isDirectory) {
+        add(t('Size'), formatSize(entry.size));
+    }
+
+    add(t('Modified'), formatDate(entry.modified));
+
+    body.appendChild(facts);
+}
+
 function renderToolbarState() {
     const tab = activeTab();
 
@@ -732,9 +891,19 @@ function applySettingsToToolbar() {
 
     el.view.replaceChildren(icon(state.settings.viewMode === 'grid' ? 'list' : 'grid', 16));
     el.view.title = state.settings.viewMode === 'grid' ? t('ViewList') : t('ViewGrid');
+
+    el.detailsToggle.setAttribute('aria-pressed', state.settings.showDetails ? 'true' : 'false');
+    el.detailsToggle.classList.toggle('is-active', state.settings.showDetails);
 }
 
 // ---------------------------------------------------------------- Auswahl
+
+/** Auswahl hat sich ge�ndert: Markierung, Statuszeile und Detailbereich nachziehen. */
+function selectionChanged() {
+    applySelection();
+    renderStatus();
+    renderDetails();
+}
 
 function applySelection() {
     const tab = activeTab();
@@ -764,8 +933,7 @@ function selectSingle(path) {
     tab.selection.clear();
     tab.selection.add(path);
     tab.anchor = path;
-    applySelection();
-    renderStatus();
+    selectionChanged();
 }
 
 function toggleSelection(path) {
@@ -778,8 +946,7 @@ function toggleSelection(path) {
         tab.anchor = path;
     }
 
-    applySelection();
-    renderStatus();
+    selectionChanged();
 }
 
 function selectRange(path) {
@@ -798,15 +965,13 @@ function selectRange(path) {
         tab.selection.add(entries[i].path);
     }
 
-    applySelection();
-    renderStatus();
+    selectionChanged();
 }
 
 function selectAll() {
     const tab = activeTab();
     visibleEntries(tab).forEach(entry => tab.selection.add(entry.path));
-    applySelection();
-    renderStatus();
+    selectionChanged();
 }
 
 function clearSelection() {
@@ -816,8 +981,7 @@ function clearSelection() {
     }
 
     tab.selection.clear();
-    applySelection();
-    renderStatus();
+    selectionChanged();
 }
 
 function selectedEntries() {
@@ -1086,6 +1250,13 @@ function entryMenu(entry) {
     if (entry.isDirectory) {
         items.push({ label: t('Open'), icon: 'folder', action: () => openEntry(entry) });
         items.push({ label: t('NewTab'), icon: 'plus', action: () => openTab(tab.rootId, entry.path) });
+    } else if (entry.preview && entry.preview !== 'none') {
+        items.push({
+            label: t('Preview'),
+            icon: 'eye',
+            disabled: !rights.canDownload,
+            action: () => openPreview(tab.rootId, visibleEntries(tab), entry.path, rights.canDownload)
+        });
     }
 
     items.push({
@@ -1213,6 +1384,10 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
+    if (isPreviewOpen()) {
+        return;
+    }
+
     if (event.key === 'Escape') {
         closeMenu();
         return;
@@ -1356,8 +1531,7 @@ function startRubberBand(startEvent) {
             }
         });
 
-        applySelection();
-        renderStatus();
+        selectionChanged();
     };
 
     const onUp = () => {
@@ -1407,6 +1581,13 @@ el.sidebarToggle.addEventListener('click', () => {
 el.backdrop.addEventListener('click', () => {
     el.sidebar.classList.remove('is-open');
     el.backdrop.hidden = true;
+});
+
+el.detailsToggle.addEventListener('click', () => {
+    state.settings.showDetails = !state.settings.showDetails;
+    applySettingsToToolbar();
+    persistSettings();
+    renderDetails();
 });
 
 el.upload.addEventListener('click', chooseUpload);

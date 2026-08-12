@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$BaseUrl = "http://localhost:2222",
     [string]$SeedPassword = "admin",
     [string]$NewPassword = "MatFile-Test-2026"

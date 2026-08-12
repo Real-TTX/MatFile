@@ -46,6 +46,15 @@ export const api = {
     list: (rootId, path) =>
         request(`/api/fs/list?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
 
+    text: (rootId, path) =>
+        request(`/api/fs/text?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
+
+    activity: (rootId, path) =>
+        request(`/api/fs/activity?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
+
+    previewUrl: (rootId, path) =>
+        `/api/fs/preview?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`,
+
     downloadUrl: (rootId, path) =>
         `/api/fs/download?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`,
 
@@ -146,6 +155,8 @@ const icons = {
     folder: "<path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/>",
     file: "<path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/>",
     star: "<polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/>",
+    eye: "<path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/>",
+    info: "<circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/>",
     pin: "<line x1='12' y1='17' x2='12' y2='22'/><path d='M9 2h6l-1 8 3 3v2H7v-2l3-3z'/>",
     x: "<line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/>",
     plus: "<line x1='12' y1='5' x2='12' y2='19'/><line x1='5' y1='12' x2='19' y2='12'/>",

@@ -22,7 +22,8 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M3 | Storage-Abstraktion, PathGuard, Root-Verwaltung, Listing-API | ✅ |
 | M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
 | M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
-| M6–M9 | Preview/Streaming, Mounts, Feinschliff | offen |
+| M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
+| M7–M9 | Remote-Mounts (SMB/NFS/SFTP/FTP/WebDAV), Thumbnails, Feinschliff | offen |
 
 Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).
 

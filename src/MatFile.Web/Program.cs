@@ -156,6 +156,7 @@ app.MapStaticAssets().AllowAnonymous();
 app.MapRazorPages().WithStaticAssets();
 app.MapFileSystemEndpoints();
 app.MapFileOperationEndpoints();
+app.MapPreviewEndpoints();
 app.MapExplorerEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>

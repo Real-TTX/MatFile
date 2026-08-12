@@ -185,7 +185,7 @@ Noch offen (eigener Feinschliff-Durchgang, siehe M8):
 | Punkt | Milestone |
 |---|---|
 | App-Icon mit „M" statt Ordnersymbol, komplettes Favicon-Set | M8 |
-| Detailbereich rechts mit Vorschau und den Reitern Details/Aktivität | M6 |
+| ~~Detailbereich rechts mit Vorschau und den Reitern Details/Aktivität~~ | ✅ M6 |
 | Seitenleiste um „Übersicht/Home" und den Abschnitt „Verbindungen" mit Statuspunkt | M7 |
 | Tabs in die Kopfzeile, globale Suche und Benutzer-Avatar oben rechts | M8 |
 | Mehrere Ansichtsmodi im Umschalter, Menü „Teilen" | M8 / später |
@@ -252,7 +252,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API (`/api/fs/roots`, `/api/fs/list`) | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks, **Download** (aus M5 vorgezogen) | Navigation komplett |
 | **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Komprimieren, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
-| **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Thumbnail-Cache, Overlay-Viewer | Medien direkt im Browser |
+| **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
 | **M7** | Remote-Provider SFTP, FTP, WebDAV, SMB (+ NFS via OS-Mount), Mount-Verwaltung im UI, persistent vs. nur Sitzung, Credential-Verschlüsselung | Externe Freigaben eingebunden |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
@@ -263,6 +263,12 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 
 - **NFS** wird nur über OS-Mount unterstützt (kein brauchbarer .NET-Client) → benötigt
   `CAP_SYS_ADMIN` im Container; ohne diese Capability blendet das UI NFS mit Hinweis aus.
+- **Vorschau** wird nur für eine feste Liste von Dateitypen inline ausgeliefert (Bild, Video, Audio, PDF).
+  HTML und SVG gehören bewusst **nicht** dazu, sonst könnte fremdes Skript auf unserer Domain laufen und
+  das Sitzungscookie abgreifen; beide werden stattdessen als Quelltext angezeigt. Jede Vorschauantwort
+  trägt zusätzlich `X-Content-Type-Options: nosniff` und eine restriktive Content-Security-Policy.
+- **Thumbnails** in der Kachelansicht fehlen noch: dafür wird eine Bildbibliothek gebraucht
+  (ImageSharp oder SkiaSharp). Offen bis M8, die Vorschau selbst funktioniert ohne.
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.
 - **Rollen** starten mit `Admin` und `User`; feinere Rechte laufen über `RootAccess` je Root/Mount.
 - Kein Node/npm im Build und keine JS-Bibliothek: der Explorer läuft mit eigenen ES-Modulen

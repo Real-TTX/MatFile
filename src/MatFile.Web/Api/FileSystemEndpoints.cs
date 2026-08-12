@@ -16,7 +16,9 @@ public static class FileSystemEndpoints
 
     public record RootResponse(long Id, string Name, string Type, string? Icon, int SortOrder, RootPermissions Permissions);
 
-    public record EntryResponse(string Name, string Path, bool IsDirectory, long Size, DateTime Modified, bool IsHidden, bool IsSymlink);
+    public record EntryResponse(
+        string Name, string Path, bool IsDirectory, long Size, DateTime Modified,
+        bool IsHidden, bool IsSymlink, string Preview);
 
     public record ListResponse(
         long RootId,
@@ -62,7 +64,8 @@ public static class FileSystemEndpoints
                     listing.ParentPath,
                     access.Permissions,
                     listing.Entries.Select(e => new EntryResponse(
-                        e.Name, e.Path, e.IsDirectory, e.Size, e.ModifiedDate, e.IsHidden, e.IsSymlink)).ToList()));
+                        e.Name, e.Path, e.IsDirectory, e.Size, e.ModifiedDate, e.IsHidden, e.IsSymlink,
+                        e.IsDirectory ? "none" : PreviewPolicy.KindOf(e.Name).ToString().ToLowerInvariant())).ToList()));
             }
             catch (StorageException exception)
             {

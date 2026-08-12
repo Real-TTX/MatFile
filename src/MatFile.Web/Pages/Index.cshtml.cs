@@ -50,7 +50,14 @@ public class IndexModel : PageModel
             "Explorer.JobUnzip", "Explorer.JobUpload",
             "Explorer.StateCompleted", "Explorer.StateFailed", "Explorer.StateCancelled",
             "Explorer.ErrorConflict", "Explorer.ErrorAccessDenied", "Explorer.ErrorInvalidName",
-            "Explorer.ErrorInvalidPath", "Explorer.ErrorTargetInsideSource", "Explorer.ErrorRootNotFound"
+            "Explorer.ErrorInvalidPath", "Explorer.ErrorTargetInsideSource", "Explorer.ErrorRootNotFound",
+
+            // Vorschau und Detailbereich
+            "Explorer.Preview", "Explorer.NotPreviewable", "Explorer.Truncated",
+            "Explorer.Details", "Explorer.Activity", "Explorer.NoActivity", "Explorer.NoSelection",
+            "Explorer.ActionLogin", "Explorer.ActionLogout", "Explorer.ActionPasswordChanged",
+            "Explorer.ActionCreateFolder", "Explorer.ActionRename", "Explorer.ActionDelete",
+            "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract"
         ];
 
         var bundle = keys.ToDictionary(
