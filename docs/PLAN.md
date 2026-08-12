@@ -10,7 +10,7 @@
 | Thema | Entscheidung |
 |---|---|
 | Backend | ASP.NET Core 10 (SDK 10.0.203 lokal vorhanden) |
-| Frontend | **Razor Pages + Vanilla JS (ES-Module) + Alpine.js**, kein Node-Build |
+| Frontend | **Razor Pages + Vanilla JS (ES-Module)**, kein Node-Build, keine JS-Bibliothek |
 | Styling | **Eigenes CSS-Designsystem** (CSS-Variablen, Light/Dark), angelehnt an Synology FileStation / Finder |
 | Remote-Zugriff | **In-Process-Provider** (SFTP/FTP/WebDAV/SMB) **+ optionaler OS-Mount** (NFS, alternativ SMB) |
 | Sprachen | **Englisch (Standard)** und **Deutsch**, umschaltbar im UI (.resx-Ressourcen) |
@@ -227,8 +227,8 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M1** | EF Core + SQLite, alle Tabellen, Audit-Interceptor, Seed-Admin, Login/Logout, DB-gestützte Session (restart-fest), Rollen & Policies, **Mehrsprachigkeit EN/DE** | Anmeldung funktioniert, Session überlebt Neustart |
 | **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), Admin-CRUD für User & Rollen | Admin-Bereich nach Guidelines nutzbar |
 | **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API (`/api/fs/roots`, `/api/fs/list`) | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
-| **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks | Navigation komplett |
-| **M5** | Datei-Operationen: Upload (chunked/resumable), Download, ZIP-Download, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Kontextmenü, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
+| **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks, **Download** (aus M5 vorgezogen) | Navigation komplett |
+| **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Thumbnail-Cache, Overlay-Viewer | Medien direkt im Browser |
 | **M7** | Remote-Provider SFTP, FTP, WebDAV, SMB (+ NFS via OS-Mount), Mount-Verwaltung im UI, persistent vs. nur Sitzung, Credential-Verschlüsselung | Externe Freigaben eingebunden |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
@@ -242,7 +242,11 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   `CAP_SYS_ADMIN` im Container; ohne diese Capability blendet das UI NFS mit Hinweis aus.
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.
 - **Rollen** starten mit `Admin` und `User`; feinere Rechte laufen über `RootAccess` je Root/Mount.
-- Kein Node/npm im Build — Alpine.js wird als Vendor-Datei mitgeliefert (offline-tauglich).
+- Kein Node/npm im Build und keine JS-Bibliothek: der Explorer läuft mit eigenen ES-Modulen
+  (`wwwroot/js/explorer/`). Alpine.js hätte eine vendorte Fremddatei bedeutet und wurde
+  nicht gebraucht. Node wird nur für die optionale Oberflächenprüfung `tests/ui-check.mjs` benötigt.
+- Übersetzungen für das JavaScript kommen als JSON-Bundle aus der Razor-Seite (`window.matfileText`),
+  damit es auch im Explorer keine fest verdrahteten Texte gibt.
 - SQLite kann `DateTimeOffset` nicht vergleichen — alle Zeitstempel liegen als UTC-`DateTime`
   in der Datenbank (globaler Value-Converter im DbContext).
 - Freigabe-Links (Public Share) sind **nicht** Teil dieses Plans; das Datenmodell lässt sie

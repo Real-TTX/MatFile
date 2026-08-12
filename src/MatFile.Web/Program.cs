@@ -36,6 +36,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<StorageRootService>();
+builder.Services.AddScoped<ExplorerStateService>();
 builder.Services.AddSingleton<StorageProviderFactory>();
 
 // Schlüssel im Volume -> Cookies und damit Sitzungen überleben einen Container-Neustart.
@@ -150,6 +151,7 @@ app.Use(async (context, next) =>
 app.MapStaticAssets().AllowAnonymous();
 app.MapRazorPages().WithStaticAssets();
 app.MapFileSystemEndpoints();
+app.MapExplorerEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {

@@ -3,6 +3,7 @@
 @{
     var currentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var isFullBleed = (ViewData["Layout"] as string) == "full";
 }
 <!DOCTYPE html>
 <html lang="@currentCulture">
@@ -17,7 +18,7 @@
     @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
-    <div class="mf-app">
+    <div class="mf-app @(isFullBleed ? "mf-app-full" : string.Empty)">
         <header class="mf-topbar">
             <a class="mf-brand" href="/">
                 <img src="~/icons/matfile.svg" alt="" />
@@ -55,13 +56,16 @@
             <span class="mf-badge" title="@AppInfo.Channel">@AppInfo.Version</span>
         </header>
 
-        <main class="mf-content">
+        <main class="mf-content @(isFullBleed ? "mf-content-full" : string.Empty)">
             @RenderBody()
         </main>
 
-        <footer class="mf-footer">
-            MatFile @AppInfo.Version &middot; @AppInfo.Channel
-        </footer>
+        @if (!isFullBleed)
+        {
+            <footer class="mf-footer">
+                MatFile @AppInfo.Version &middot; @AppInfo.Channel
+            </footer>
+        }
     </div>
 
     <script src="~/js/matfile.js" asp-append-version="true"></script>

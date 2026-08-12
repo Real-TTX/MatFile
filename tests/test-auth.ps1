@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$BaseUrl = "http://localhost:2222",
     [string]$SeedPassword = "admin",
     [string]$NewPassword = "MatFile-Test-2026"
@@ -62,7 +62,7 @@ Add-Result "Kennwort geaendert" ($r5.Content -match 'The password was changed') 
 
 # 6. Startseite jetzt erreichbar
 $r6 = Invoke-WebRequest "$BaseUrl/" -WebSession $session -UseBasicParsing
-Add-Result "Startseite erreichbar" ($r6.Content -match 'Welcome' -and $r6.Content -match 'Administrator') ""
+Add-Result "Startseite erreichbar" ($r6.Content -match 'mfx-listing' -and $r6.Content -match 'Locations') ""
 
 # 7. Sprache auf Deutsch umstellen
 $token = Get-Token $r6.Content
@@ -71,7 +71,7 @@ $r7 = Invoke-WebRequest "$BaseUrl/SetLanguage" -Method Post -WebSession $session
     culture                    = 'de'
     returnUrl                  = '/'
 }
-Add-Result "Sprachwechsel auf Deutsch" ($r7.Content -match 'Willkommen') $r7.BaseResponse.ResponseUri.AbsolutePath
+Add-Result "Sprachwechsel auf Deutsch" ($r7.Content -match 'Speicherorte') $r7.BaseResponse.ResponseUri.AbsolutePath
 
 # 8. Neustart des Containers -> Session muss bestehen bleiben
 docker compose -f C:\Users\Matthias\Desktop\Development\MatFile\docker-compose.dev.yml restart matfile | Out-Null
@@ -87,7 +87,7 @@ for ($i = 0; $i -lt 30; $i++) {
 Add-Result "Container nach Neustart bereit" $ready ""
 
 $r8 = Invoke-WebRequest "$BaseUrl/" -WebSession $session -UseBasicParsing
-Add-Result "Session ueberlebt Neustart" ($r8.Content -match 'Willkommen') $r8.BaseResponse.ResponseUri.AbsolutePath
+Add-Result "Session ueberlebt Neustart" ($r8.Content -match 'Speicherorte') $r8.BaseResponse.ResponseUri.AbsolutePath
 
 # 9. Abmelden
 $token = Get-Token $r8.Content
@@ -111,7 +111,7 @@ $f2 = Invoke-WebRequest "$BaseUrl/Login" -Method Post -WebSession $fresh -UseBas
     'Input.Password'           = $NewPassword
 }
 Add-Result "Anmeldung mit neuem Kennwort" ($f2.BaseResponse.ResponseUri.AbsolutePath -eq '/') $f2.BaseResponse.ResponseUri.AbsolutePath
-Add-Result "Sprachwahl bleibt am Benutzer" ($f2.Content -match 'Willkommen') ""
+Add-Result "Sprachwahl bleibt am Benutzer" ($f2.Content -match 'Speicherorte') ""
 
 # 11. Zurueck auf Englisch
 $token = Get-Token $f2.Content
@@ -120,7 +120,7 @@ $f3 = Invoke-WebRequest "$BaseUrl/SetLanguage" -Method Post -WebSession $fresh -
     culture                    = 'en'
     returnUrl                  = '/'
 }
-Add-Result "Sprachwechsel zurueck auf Englisch" ($f3.Content -match 'Welcome') ""
+Add-Result "Sprachwechsel zurueck auf Englisch" ($f3.Content -match 'Locations') ""
 
 # 12. Health ohne Anmeldung
 $anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession

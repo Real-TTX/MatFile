@@ -1,62 +1,49 @@
-using System.Security.Claims;
+using System.Text.Json;
 using MatFile.Web.Data;
 using MatFile.Web.Security;
-using MatFile.Web.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace MatFile.Web.Pages;
 
+/// <summary>Der Explorer. Die Oberfläche wird hier gerahmt, die Interaktion läuft über /api.</summary>
 public class IndexModel : PageModel
 {
-    private readonly AppInfo _appInfo;
-    private readonly MatFilePaths _paths;
-    private readonly IHostEnvironment _environment;
-    private readonly MatFileDbContext _db;
+    private readonly IStringLocalizer<SharedResource> _text;
 
-    public IndexModel(AppInfo appInfo, MatFilePaths paths, IHostEnvironment environment, MatFileDbContext db)
+    public IndexModel(IStringLocalizer<SharedResource> text) => _text = text;
+
+    /// <summary>Übersetzungen für das JavaScript des Explorers.</summary>
+    public string TextBundleJson { get; private set; } = "{}";
+
+    public IActionResult OnGet()
     {
-        _appInfo = appInfo;
-        _paths = paths;
-        _environment = environment;
-        _db = db;
-    }
-
-    public string Version => _appInfo.Version;
-    public string Channel => _appInfo.Channel;
-    public string Environment => _environment.EnvironmentName;
-    public string DataDirectory => _paths.DataDirectory;
-    public string DisplayName => User.GetDisplayName();
-    public string Username => User.Identity?.Name ?? string.Empty;
-
-    public IReadOnlyList<string> Roles { get; private set; } = [];
-    public IReadOnlyList<string> Permissions { get; private set; } = [];
-    public DateTime? SessionExpires { get; private set; }
-    public int ActiveSessionCount { get; private set; }
-    public bool DatabaseReady { get; private set; }
-
-    public async Task OnGetAsync()
-    {
-        Roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-        Permissions = User.FindAll(MatFileClaims.PermissionClaim).Select(c => c.Value).ToList();
-        DatabaseReady = await _db.Database.CanConnectAsync();
-
-        var userId = User.GetUserId();
-        var token = User.GetSessionToken();
-        var now = DateTime.UtcNow;
-
-        if (userId is { } currentUserId)
+        if (!User.HasPermission(Permission.UseExplorer))
         {
-            ActiveSessionCount = await _db.UserSession
-                .CountAsync(s => s.UserId == currentUserId && !s.IsRevoked && s.ExpiresDate > now);
+            return RedirectToPage("/Admin/Index");
         }
 
-        if (token is { } currentToken)
-        {
-            SessionExpires = await _db.UserSession
-                .Where(s => s.Token == currentToken)
-                .Select(s => (DateTime?)s.ExpiresDate)
-                .FirstOrDefaultAsync();
-        }
+        string[] keys =
+        [
+            "Explorer.Roots", "Explorer.Bookmarks", "Explorer.NoRoots", "Explorer.NoBookmarks",
+            "Explorer.EmptyFolder", "Explorer.Loading", "Explorer.Name", "Explorer.Size",
+            "Explorer.Modified", "Explorer.Type", "Explorer.Folder", "Explorer.File",
+            "Explorer.Items", "Explorer.Selected", "Explorer.NewTab", "Explorer.CloseTab",
+            "Explorer.Pin", "Explorer.Unpin", "Explorer.Back", "Explorer.Forward", "Explorer.Up",
+            "Explorer.Refresh", "Explorer.Search", "Explorer.ViewList", "Explorer.ViewGrid",
+            "Explorer.ShowHidden", "Explorer.AddBookmark", "Explorer.RemoveBookmark",
+            "Explorer.Download", "Explorer.Open", "Explorer.CopyPath", "Explorer.Copied",
+            "Explorer.Properties", "Explorer.SelectAll", "Explorer.Path", "Explorer.Sidebar",
+            "Explorer.Close", "Explorer.Error", "Explorer.ErrorNotFound", "Explorer.ErrorAccess",
+            "Explorer.ErrorUnavailable"
+        ];
+
+        var bundle = keys.ToDictionary(
+            key => key["Explorer.".Length..],
+            key => _text[key].Value);
+
+        TextBundleJson = JsonSerializer.Serialize(bundle);
+        return Page();
     }
 }

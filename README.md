@@ -20,7 +20,8 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M1 | Datenbank, Anmeldung, Rollen, Sessions, Mehrsprachigkeit | ✅ |
 | M2 | Designsystem, Controls, Admin-CRUD | ✅ |
 | M3 | Storage-Abstraktion, PathGuard, Root-Verwaltung, Listing-API | ✅ |
-| M4–M9 | Explorer, Dateioperationen, Preview, Mounts, Feinschliff | offen |
+| M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
+| M5–M9 | Dateioperationen, Preview, Mounts, Feinschliff | offen |
 
 Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).
 

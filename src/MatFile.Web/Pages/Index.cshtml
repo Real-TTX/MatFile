@@ -1,66 +1,78 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = L["Index.Title"].Value;
+    ViewData["Title"] = "Explorer";
+    ViewData["Layout"] = "full";
 }
 
-<div class="mf-container">
-    <div class="mf-card">
-        <h1>@L["Index.Welcome", Model.DisplayName]</h1>
-        <p class="mf-muted">@L["Index.Intro"]</p>
+@section Head {
+    <link rel="stylesheet" href="~/css/explorer.css" asp-append-version="true" />
+}
 
-        <dl class="mf-facts">
-            <dt>@L["Index.User"]</dt>
-            <dd class="mf-mono">@Model.Username</dd>
+<div class="mfx" id="mfx">
+    <aside class="mfx-sidebar" id="mfx-sidebar" aria-label="@L["Explorer.Sidebar"]">
+        <section class="mfx-side-group">
+            <h2>@L["Explorer.Roots"]</h2>
+            <ul class="mfx-side-list" id="mfx-roots"></ul>
+        </section>
 
-            <dt>@L["Index.Roles"]</dt>
-            <dd>
-                @foreach (var role in Model.Roles)
-                {
-                    <span class="mf-chip">@role</span>
-                }
-            </dd>
+        <section class="mfx-side-group">
+            <h2>@L["Explorer.Bookmarks"]</h2>
+            <ul class="mfx-side-list" id="mfx-bookmarks"></ul>
+        </section>
+    </aside>
 
-            <dt>@L["Index.Permissions"]</dt>
-            <dd>
-                @foreach (var permission in Model.Permissions)
-                {
-                    <span class="mf-chip">@permission</span>
-                }
-            </dd>
+    <div class="mfx-backdrop" id="mfx-backdrop" hidden></div>
 
-            <dt>@L["Index.SessionValidUntil"]</dt>
-            <dd>@(Model.SessionExpires?.ToLocalTime().ToString("g") ?? "-")</dd>
+    <div class="mfx-main">
+        <div class="mfx-tabbar" id="mfx-tabs" role="tablist"></div>
 
-            <dt>@L["Index.ActiveSessions"]</dt>
-            <dd>@Model.ActiveSessionCount</dd>
-        </dl>
-    </div>
+        <div class="mfx-toolbar">
+            <button type="button" class="mfx-btn mfx-only-mobile" id="mfx-sidebar-toggle"
+                    title="@L["Explorer.Sidebar"]" aria-label="@L["Explorer.Sidebar"]">
+                <mf-icon name="folder" />
+            </button>
 
-    <div class="mf-card mf-card-spaced">
-        <h2>@L["Index.System"]</h2>
-        <dl class="mf-facts">
-            <dt>@L["Index.Version"]</dt>
-            <dd class="mf-mono">@Model.Version</dd>
+            <button type="button" class="mfx-btn" id="mfx-back" title="@L["Explorer.Back"]" aria-label="@L["Explorer.Back"]">
+                <mf-icon name="chevron-left" />
+            </button>
+            <button type="button" class="mfx-btn" id="mfx-forward" title="@L["Explorer.Forward"]" aria-label="@L["Explorer.Forward"]">
+                <mf-icon name="chevron-right" />
+            </button>
+            <button type="button" class="mfx-btn" id="mfx-up" title="@L["Explorer.Up"]" aria-label="@L["Explorer.Up"]">
+                <mf-icon name="arrow-left" class="mfx-rotate" />
+            </button>
+            <button type="button" class="mfx-btn" id="mfx-refresh" title="@L["Explorer.Refresh"]" aria-label="@L["Explorer.Refresh"]">
+                <mf-icon name="refresh" />
+            </button>
 
-            <dt>@L["Index.Channel"]</dt>
-            <dd>@Model.Channel</dd>
+            <nav class="mfx-breadcrumb" id="mfx-breadcrumb" aria-label="@L["Explorer.Path"]"></nav>
 
-            <dt>@L["Index.Environment"]</dt>
-            <dd>@Model.Environment</dd>
+            <div class="mfx-search">
+                <mf-icon name="search" />
+                <input type="search" id="mfx-search" placeholder="@L["Explorer.Search"]"
+                       aria-label="@L["Explorer.Search"]" />
+            </div>
 
-            <dt>@L["Index.DataDirectory"]</dt>
-            <dd class="mf-mono">@Model.DataDirectory</dd>
-
-            <dt>@L["Index.Database"]</dt>
-            <dd>
-                <span class="mf-dot @(Model.DatabaseReady ? "mf-dot-ok" : "mf-dot-error")"></span>
-                @(Model.DatabaseReady ? L["Index.DatabaseConnected"] : L["Index.DatabaseUnavailable"])
-            </dd>
-        </dl>
-
-        <div class="mf-actions">
-            <a class="mf-btn mf-btn-primary" href="/healthz">@L["Index.CheckHealth"]</a>
+            <button type="button" class="mfx-btn" id="mfx-hidden" title="@L["Explorer.ShowHidden"]"
+                    aria-pressed="false" aria-label="@L["Explorer.ShowHidden"]">
+                <mf-icon name="alert" />
+            </button>
+            <button type="button" class="mfx-btn" id="mfx-view" title="@L["Explorer.ViewGrid"]"
+                    aria-label="@L["Explorer.ViewGrid"]">
+                <mf-icon name="folder" />
+            </button>
         </div>
+
+        <div class="mfx-listing" id="mfx-listing" tabindex="0" role="grid" aria-label="Explorer"></div>
+
+        <div class="mfx-status" id="mfx-status"></div>
     </div>
 </div>
+
+<ul class="mfx-menu" id="mfx-menu" role="menu" hidden></ul>
+
+@section Scripts {
+    <script>window.matfileText = @Html.Raw(Model.TextBundleJson);</script>
+    <script type="module" src="~/js/explorer/explorer.js" asp-append-version="true"></script>
+}
