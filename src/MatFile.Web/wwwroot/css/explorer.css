@@ -62,9 +62,10 @@
     display: flex;
     flex: 1 1 auto;
     align-items: center;
-    gap: var(--mf-space-2);
+    gap: var(--mf-space-3);
     min-width: 0;
-    padding: 6px var(--mf-space-2);
+    padding: 8px var(--mf-space-3);
+    font-size: 14px;
     border: 0;
     border-radius: var(--mf-radius);
     background: transparent;
@@ -133,8 +134,8 @@
 .mfx-tabbar {
     display: flex;
     align-items: stretch;
-    gap: 2px;
-    padding: var(--mf-space-1) var(--mf-space-2) 0;
+    gap: var(--mf-space-1);
+    padding: var(--mf-space-2) var(--mf-space-2) 0;
     background: var(--mf-surface-alt);
     border-bottom: 1px solid var(--mf-border);
     overflow-x: auto;
@@ -145,12 +146,14 @@
     display: flex;
     align-items: center;
     gap: var(--mf-space-2);
-    max-width: 220px;
-    padding: 6px var(--mf-space-2);
+    min-height: 38px;
+    max-width: 240px;
+    padding: 0 var(--mf-space-3);
     border: 1px solid transparent;
     border-bottom: 0;
     border-radius: var(--mf-radius) var(--mf-radius) 0 0;
     color: var(--mf-text-muted);
+    font-size: 14px;
     cursor: pointer;
     user-select: none;
 }
@@ -170,7 +173,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
 }
 
 .mfx-tab-pin,
@@ -214,7 +216,8 @@
     display: flex;
     align-items: center;
     gap: var(--mf-space-1);
-    padding: var(--mf-space-2);
+    min-height: 52px;
+    padding: var(--mf-space-2) var(--mf-space-3);
     border-bottom: 1px solid var(--mf-border);
     background: var(--mf-surface);
 }
@@ -223,7 +226,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
     border: 1px solid transparent;
     border-radius: var(--mf-radius);
     background: transparent;
@@ -255,8 +260,9 @@
     align-items: center;
     gap: 2px;
     min-width: 0;
+    height: 34px;
     margin: 0 var(--mf-space-2);
-    padding: 4px var(--mf-space-2);
+    padding: 0 var(--mf-space-2);
     border: 1px solid var(--mf-border);
     border-radius: var(--mf-radius);
     background: var(--mf-bg);
@@ -266,13 +272,13 @@
 }
 
 .mfx-crumb {
-    padding: 2px 6px;
+    padding: 4px 8px;
     border: 0;
     border-radius: var(--mf-radius);
     background: transparent;
     color: var(--mf-text);
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
 }
 
@@ -285,20 +291,22 @@
     display: flex;
     align-items: center;
     gap: var(--mf-space-2);
-    padding: 0 var(--mf-space-2);
+    height: 34px;
+    padding: 0 var(--mf-space-3);
     border: 1px solid var(--mf-border);
     border-radius: var(--mf-radius);
     color: var(--mf-text-muted);
 }
 
 .mfx-search input {
-    width: 150px;
-    padding: 6px 0;
+    width: 170px;
+    height: 100%;
+    padding: 0;
     border: 0;
     background: transparent;
     color: var(--mf-text);
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .mfx-search input:focus {
@@ -326,7 +334,7 @@
 }
 
 .mfx-head-cell {
-    padding: 7px var(--mf-space-3);
+    padding: 9px var(--mf-space-3);
     border: 0;
     background: transparent;
     color: var(--mf-text-muted);
@@ -367,9 +375,9 @@
 .mfx-cell {
     display: flex;
     align-items: center;
-    gap: var(--mf-space-2);
+    gap: var(--mf-space-3);
     min-width: 0;
-    padding: 7px var(--mf-space-3);
+    padding: 9px var(--mf-space-3);
     font-size: 14px;
 }
 
@@ -793,12 +801,13 @@
 .mfx-status {
     display: flex;
     align-items: center;
-    gap: var(--mf-space-3);
-    padding: 5px var(--mf-space-3);
+    gap: var(--mf-space-4);
+    min-height: 32px;
+    padding: var(--mf-space-1) var(--mf-space-3);
     border-top: 1px solid var(--mf-border);
     background: var(--mf-surface);
     color: var(--mf-text-muted);
-    font-size: 12px;
+    font-size: 13px;
 }
 
 /* --- Kontextmenü --- */
