@@ -62,6 +62,11 @@
     box-sizing: border-box;
 }
 
+/* Eigene display-Regeln (z. B. flex) wuerden das hidden-Attribut sonst aushebeln. */
+[hidden] {
+    display: none !important;
+}
+
 html,
 body {
     height: 100%;

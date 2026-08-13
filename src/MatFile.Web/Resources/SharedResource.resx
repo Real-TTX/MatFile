@@ -197,8 +197,8 @@
 
   <data name="Root.Name"><value>Name</value></data>
   <data name="Root.Type"><value>Type</value></data>
-  <data name="Root.Path"><value>Path in the container</value></data>
-  <data name="Root.PathHint"><value>Absolute path of a mounted volume, for example /storage/tank. Only this folder and everything below it becomes visible.</value></data>
+  <data name="Root.Path"><value>Path</value></data>
+  <data name="Root.PathHint"><value>Local: absolute path of a mounted volume, for example /storage/tank. Share: optional subfolder on the remote side. Only this folder and everything below it becomes visible.</value></data>
   <data name="Root.Icon"><value>Icon</value></data>
   <data name="Root.SortOrder"><value>Sort order</value></data>
   <data name="Root.IsEnabled"><value>Root path is enabled</value></data>

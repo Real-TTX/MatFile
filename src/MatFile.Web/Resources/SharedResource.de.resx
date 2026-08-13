@@ -197,8 +197,8 @@
 
   <data name="Root.Name"><value>Name</value></data>
   <data name="Root.Type"><value>Typ</value></data>
-  <data name="Root.Path"><value>Pfad im Container</value></data>
-  <data name="Root.PathHint"><value>Absoluter Pfad eines eingehängten Volumes, zum Beispiel /storage/tank. Nur dieser Ordner und alles darunter wird sichtbar.</value></data>
+  <data name="Root.Path"><value>Pfad</value></data>
+  <data name="Root.PathHint"><value>Lokal: absoluter Pfad eines eingehängten Volumes, zum Beispiel /storage/tank. Freigabe: optionaler Unterordner auf der Gegenstelle. Nur dieser Ordner und alles darunter wird sichtbar.</value></data>
   <data name="Root.Icon"><value>Symbol</value></data>
   <data name="Root.SortOrder"><value>Sortierung</value></data>
   <data name="Root.IsEnabled"><value>Root-Pfad ist aktiv</value></data>
