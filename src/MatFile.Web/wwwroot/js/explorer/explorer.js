@@ -1,6 +1,6 @@
 // MatFile Explorer - Tabs, Navigation, Auswahl, Kontextmenü und Dateioperationen.
 import { api, t, formatSize, formatDate, fileType, icon, rootIcon, errorKey } from './api.js';
-import { askName, askConfirm, showFacts, flash } from './dialogs.js';
+import { askName, askFileName, askConfirm, showFacts, flash } from './dialogs.js';
 import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
@@ -32,6 +32,7 @@ const el = {
     refresh: document.getElementById('mfx-refresh'),
     upload: document.getElementById('mfx-upload'),
     newFolder: document.getElementById('mfx-newfolder'),
+    newFile: document.getElementById('mfx-newfile'),
     hidden: document.getElementById('mfx-hidden'),
     view: document.getElementById('mfx-view'),
     details: document.getElementById('mfx-details'),
@@ -1149,6 +1150,7 @@ function renderToolbarState() {
     const rights = permissions();
     el.upload.disabled = isSearch || !rights.canUpload;
     el.newFolder.disabled = isSearch || !rights.canWrite;
+    el.newFile.disabled = isSearch || !rights.canWrite;
     el.refresh.disabled = false;
     el.view.disabled = isSearch;
 }
@@ -1382,6 +1384,33 @@ async function newFolder() {
     }
 }
 
+/** Legt eine leere Datei an und öffnet sie gleich im Editor, wenn es Text ist. */
+async function newFile() {
+    const tab = activeTab();
+    const name = await askFileName(t('NewFile'), t('Name'), t('NewFileName'));
+
+    if (!name) {
+        return;
+    }
+
+    try {
+        const entry = await api.createFile(tab.rootId, tab.path, name);
+        await reload();
+
+        const fresh = (activeTab().entries || []).find(item => item.path === entry.path);
+
+        if (fresh) {
+            selectSingle(fresh.path);
+
+            if (fresh.preview === 'text' && permissions().canWrite) {
+                showPreview(activeTab(), fresh, true);
+            }
+        }
+    } catch (error) {
+        handleError(error);
+    }
+}
+
 async function renameEntry(entry) {
     const tab = activeTab();
     const name = await askName(t('Rename'), t('Name'), entry.name);
@@ -1562,6 +1591,13 @@ function runSearch(tab) {
     if (tab.search.term.trim().length < 2) {
         flash(t('SearchQueryTooShort').replace('{0}', 2), true);
         return;
+    }
+
+    // Jeder Lauf beginnt mit einer leeren Liste - sonst bleibt der Hinweis
+    // "Keine Treffer" über den Treffern des neuen Laufs stehen.
+    if (tab.view) {
+        tab.view.hits.replaceChildren();
+        tab.view.rendered = 0;
     }
 
     startSearch(tab.search, () => {
@@ -1843,15 +1879,19 @@ function updateSearchView(tab) {
 
     view.rendered = search.hits.length;
 
-    if (search.state !== 'running' && search.hits.length === 0) {
-        const empty = el.listing.querySelector('.mfx-search-empty');
+    // Der Hinweis steht nur da, solange es wirklich nichts zu zeigen gibt.
+    const note = view.hits.querySelector('.mfx-search-empty');
+    const nothingFound = search.state !== 'running' && search.state !== 'idle' && search.hits.length === 0;
 
-        if (!empty && search.state !== 'idle') {
-            const note = document.createElement('li');
-            note.className = 'mfx-search-empty mf-muted';
-            note.textContent = t('SearchNoHits');
-            view.hits.appendChild(note);
-        }
+    if (note && !nothingFound) {
+        note.remove();
+    }
+
+    if (!note && nothingFound) {
+        const empty = document.createElement('li');
+        empty.className = 'mfx-search-empty mf-muted';
+        empty.textContent = t('SearchNoHits');
+        view.hits.appendChild(empty);
     }
 }
 
@@ -2014,7 +2054,8 @@ function folderMenu() {
 
     return [
         { label: t('Upload'), icon: 'upload', disabled: !rights.canUpload, action: () => chooseUpload() },
-        { label: t('NewFolder'), icon: 'folder', disabled: !rights.canWrite, action: () => newFolder() },
+        { label: t('NewFolder'), icon: 'folder-plus', disabled: !rights.canWrite, action: () => newFolder() },
+        { label: t('NewFile'), icon: 'file-plus', disabled: !rights.canWrite, action: () => newFile() },
         '-',
         { label: t('Paste'), icon: 'file', disabled: !state.clipboard || !rights.canWrite, action: () => paste() },
         { label: t('SelectAll'), icon: 'list', action: () => selectAll() },
@@ -2404,7 +2445,8 @@ function menuItems(name) {
 
     if (name === 'file') {
         return [
-            { label: t('NewFolder'), icon: 'folder', disabled: !rights.canWrite, action: () => newFolder() },
+            { label: t('NewFolder'), icon: 'folder-plus', disabled: !rights.canWrite, action: () => newFolder() },
+            { label: t('NewFile'), icon: 'file-plus', disabled: !rights.canWrite, action: () => newFile() },
             { label: t('Upload'), icon: 'upload', disabled: !rights.canUpload, action: () => chooseUpload() },
             '-',
             {
@@ -2565,6 +2607,7 @@ el.detailsToggle.addEventListener('click', () => {
 
 el.upload.addEventListener('click', chooseUpload);
 el.newFolder.addEventListener('click', newFolder);
+el.newFile.addEventListener('click', newFile);
 
 // Dateien per Drag & Drop in den aktuellen Ordner hochladen
 ['dragenter', 'dragover'].forEach(name => {

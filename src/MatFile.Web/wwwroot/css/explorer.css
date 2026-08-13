@@ -1249,6 +1249,37 @@
     background: var(--mf-danger);
 }
 
+/* Endungen zum Anklicken beim Anlegen einer Datei. */
+.mf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mf-space-1);
+    margin-top: calc(-1 * var(--mf-space-2));
+}
+
+.mf-chip {
+    padding: 3px 10px;
+    border: 1px solid var(--mf-border);
+    border-radius: 999px;
+    background: var(--mf-bg);
+    color: var(--mf-text-muted);
+    font: inherit;
+    font-family: var(--mf-font-mono);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mf-chip:hover {
+    border-color: var(--mf-accent);
+    color: var(--mf-text);
+}
+
+.mf-chip.is-active {
+    border-color: var(--mf-accent);
+    background: var(--mf-accent-soft);
+    color: var(--mf-accent);
+}
+
 /* --- Verwaltungsdialoge: Benutzer, Rollen, Speicherorte --- */
 
 .mfx-manage {

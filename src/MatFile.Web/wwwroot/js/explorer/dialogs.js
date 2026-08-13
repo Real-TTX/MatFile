@@ -93,6 +93,92 @@ export function askName(title, label, value) {
     });
 }
 
+/** Gängige Endungen für eine neue Datei. */
+const FILE_TYPES = ['.txt', '.md', '.json', '.xml', '.yml', '.csv', '.log', '.sh'];
+
+/**
+ * Fragt einen Dateinamen ab und bietet die üblichen Endungen zum Anklicken an.
+ * Liefert null beim Abbrechen.
+ */
+export function askFileName(title, label, value) {
+    return new Promise(resolve => {
+        const dialog = build(title);
+        let answered = null;
+
+        const field = document.createElement('div');
+        field.className = 'mf-field';
+
+        const caption = document.createElement('label');
+        caption.textContent = label;
+        field.appendChild(caption);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = value || '';
+        field.appendChild(input);
+        dialog.appendChild(field);
+
+        // Endung anklicken: der Name davor bleibt stehen.
+        const chips = document.createElement('div');
+        chips.className = 'mf-chips';
+
+        FILE_TYPES.forEach(extension => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'mf-chip';
+            chip.textContent = extension;
+            chip.addEventListener('click', () => {
+                const current = input.value.trim();
+                const dot = current.lastIndexOf('.');
+                const base = dot > 0 ? current.slice(0, dot) : current;
+
+                input.value = (base || 'neu') + extension;
+                input.focus();
+                input.setSelectionRange(0, input.value.length - extension.length);
+
+                chips.querySelectorAll('.mf-chip').forEach(other =>
+                    other.classList.toggle('is-active', other === chip));
+            });
+
+            chips.appendChild(chip);
+        });
+
+        dialog.appendChild(chips);
+
+        const confirm = () => {
+            const name = input.value.trim();
+            if (name.length === 0) {
+                input.focus();
+                return;
+            }
+
+            answered = name;
+            dialog.close();
+        };
+
+        actions(dialog, t('Save'), false, confirm);
+
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                confirm();
+            }
+        });
+
+        dialog.addEventListener('close', () => {
+            dialog.remove();
+            resolve(answered);
+        });
+
+        document.body.appendChild(dialog);
+        dialog.showModal();
+
+        input.focus();
+        const dot = input.value.lastIndexOf('.');
+        input.setSelectionRange(0, dot > 0 ? dot : input.value.length);
+    });
+}
+
 /** Sicherheitsabfrage. Liefert true, wenn bestätigt wurde. */
 export function askConfirm(title, message, confirmLabel, danger) {
     return new Promise(resolve => {

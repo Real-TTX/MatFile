@@ -64,6 +64,36 @@ public sealed class FileOperationService
         return entry;
     }
 
+    /// <summary>Legt eine leere Datei an - der Inhalt kommt danach über den Editor.</summary>
+    public async Task<StorageEntry> CreateFileAsync(long userId, long rootId, string? parentPath, string name)
+    {
+        var access = await RequireAsync(userId, rootId, p => p.CanWrite);
+
+        if (!PathGuard.IsValidName(name))
+        {
+            throw StorageException.InvalidName(name);
+        }
+
+        var path = PathGuard.Combine(parentPath, name.Trim());
+
+        if (await access.Provider.GetAsync(path) is not null)
+        {
+            throw StorageException.Conflict(path);
+        }
+
+        // overwrite: false meldet der Provider selbst als Konflikt, falls jemand zuvorkommt.
+        await using (await access.Provider.OpenWriteAsync(path, overwrite: false))
+        {
+            // Eine neue Datei beginnt leer.
+        }
+
+        var entry = await access.Provider.GetAsync(path)
+                    ?? new StorageEntry(name.Trim(), path, false, 0, DateTime.UtcNow, false, false);
+
+        await LogAsync(userId, "CreateFile", rootId, entry.Path);
+        return entry;
+    }
+
     public async Task<StorageEntry> RenameAsync(long userId, long rootId, string path, string newName)
     {
         var access = await RequireAsync(userId, rootId, p => p.CanWrite);

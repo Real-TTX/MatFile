@@ -90,6 +90,7 @@ export const api = {
 
     // --- Dateioperationen ---
     createFolder: (rootId, path, name) => send('/api/fs/folder', 'POST', { rootId, path, name }),
+    createFile: (rootId, path, name) => send('/api/fs/file', 'POST', { rootId, path, name }),
     rename: (rootId, path, newName) => send('/api/fs/rename', 'POST', { rootId, path, newName }),
     remove: (rootId, paths) => send('/api/fs/delete', 'POST', { rootId, paths }),
 
@@ -204,6 +205,7 @@ export function fileType(name) {
 const icons = {
     folder: "<path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/>",
     file: "<path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/>",
+    'file-plus': "<path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='12' y1='12' x2='12' y2='18'/><line x1='9' y1='15' x2='15' y2='15'/>",
     star: "<polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/>",
     eye: "<path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/>",
     info: "<circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/>",

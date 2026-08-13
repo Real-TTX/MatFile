@@ -182,6 +182,66 @@ for (let i = 0; i < 40; i++) {
 const contentShot = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(OUT.replace(/\.png$/, '-content.png'), Buffer.from(contentShot.data, 'base64'));
 
+// Erst ohne Treffer, dann mit Inhaltssuche: der Hinweis "Keine Treffer" darf
+// nicht ueber den neuen Treffern stehen bleiben.
+await evaluate(`(() => {
+    const term = document.querySelector('.mfx-search-term');
+    term.value = 'Suchbegriff';
+    term.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Inhaltssuche wirklich abschalten - ein Klick meldet die Aenderung.
+    const content = document.querySelector('.mfx-search-options .mf-check input');
+    if (content.checked) { content.click(); }
+
+    document.querySelector('.mfx-search-actions .mf-btn-primary').click();
+    return true;
+})()`);
+
+let empty = null;
+for (let i = 0; i < 40; i++) {
+    empty = await evaluate(`(() => {
+        const view = document.querySelector('.mfx-search-view');
+        return {
+            finished: [...view.querySelectorAll('.mfx-search-actions .mf-btn')][1].disabled,
+            note: view.querySelector('.mfx-search-empty')?.textContent || null,
+            hits: view.querySelectorAll('.mfx-hit').length
+        };
+    })()`);
+    if (empty && empty.finished) break;
+    await sleep(250);
+}
+
+await evaluate(`(() => {
+    document.querySelector('.mfx-search-options .mf-check input').click();
+    document.querySelector('.mfx-search-actions .mf-btn-primary').click();
+    return true;
+})()`);
+
+let afterContent = null;
+for (let i = 0; i < 40; i++) {
+    afterContent = await evaluate(`(() => {
+        const view = document.querySelector('.mfx-search-view');
+        return {
+            finished: [...view.querySelectorAll('.mfx-search-actions .mf-btn')][1].disabled,
+            note: view.querySelector('.mfx-search-empty')?.textContent || null,
+            hits: view.querySelectorAll('.mfx-hit').length,
+            status: document.querySelector('#mfx-status')?.textContent?.trim()
+        };
+    })()`);
+    if (afterContent && afterContent.finished && afterContent.hits > 0) break;
+    await sleep(250);
+}
+
+// Zurueck auf die Ausgangssuche fuer den naechsten Schritt
+await evaluate(`(() => {
+    const term = document.querySelector('.mfx-search-term');
+    term.value = 'zebra';
+    term.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('.mfx-search-actions .mf-btn-primary').click();
+    return true;
+})()`);
+await sleep(1500);
+
 // Im Ordner anzeigen: springt im Ordnertab, der Suchtab bleibt offen
 await evaluate(`(() => {
     const hit = [...document.querySelectorAll('.mfx-hit')].find(h => h.querySelector('.mfx-hit-snippet'))
@@ -220,7 +280,10 @@ const backInSearch = await evaluate(`(() => {
     };
 })()`);
 
-console.log(JSON.stringify({ toolbar, filtered, searchTab, done, withContent, revealed, backInSearch, consoleErrors }, null, 2));
+console.log(JSON.stringify({
+    toolbar, filtered, searchTab, done, withContent, empty, afterContent,
+    revealed, backInSearch, consoleErrors
+}, null, 2));
 
 socket.close();
 edge.kill();

@@ -181,7 +181,73 @@ const xml = await editorState();
 await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); true;`);
 await sleep(700);
 
-console.log(JSON.stringify({ folder, json, editing, dirty, afterSave, reopened, markdown, xml, consoleErrors }, null, 2));
+// --- Neue Datei anlegen und gleich beschreiben ---------------------------
+await evaluate(`document.querySelector('#mfx-newfile').click(); true;`);
+await sleep(600);
+
+const createDialog = await evaluate(`(() => {
+    const box = document.querySelector('dialog[open]');
+    if (!box) return null;
+    return {
+        title: box.querySelector('h2')?.textContent,
+        suggestion: box.querySelector('input')?.value,
+        chips: [...box.querySelectorAll('.mf-chip')].map(c => c.textContent)
+    };
+})()`);
+
+await evaluate(`(() => {
+    const box = document.querySelector('dialog[open]');
+    const input = box.querySelector('input');
+    input.value = 'neue-notiz';
+    [...box.querySelectorAll('.mf-chip')].find(c => c.textContent === '.json').click();
+    return true;
+})()`);
+await sleep(300);
+
+const afterChip = await evaluate(`document.querySelector('dialog[open] input')?.value`);
+
+await evaluate(`document.querySelector('dialog[open] .mf-btn-primary').click(); true;`);
+await sleep(1800);
+
+const created = await evaluate(`(() => ({
+    rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
+    editorOpen: !!document.querySelector('.mfe'),
+    readOnly: document.querySelector('.mfe-input')?.readOnly,
+    value: document.querySelector('.mfe-input')?.value,
+    title: document.querySelector('.mfx-preview-title')?.textContent
+}))()`);
+
+// Inhalt schreiben und speichern
+await evaluate(`(() => {
+    const input = document.querySelector('.mfe-input');
+    input.value = '{ "angelegt": true }';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    const buttons = [...document.querySelectorAll('.mfx-preview-bar .mfx-btn')].filter(b => !b.hidden);
+    buttons.find(b => b.title.includes('peichern') || b.title.includes('Save')).click();
+    return true;
+})()`);
+await sleep(1500);
+
+const savedNew = await evaluate(`(() => ({
+    flash: document.querySelector('.mfx-flash')?.textContent || null,
+    value: document.querySelector('.mfe-input')?.value
+}))()`);
+
+await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); true;`);
+await sleep(900);
+
+const listAfterCreate = await evaluate(`(() => {
+    const row = [...document.querySelectorAll('.mfx-row')].find(r => r.dataset.path.endsWith('neue-notiz.json'));
+    return {
+        rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
+        size: row ? row.querySelector('.mfx-cell-size')?.textContent : null
+    };
+})()`);
+
+console.log(JSON.stringify({
+    folder, json, editing, dirty, afterSave, reopened, markdown, xml,
+    createDialog, afterChip, created, savedNew, listAfterCreate, consoleErrors
+}, null, 2));
 
 socket.close();
 edge.kill();

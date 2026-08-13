@@ -74,6 +74,36 @@ $ren = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $rootId; path = 'Arb
 $afterRename = Names $admin $rootId ''
 Add-Result "Ordner umbenannt" ($ren.Status -eq 200 -and $afterRename -contains 'Projekte' -and $afterRename -notcontains 'Arbeit') "status=$($ren.Status) $($afterRename -join ',')"
 
+# --- Datei anlegen --------------------------------------------------------
+$file = Api POST "$BaseUrl/api/fs/file" $admin @{ rootId = $rootId; path = 'Projekte'; name = 'notizen.json' }
+Add-Result "Datei angelegt" (
+    $file.Status -eq 200 -and $file.Data.isDirectory -eq $false -and $file.Data.size -eq 0) "size=$($file.Data.size)"
+Add-Result "Datei in der Liste" ((Names $admin $rootId 'Projekte') -contains 'notizen.json') ""
+
+$fileDup = Api POST "$BaseUrl/api/fs/file" $admin @{ rootId = $rootId; path = 'Projekte'; name = 'notizen.json' }
+Add-Result "Doppelte Datei abgelehnt" ($fileDup.Status -eq 409) "status=$($fileDup.Status)"
+
+$fileBad = Api POST "$BaseUrl/api/fs/file" $admin @{ rootId = $rootId; path = 'Projekte'; name = '../ausbruch.txt' }
+Add-Result "Ungueltiger Dateiname abgelehnt" ($fileBad.Status -eq 400) "status=$($fileBad.Status)"
+
+# Frisch angelegt heisst leer und sofort bearbeitbar
+$fresh = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=$(Enc 'Projekte/notizen.json')" $admin
+$written = Api PUT "$BaseUrl/api/fs/text" $admin @{
+    rootId = $rootId; path = 'Projekte/notizen.json'; content = '{ "neu": true }'
+}
+$readBack = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=$(Enc 'Projekte/notizen.json')" $admin
+Add-Result "Neue Datei ist leer und bearbeitbar" (
+    $fresh.Data.content -eq '' -and $fresh.Data.editable -eq $true) "len=$($fresh.Data.content.Length)"
+Add-Result "Inhalt in die neue Datei geschrieben" (
+    $written.Status -eq 200 -and $readBack.Data.content -eq '{ "neu": true }') "status=$($written.Status)"
+
+$fileLog = Api GET "$BaseUrl/api/fs/activity?rootId=$rootId&path=$(Enc 'Projekte/notizen.json')" $admin
+Add-Result "Anlegen im Protokoll" (
+    ($fileLog.Data | ForEach-Object { $_.action }) -contains 'CreateFile') "n=$(@($fileLog.Data).Count)"
+
+$removeNew = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $rootId; paths = @('Projekte/notizen.json') }
+Wait-Job $admin $removeNew.Data.token | Out-Null
+
 # --- Upload in zwei Teilstuecken -----------------------------------------
 $content = ('MatFile Upload Test ' * 200)
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($content)
@@ -173,6 +203,9 @@ Connect-Mat $BaseUrl $tester 'tester' $TesterPassword | Out-Null
 
 $noFolder = Api POST "$BaseUrl/api/fs/folder" $tester @{ rootId = $rootId; path = ''; name = 'Verboten' }
 Add-Result "Ordner ohne Schreibrecht gesperrt" ($noFolder.Status -eq 403) "status=$($noFolder.Status)"
+
+$noFile = Api POST "$BaseUrl/api/fs/file" $tester @{ rootId = $rootId; path = ''; name = 'verboten.txt' }
+Add-Result "Datei ohne Schreibrecht gesperrt" ($noFile.Status -eq 403) "status=$($noFile.Status)"
 
 $noUpload = Api POST "$BaseUrl/api/fs/upload/begin" $tester @{ rootId = $rootId; path = ''; name = 'x.txt'; size = 1; overwrite = $false }
 Add-Result "Upload ohne Recht gesperrt" ($noUpload.Status -eq 403) "status=$($noUpload.Status)"

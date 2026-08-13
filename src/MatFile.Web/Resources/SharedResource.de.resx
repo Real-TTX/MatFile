@@ -376,6 +376,8 @@
   <data name="Explorer.Upload"><value>Hochladen</value></data>
   <data name="Explorer.NewFolder"><value>Neuer Ordner</value></data>
   <data name="Explorer.NewFolderName"><value>Neuer Ordner</value></data>
+  <data name="Explorer.NewFile"><value>Neue Datei</value></data>
+  <data name="Explorer.NewFileName"><value>neue-datei.txt</value></data>
   <data name="Explorer.Rename"><value>Umbenennen</value></data>
   <data name="Explorer.Delete"><value>Löschen</value></data>
   <data name="Explorer.Cut"><value>Ausschneiden</value></data>
@@ -423,6 +425,7 @@
   <data name="Explorer.ActionLogout"><value>Abgemeldet</value></data>
   <data name="Explorer.ActionPasswordChanged"><value>Kennwort geändert</value></data>
   <data name="Explorer.ActionCreateFolder"><value>Ordner angelegt</value></data>
+  <data name="Explorer.ActionCreateFile"><value>Datei angelegt</value></data>
   <data name="Explorer.ActionRename"><value>Umbenannt</value></data>
   <data name="Explorer.ActionDelete"><value>Gelöscht</value></data>
   <data name="Explorer.ActionCopy"><value>Kopiert</value></data>

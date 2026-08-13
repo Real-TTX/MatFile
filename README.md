@@ -8,7 +8,7 @@ keinen komfortablen Zugriff auf Dateien bieten.
   (NFS folgt über einen OS-Mount)
 - Explorer-Bedienung: Sidebar, **Tabs**, Menüleiste, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
-- **Texteditor mit Syntaxhervorhebung** für JSON, XML, Markdown, YAML, Code & Co. –
+- **Dateien anlegen** (.txt, .json, .md, .xml …) und **Texteditor mit Syntaxhervorhebung** –
   ansehen und direkt bearbeiten
 - **Erweiterte Suche als eigener Tab** (über das `+` in der Tab-Leiste): rekursiv über alle
   Unterordner, auf Wunsch im Dateiinhalt, mit Fortschritt und Sprung in den Trefferordner

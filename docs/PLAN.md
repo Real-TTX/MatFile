@@ -143,6 +143,9 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 - **Vorschau-Overlay**: Bild, Video/Audio (echtes Streaming per HTTP-Range), PDF, Text/Code,
   Blättern mit Pfeiltasten. Text steht in lesbarer Breite (max. 1100 px) statt über den
   ganzen Bildschirm.
+- **Neue Datei** neben *Neuer Ordner* (Werkzeugleiste, Menü *Datei*, Rechtsklick ins Leere):
+  Namensabfrage mit anklickbaren Endungen (.txt, .md, .json, .xml, .yml, .csv, .log, .sh);
+  danach öffnet sich die leere Datei gleich im Editor.
 - **Texteditor** im selben Overlay: Syntaxhervorhebung für JSON, XML/HTML, Markdown, YAML/INI,
   Shell/Python, SQL, CSS und C-artige Sprachen, Zeilennummern, Tabulator, `Strg+S`.
   Bearbeiten nur mit Schreibrecht; gekürzt geladene (zu große) Dateien bleiben schreibgeschützt,

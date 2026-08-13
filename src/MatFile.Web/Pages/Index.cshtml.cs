@@ -44,7 +44,8 @@ public class IndexModel : PageModel
             "Explorer.ErrorUnavailable",
 
             // Dateioperationen
-            "Explorer.Upload", "Explorer.NewFolder", "Explorer.NewFolderName", "Explorer.Rename",
+            "Explorer.Upload", "Explorer.NewFolder", "Explorer.NewFolderName",
+            "Explorer.NewFile", "Explorer.NewFileName", "Explorer.ActionCreateFile", "Explorer.Rename",
             "Explorer.Delete", "Explorer.Cut", "Explorer.Copy", "Explorer.Paste",
             "Explorer.Compress", "Explorer.Extract", "Explorer.DownloadZip",
             "Explorer.Save", "Explorer.Cancel", "Explorer.Overwrite", "Explorer.OverwriteQuestion",

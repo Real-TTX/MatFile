@@ -36,6 +36,9 @@ public static class FileOperationEndpoints
         group.MapPost("/folder", (FolderRequest request, FileOperationService operations, ClaimsPrincipal user)
             => Run(user, id => operations.CreateFolderAsync(id, request.RootId, request.Path, request.Name)));
 
+        group.MapPost("/file", (FolderRequest request, FileOperationService operations, ClaimsPrincipal user)
+            => Run(user, id => operations.CreateFileAsync(id, request.RootId, request.Path, request.Name)));
+
         group.MapPost("/rename", (RenameRequest request, FileOperationService operations, ClaimsPrincipal user)
             => Run(user, id => operations.RenameAsync(id, request.RootId, request.Path, request.NewName)));
 
