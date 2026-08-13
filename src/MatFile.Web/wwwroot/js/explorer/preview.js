@@ -1,7 +1,20 @@
 // Vorschau als Vollbild-Overlay: Bild, Video, Audio, PDF und Text.
-import { api, t, formatSize, icon } from './api.js';
+// Textdateien lassen sich hier auch bearbeiten - mit Syntaxhervorhebung.
+import { api, t, formatSize, icon, errorKey } from './api.js';
+import { askConfirm, flash } from './dialogs.js';
+import { createEditor } from './editor.js';
 
 let context = null;
+
+/** Zustand der geöffneten Textdatei. */
+const text = {
+    editor: null,
+    loaded: '',
+    modified: null,
+    editable: false,
+    editing: false,
+    dirty: false
+};
 
 const overlay = document.createElement('div');
 overlay.className = 'mfx-preview';
@@ -33,6 +46,10 @@ function barButton(iconName, label, handler) {
     bar.appendChild(button);
     return button;
 }
+
+const editButton = barButton('pencil', t('Edit'), () => startEditing());
+const saveButton = barButton('save', t('Save'), () => save());
+const revertButton = barButton('refresh', t('Revert'), () => revert());
 
 const downloadButton = barButton('download', t('Download'), () => {
     if (context) {
@@ -73,17 +90,45 @@ overlay.addEventListener('mousedown', event => {
 
 const current = () => context.entries[context.index];
 
-function close() {
-    stage.replaceChildren();
-    overlay.hidden = true;
-    context = null;
+/** Ungespeicherte Änderungen nicht stillschweigend wegwerfen. */
+async function mayLeave() {
+    if (!text.dirty) {
+        return true;
+    }
+
+    return askConfirm(t('UnsavedTitle'), t('UnsavedQuestion'), t('Discard'), true);
 }
 
-function step(direction) {
+async function close() {
+    if (!await mayLeave()) {
+        return;
+    }
+
+    stage.replaceChildren();
+    stage.classList.remove('is-text');
+    overlay.hidden = true;
+    context = null;
+    resetText();
+}
+
+function resetText() {
+    text.loaded = '';
+    text.modified = null;
+    text.editable = false;
+    text.editing = false;
+    text.dirty = false;
+}
+
+async function step(direction) {
     if (!context || context.entries.length < 2) {
         return;
     }
 
+    if (!await mayLeave()) {
+        return;
+    }
+
+    resetText();
     context.index = (context.index + direction + context.entries.length) % context.entries.length;
     render();
 }
@@ -95,18 +140,28 @@ function message(text) {
     return box;
 }
 
-async function render() {
+function updateBar() {
     const entry = current();
 
-    title.textContent = entry.name;
+    title.textContent = entry.name + (text.dirty ? ' •' : '');
     counter.textContent = context.entries.length > 1
         ? `${context.index + 1} / ${context.entries.length}`
         : formatSize(entry.size);
 
     downloadButton.hidden = !context.canDownload;
-    previous.hidden = context.entries.length < 2;
-    next.hidden = context.entries.length < 2;
+    previous.hidden = context.entries.length < 2 || text.editing;
+    next.hidden = context.entries.length < 2 || text.editing;
 
+    editButton.hidden = !text.editable || text.editing;
+    saveButton.hidden = !text.editing;
+    revertButton.hidden = !text.editing;
+}
+
+async function render() {
+    const entry = current();
+
+    updateBar();
+    stage.classList.remove('is-text');
     stage.replaceChildren();
     const url = `/api/fs/preview?rootId=${encodeURIComponent(context.rootId)}&path=${encodeURIComponent(entry.path)}`;
 
@@ -144,15 +199,50 @@ async function render() {
         try {
             const result = await api.text(context.rootId, entry.path);
 
-            const block = document.createElement('pre');
-            block.className = 'mfx-preview-text';
-            block.textContent = result.truncated
-                ? `${result.content}\n\n… ${t('Truncated')}`
-                : result.content;
+            text.loaded = result.content;
+            text.modified = result.modified;
+            text.editable = !!result.editable && !!context.canWrite;
+            text.dirty = false;
 
-            stage.replaceChildren(block);
+            if (!text.editor) {
+                text.editor = createEditor({
+                    onChange: () => {
+                        const dirty = text.editor.getValue() !== text.loaded;
+
+                        if (dirty !== text.dirty) {
+                            text.dirty = dirty;
+                            updateBar();
+                        }
+                    },
+                    onSave: () => save()
+                });
+            }
+
+            text.editor.setValue(result.content, entry.name);
+            text.editor.setReadOnly(!text.editing);
+
+            // Auf breiten Schirmen bleibt der Text in lesbarer Breite stehen.
+            const sheet = document.createElement('div');
+            sheet.className = 'mfx-preview-doc';
+            sheet.appendChild(text.editor.element);
+
+            if (result.truncated) {
+                const note = document.createElement('div');
+                note.className = 'mfx-preview-note';
+                note.textContent = `${t('Truncated')} · ${formatSize(result.size)}`;
+                sheet.appendChild(note);
+            }
+
+            stage.classList.add('is-text');
+            stage.replaceChildren(sheet);
+            updateBar();
+
+            if (context.startInEdit && text.editable) {
+                context.startInEdit = false;
+                startEditing();
+            }
         } catch (error) {
-            stage.replaceChildren(message(t('Error')));
+            stage.replaceChildren(message(t(errorKey(error && error.code), t('Error'))));
         }
 
         return;
@@ -161,8 +251,71 @@ async function render() {
     stage.appendChild(message(t('NotPreviewable')));
 }
 
-/** Öffnet die Vorschau für einen Eintrag; mit den übrigen Dateien lässt sich blättern. */
-export function openPreview(rootId, entries, startPath, canDownload) {
+// ---------------------------------------------------------------- Bearbeiten
+
+function startEditing() {
+    if (!text.editable || !text.editor) {
+        return;
+    }
+
+    text.editing = true;
+    text.editor.setReadOnly(false);
+    text.editor.focus();
+    updateBar();
+}
+
+async function save() {
+    if (!text.editing || !context) {
+        return;
+    }
+
+    const entry = current();
+    const content = text.editor.getValue();
+
+    saveButton.disabled = true;
+
+    try {
+        const result = await api.saveText(context.rootId, entry.path, content, text.modified);
+
+        text.loaded = content;
+        text.modified = result.modified;
+        text.dirty = false;
+        entry.size = result.size;
+        entry.modified = result.modified;
+
+        flash(t('Common.Saved'));
+        updateBar();
+
+        if (context.onSaved) {
+            context.onSaved();
+        }
+    } catch (error) {
+        const code = error && error.code;
+        flash(t(errorKey(code), t('Error')), true);
+    } finally {
+        saveButton.disabled = false;
+    }
+}
+
+/** Zurück auf den zuletzt geladenen Stand - ohne die Datei erneut zu holen. */
+async function revert() {
+    if (text.dirty && !await askConfirm(t('UnsavedTitle'), t('UnsavedQuestion'), t('Discard'), true)) {
+        return;
+    }
+
+    text.editor.setValue(text.loaded, current().name);
+    text.editing = false;
+    text.dirty = false;
+    text.editor.setReadOnly(true);
+    updateBar();
+}
+
+/**
+ * Öffnet die Vorschau für einen Eintrag; mit den übrigen Dateien lässt sich blättern.
+ * @param options {{canDownload, canWrite, edit, onSaved}}
+ */
+export function openPreview(rootId, entries, startPath, options) {
+    const settings = options || {};
     const previewable = entries.filter(entry => !entry.isDirectory && entry.preview !== 'none');
     const list = previewable.length > 0 ? previewable : entries.filter(entry => !entry.isDirectory);
     const index = Math.max(0, list.findIndex(entry => entry.path === startPath));
@@ -171,7 +324,18 @@ export function openPreview(rootId, entries, startPath, canDownload) {
         return;
     }
 
-    context = { rootId, entries: list, index, canDownload };
+    resetText();
+
+    context = {
+        rootId,
+        entries: list,
+        index,
+        canDownload: !!settings.canDownload,
+        canWrite: !!settings.canWrite,
+        startInEdit: !!settings.edit,
+        onSaved: settings.onSaved
+    };
+
     overlay.hidden = false;
     render();
 }
@@ -185,10 +349,20 @@ document.addEventListener('keydown', event => {
         return;
     }
 
+    // Im Editor gehören die Tasten dem Text.
+    const inEditor = event.target instanceof Element && event.target.closest('.mfe');
+
     if (event.key === 'Escape') {
         event.preventDefault();
         close();
-    } else if (event.key === 'ArrowRight') {
+        return;
+    }
+
+    if (inEditor) {
+        return;
+    }
+
+    if (event.key === 'ArrowRight') {
         event.preventDefault();
         step(1);
     } else if (event.key === 'ArrowLeft') {

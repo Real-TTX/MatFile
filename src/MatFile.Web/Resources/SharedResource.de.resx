@@ -364,6 +364,15 @@
   <data name="Explorer.ShowInFolder"><value>Im Ordner anzeigen</value></data>
   <data name="Explorer.NoExplorerAccess"><value>Die Rolle erlaubt keinen Zugriff auf den Dateiexplorer.</value></data>
 
+  <data name="Explorer.Edit"><value>Bearbeiten</value></data>
+  <data name="Explorer.Revert"><value>Änderungen verwerfen</value></data>
+  <data name="Explorer.UnsavedTitle"><value>Nicht gespeichert</value></data>
+  <data name="Explorer.UnsavedQuestion"><value>Die Datei hat ungespeicherte Änderungen. Verwerfen?</value></data>
+  <data name="Explorer.Discard"><value>Verwerfen</value></data>
+  <data name="Explorer.ErrorModifiedElsewhere"><value>Die Datei wurde zwischenzeitlich geändert. Bitte neu öffnen und noch einmal speichern.</value></data>
+  <data name="Explorer.ErrorFileTooLarge"><value>Diese Datei ist für den Editor zu groß.</value></data>
+  <data name="Explorer.ErrorNotEditable"><value>Dieser Dateityp lässt sich nicht bearbeiten.</value></data>
+
   <data name="Explorer.Upload"><value>Hochladen</value></data>
   <data name="Explorer.NewFolder"><value>Neuer Ordner</value></data>
   <data name="Explorer.NewFolderName"><value>Neuer Ordner</value></data>
@@ -420,6 +429,7 @@
   <data name="Explorer.ActionMove"><value>Verschoben</value></data>
   <data name="Explorer.ActionCompress"><value>Komprimiert</value></data>
   <data name="Explorer.ActionExtract"><value>Entpackt</value></data>
+  <data name="Explorer.ActionEdit"><value>Bearbeitet</value></data>
   <data name="Explorer.Connections"><value>Verbindungen</value></data>
   <data name="Explorer.Online"><value>erreichbar</value></data>
   <data name="Explorer.Offline"><value>nicht erreichbar</value></data>

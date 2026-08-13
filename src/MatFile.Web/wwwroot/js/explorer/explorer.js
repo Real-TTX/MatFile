@@ -306,11 +306,23 @@ async function openEntry(entry) {
 
     // Anzeigbare Dateien öffnen die Vorschau, alles andere lädt herunter.
     if (entry.preview && entry.preview !== 'none') {
-        openPreview(tab.rootId, visibleEntries(tab), entry.path, true);
+        showPreview(tab, entry, false);
         return;
     }
 
     window.location.href = api.downloadUrl(tab.rootId, entry.path);
+}
+
+/** Vorschau mit den Rechten des Speicherorts öffnen - auf Wunsch gleich im Editor. */
+function showPreview(tab, entry, edit) {
+    const rights = permissions();
+
+    openPreview(tab.rootId, visibleEntries(tab), entry.path, {
+        canDownload: rights.canDownload,
+        canWrite: rights.canWrite,
+        edit,
+        onSaved: () => reload()
+    });
 }
 
 // ---------------------------------------------------------------- Anzeige
@@ -1579,7 +1591,13 @@ async function openHit(rootId, hit) {
     }
 
     if (hit.preview && hit.preview !== 'none') {
-        openPreview(rootId, [hit], hit.path, true);
+        const rights = rootRights(rootId);
+
+        openPreview(rootId, [hit], hit.path, {
+            canDownload: rights.canDownload,
+            canWrite: rights.canWrite
+        });
+
         return;
     }
 
@@ -1938,8 +1956,18 @@ function entryMenu(entry) {
             label: t('Preview'),
             icon: 'eye',
             disabled: !rights.canDownload,
-            action: () => openPreview(tab.rootId, visibleEntries(tab), entry.path, rights.canDownload)
+            action: () => showPreview(tab, entry, false)
         });
+
+        // Textdateien lassen sich gleich im Editor öffnen.
+        if (entry.preview === 'text') {
+            items.push({
+                label: t('Edit'),
+                icon: 'pencil',
+                disabled: !rights.canDownload || !rights.canWrite,
+                action: () => showPreview(tab, entry, true)
+            });
+        }
     }
 
     items.push({

@@ -17,21 +17,9 @@ function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     Write-Host "$mark  $name  $detail"
 }
 
+# Kurzform fuer die JSON-Aufrufe aus _helpers.ps1 - liefert auch im Fehlerfall den Koerper.
 function Api([string]$method, [string]$url, $session, $body) {
-    try {
-        $args = @{ Uri = $url; Method = $method; WebSession = $session; UseBasicParsing = $true }
-        if ($null -ne $body) {
-            $args.Body = ($body | ConvertTo-Json -Depth 6 -Compress)
-            $args.ContentType = 'application/json'
-        }
-        $r = Invoke-WebRequest @args
-        $data = $null
-        if ($r.Content) { try { $data = $r.Content | ConvertFrom-Json } catch { } }
-        return @{ Status = [int]$r.StatusCode; Data = $data; Raw = $r }
-    } catch {
-        $status = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
-        return @{ Status = $status; Data = $null; Raw = $null }
-    }
+    return Send-MatJson $method $url $session $body
 }
 
 # --- Testdaten im Container ----------------------------------------------
@@ -124,6 +112,48 @@ Api POST "$BaseUrl/api/fs/folder" $admin @{ rootId = $rootId; path = ''; name = 
 $activity = Api GET "$BaseUrl/api/fs/activity?rootId=$rootId&path=Protokolltest" $admin
 Add-Result "Protokoll zum Eintrag" ($activity.Status -eq 200 -and @($activity.Data).Count -ge 1 -and $activity.Data[0].action -eq 'CreateFolder') "n=$(@($activity.Data).Count)"
 
+# --- Bearbeiten von Textdateien ------------------------------------------
+$textInfo = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=notiz.txt" $admin
+Add-Result "Textdatei ist bearbeitbar" (
+    $textInfo.Data.editable -eq $true -and $textInfo.Data.truncated -eq $false -and
+    $null -ne $textInfo.Data.modified) "editable=$($textInfo.Data.editable)"
+
+$neu = "Zeile eins geaendert`nZeile zwei`nZeile drei`n"
+$saved = Api PUT "$BaseUrl/api/fs/text" $admin @{
+    rootId = $rootId; path = 'notiz.txt'; content = $neu; ifModified = $textInfo.Data.modified
+}
+$afterSave = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=notiz.txt" $admin
+Add-Result "Text gespeichert" (
+    $saved.Status -eq 200 -and $afterSave.Data.content -eq $neu) "status=$($saved.Status) len=$($saved.Data.size)"
+
+$stale = Api PUT "$BaseUrl/api/fs/text" $admin @{
+    rootId = $rootId; path = 'notiz.txt'; content = 'ueberholt'; ifModified = '2020-01-01T00:00:00Z'
+}
+Add-Result "Veralteter Stand abgelehnt" (
+    $stale.Status -eq 409 -and $stale.Data.error -eq 'modified_elsewhere') "status=$($stale.Status)"
+
+$blind = Api PUT "$BaseUrl/api/fs/text" $admin @{ rootId = $rootId; path = 'notiz.txt'; content = $neu }
+Add-Result "Ohne Zeitstempel wird gespeichert" ($blind.Status -eq 200) "status=$($blind.Status)"
+
+$binary = Api PUT "$BaseUrl/api/fs/text" $admin @{ rootId = $rootId; path = 'bild.png'; content = 'x' }
+Add-Result "Nur Textdateien bearbeitbar" ($binary.Status -eq 415) "status=$($binary.Status)"
+
+$folder = Api PUT "$BaseUrl/api/fs/text" $admin @{ rootId = $rootId; path = 'Unterordner'; content = 'x' }
+Add-Result "Ordner nicht bearbeitbar" ($folder.Status -eq 404) "status=$($folder.Status)"
+
+$escape = Api PUT "$BaseUrl/api/fs/text" $admin @{ rootId = $rootId; path = '../../etc/passwd'; content = 'x' }
+Add-Result "Pfadausbruch beim Speichern blockiert" ($escape.Status -eq 400 -or $escape.Status -eq 404) "status=$($escape.Status)"
+
+# Zu grosse Dateien werden gekuerzt gelesen und duerfen deshalb nicht gespeichert werden
+$bigInfo = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=gross.txt" $admin
+$big = Api PUT "$BaseUrl/api/fs/text" $admin @{ rootId = $rootId; path = 'gross.txt'; content = 'kurz' }
+Add-Result "Grosse Datei nicht bearbeitbar" (
+    $bigInfo.Data.editable -eq $false -and $big.Status -eq 413) "editable=$($bigInfo.Data.editable) status=$($big.Status)"
+
+$logAfterEdit = Api GET "$BaseUrl/api/fs/activity?rootId=$rootId&path=notiz.txt" $admin
+Add-Result "Bearbeiten im Protokoll" (
+    ($logAfterEdit.Data | ForEach-Object { $_.action }) -contains 'Edit') "n=$(@($logAfterEdit.Data).Count)"
+
 # --- Rechte ---------------------------------------------------------------
 New-MatUser $BaseUrl $admin @{
     username = 'tester'; displayName = 'Tester'; newPassword = $TesterPassword; roleIds = @($roles['User'])
@@ -138,9 +168,20 @@ Add-Result "Vorschau ohne Downloadrecht gesperrt" ($denied.Status -eq 403) "stat
 $deniedText = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=notiz.txt" $tester
 Add-Result "Textvorschau ohne Recht gesperrt" ($deniedText.Status -eq 403) "status=$($deniedText.Status)"
 
+$noEdit = Api PUT "$BaseUrl/api/fs/text" $tester @{ rootId = $rootId; path = 'notiz.txt'; content = 'fremd' }
+Add-Result "Bearbeiten ohne Schreibrecht gesperrt" ($noEdit.Status -eq 403) "status=$($noEdit.Status)"
+
 $anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $anonPreview = Api GET "$BaseUrl/api/fs/preview?rootId=$rootId&path=bild.png" $anon
 Add-Result "Vorschau ohne Anmeldung gesperrt" ($anonPreview.Status -eq 401) "status=$($anonPreview.Status)"
+
+$anonSave = Api PUT "$BaseUrl/api/fs/text" $anon @{ rootId = $rootId; path = 'notiz.txt'; content = 'x' }
+Add-Result "Speichern ohne Anmeldung gesperrt" ($anonSave.Status -eq 401) "status=$($anonSave.Status)"
+
+$page = Invoke-WebRequest "$BaseUrl/" -WebSession $admin -UseBasicParsing
+Add-Result "Editor wird ausgeliefert" (
+    (Invoke-WebRequest "$BaseUrl/js/explorer/editor.js" -UseBasicParsing).StatusCode -eq 200 -and
+    $page.Content -match 'Bearbeiten|Edit') ""
 
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })

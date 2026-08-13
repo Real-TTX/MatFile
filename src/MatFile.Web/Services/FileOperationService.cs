@@ -428,6 +428,9 @@ public sealed class FileOperationService
         return target == source || target.StartsWith(source + "/", StringComparison.Ordinal);
     }
 
+    /// <summary>Protokolliert das Bearbeiten einer Textdatei im Editor.</summary>
+    public Task LogEditAsync(long userId, long rootId, string path) => LogAsync(userId, "Edit", rootId, path);
+
     private async Task LogAsync(long userId, string action, long rootId, string path, string? source = null)
     {
         _db.ActivityLog.Add(new ActivityLog

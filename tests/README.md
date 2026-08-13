@@ -78,6 +78,9 @@ node .\tests\ui-check-search.mjs http://localhost:2222 admin Suche .\search.png
 
 # Verwaltungsdialoge: Benutzer, Rollen, Rechtematrix eines Speicherorts
 node .\tests\ui-check-manage.mjs http://localhost:2222 admin .\manage.png
+
+# Texteditor: Syntaxhervorhebung, Breite, Bearbeiten und Speichern
+node .\tests\ui-check-editor.mjs http://localhost:2222 admin Demo .\editor.png
 ```
 
 Benötigt Node (nur für diesen Check, nicht für den Build) und Microsoft Edge.
@@ -93,7 +96,7 @@ mit `-SeedPassword <kennwort>` übergeben.
 | `test-search.ps1` | Suche nach Namen über mehrere Ebenen, Ordner als Treffer, Schreibweise egal, Suche ab einem Unterordner, Inhaltssuche mit Fundstelle als Textzeile, übersprungene Binärdateien, versteckte Dateien nur auf Wunsch, Fortschrittszählung, Abbruch, stückweises Nachladen der Treffer, zu kurze Eingabe, Inhaltssuche ohne Downloadrecht gesperrt, fremde Suche nicht lesbar |
 
 | `test-remote.ps1` | Verbindungstest mit richtigem und falschem Kennwort, Zugangsdaten verschlüsselt gespeichert (Klartext-Suche in der Datenbank), **SFTP, WebDAV, FTP und SMB** jeweils lesen/schreiben/umbenennen/löschen, **Kopieren zwischen lokalem Speicher und Gegenstelle in beide Richtungen**, Pfadausbruch blockiert, Basispfad begrenzt den Zugriff, Statusabfrage für die Seitenleiste (erreichbar und Ausfall). Startet die Testserver `sftp`, `webdav`, `ftp` und `smb` über das Compose-Profil `testing`. |
-| `test-preview.ps1` | Vorschautypen im Listing, Bild inline mit Schutzheadern, Video per Range-Anfrage, **HTML und unbekannte Typen nie inline**, Textvorschau inkl. Kürzung großer Dateien, Protokoll zu einem Eintrag, Vorschau ohne Downloadrecht und ohne Anmeldung gesperrt |
+| `test-preview.ps1` | **Bearbeiten von Textdateien** (speichern, veralteter Stand, nur Textdateien, zu große Dateien schreibgeschützt, Protokolleintrag, Rechte), Vorschautypen im Listing, Bild inline mit Schutzheadern, Video per Range-Anfrage, **HTML und unbekannte Typen nie inline**, Textvorschau inkl. Kürzung großer Dateien, Protokoll zu einem Eintrag, Vorschau ohne Downloadrecht und ohne Anmeldung gesperrt |
 | `test-operations.ps1` | Ordner anlegen/umbenennen, Namenskonflikte, Upload in Teilstücken inkl. Fortsetzen bei falschem Offset, Kopieren/Verschieben als Job, Kopie mit neuem Namen, Zielordner im Quellordner, Komprimieren, ZIP-Download, Entpacken, **Zip-Slip blockiert**, Löschen, Rechteprüfung ohne Schreib-/Upload-/Löschrecht, fremde Jobs nicht abbrechbar |
 | `test-explorer.ps1` | Explorer als Startseite, eingebettete Übersetzungen, ES-Module, Anzeigeeinstellungen inkl. Normalisierung, Favoriten anlegen/löschen/nicht doppelt, angeheftete Tabs mit Filterung fremder Roots, Download inkl. Range-Anfrage, Ordner nicht herunterladbar, Pfadausbruch blockiert, Download ohne Recht gesperrt, Zustand je Benutzer getrennt |
 

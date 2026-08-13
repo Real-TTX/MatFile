@@ -63,6 +63,12 @@ public class IndexModel : PageModel
             "Explorer.ActionLogin", "Explorer.ActionLogout", "Explorer.ActionPasswordChanged",
             "Explorer.ActionCreateFolder", "Explorer.ActionRename", "Explorer.ActionDelete",
             "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract",
+            "Explorer.ActionEdit",
+
+            // Texteditor
+            "Explorer.Edit", "Explorer.Revert", "Explorer.UnsavedTitle", "Explorer.UnsavedQuestion",
+            "Explorer.Discard", "Explorer.ErrorFileTooLarge", "Explorer.ErrorNotEditable",
+            "Explorer.ErrorModifiedElsewhere",
 
             // Verbindungen
             "Explorer.Connections", "Explorer.Online", "Explorer.Offline",

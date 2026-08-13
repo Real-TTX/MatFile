@@ -66,6 +66,9 @@ export const api = {
     text: (rootId, path) =>
         request(`/api/fs/text?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
 
+    saveText: (rootId, path, content, ifModified) =>
+        send('/api/fs/text', 'PUT', { rootId, path, content, ifModified }),
+
     activity: (rootId, path) =>
         request(`/api/fs/activity?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
 

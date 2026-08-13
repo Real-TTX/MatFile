@@ -20,21 +20,9 @@ function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     Write-Host "$mark  $name  $detail"
 }
 
+# Kurzform fuer die JSON-Aufrufe aus _helpers.ps1 - liefert auch im Fehlerfall den Koerper.
 function Api([string]$method, [string]$url, $session, $body) {
-    try {
-        $args = @{ Uri = $url; Method = $method; WebSession = $session; UseBasicParsing = $true }
-        if ($null -ne $body) {
-            $args.Body = ($body | ConvertTo-Json -Depth 6 -Compress)
-            $args.ContentType = 'application/json'
-        }
-        $r = Invoke-WebRequest @args
-        $data = $null
-        if ($r.Content) { try { $data = $r.Content | ConvertFrom-Json } catch { } }
-        return @{ Status = [int]$r.StatusCode; Data = $data; Raw = $r }
-    } catch {
-        $status = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
-        return @{ Status = $status; Data = $null; Raw = $null }
-    }
+    return Send-MatJson $method $url $session $body
 }
 
 function Wait-Job($session, [string]$token, [int]$timeoutSeconds = 30) {

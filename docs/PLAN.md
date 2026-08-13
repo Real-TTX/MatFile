@@ -141,7 +141,12 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   Zu Favoriten · Eigenschaften · *(Abstand)* Löschen.
 - **Tastatur**: F2, Entf, Ctrl+C/X/V, Ctrl+A, Enter, Backspace, Pfeiltasten, F5.
 - **Vorschau-Overlay**: Bild, Video/Audio (echtes Streaming per HTTP-Range), PDF, Text/Code,
-  Blättern mit Pfeiltasten.
+  Blättern mit Pfeiltasten. Text steht in lesbarer Breite (max. 1100 px) statt über den
+  ganzen Bildschirm.
+- **Texteditor** im selben Overlay: Syntaxhervorhebung für JSON, XML/HTML, Markdown, YAML/INI,
+  Shell/Python, SQL, CSS und C-artige Sprachen, Zeilennummern, Tabulator, `Strg+S`.
+  Bearbeiten nur mit Schreibrecht; gekürzt geladene (zu große) Dateien bleiben schreibgeschützt,
+  und ein zwischenzeitlich geänderter Stand wird beim Speichern abgelehnt statt überschrieben.
 - **Transfer-Panel** unten rechts: laufende Uploads/Jobs mit Fortschritt und Abbruch.
 
 ### Verwaltung (nach den CRUD-Guidelines)
@@ -329,6 +334,11 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   Einen echten Prozentwert gibt es nicht — angezeigt wird der Anteil der erledigten an den
   bekannten Ordnern. Die **Inhaltssuche** verlangt zusätzlich das Downloadrecht, überspringt
   Dateien über 8 MB und bricht beim ersten Nullbyte als Binärdatei ab.
+- Der **Texteditor** ist selbst geschrieben: ein Eingabefeld mit durchsichtiger Schrift liegt
+  deckungsgleich über dem eingefärbten Text, ein eigener Tokenizer je Sprachfamilie erledigt
+  die Hervorhebung. CodeMirror oder Monaco hätten eine vendorte Fremdbibliothek bedeutet -
+  dieselbe Entscheidung wie gegen Alpine.js. Ab 200 000 Zeichen wird nicht mehr eingefärbt,
+  damit das Tippen flüssig bleibt; bearbeitbar sind Dateien bis 512 KB.
 - **Thumbnails** in der Kachelansicht fehlen noch: dafür wird eine Bildbibliothek gebraucht
   (ImageSharp oder SkiaSharp). Offen bis M8, die Vorschau selbst funktioniert ohne.
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.

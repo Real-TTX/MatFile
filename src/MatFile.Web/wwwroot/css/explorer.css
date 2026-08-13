@@ -1098,20 +1098,30 @@
     background: #fff;
 }
 
-.mfx-preview-text {
-    width: 100%;
-    max-height: 100%;
-    margin: 0;
-    padding: var(--mf-space-4);
+/* Text bekommt eine lesbare Breite statt der ganzen Fläche. */
+.mfx-preview-stage.is-text {
+    align-items: stretch;
+    padding: var(--mf-space-3) var(--mf-space-4) var(--mf-space-4);
+}
+
+.mfx-preview-doc {
+    display: flex;
+    flex-direction: column;
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    border: 1px solid var(--mf-border);
     border-radius: var(--mf-radius-lg);
     background: var(--mf-surface);
-    color: var(--mf-text);
-    font-family: var(--mf-font-mono);
-    font-size: 13px;
-    line-height: 1.5;
-    overflow: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
+    overflow: hidden;
+}
+
+.mfx-preview-note {
+    flex: 0 0 auto;
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-top: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+    color: var(--mf-text-muted);
+    font-size: 12px;
 }
 
 .mfx-preview-message {
@@ -1751,4 +1761,124 @@
     .mfx-hit-meta {
         display: none;
     }
+}
+
+/* --- Texteditor mit Syntaxhervorhebung --- */
+
+.mfe {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    font-family: var(--mf-font-mono);
+    font-size: 13px;
+    line-height: 20px;
+    tab-size: 4;
+}
+
+.mfe-gutter {
+    flex: 0 0 auto;
+    width: 52px;
+    padding: var(--mf-space-3) var(--mf-space-2) var(--mf-space-3) 0;
+    border-right: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+    color: var(--mf-text-muted);
+    text-align: right;
+    overflow: hidden;
+    user-select: none;
+}
+
+.mfe-numbers {
+    white-space: pre;
+    will-change: transform;
+}
+
+/* Eingabefeld und eingefärbter Text liegen deckungsgleich übereinander. */
+.mfe-body {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mfe-highlight,
+.mfe-input {
+    margin: 0;
+    padding: var(--mf-space-3);
+    border: 0;
+    font: inherit;
+    line-height: inherit;
+    tab-size: inherit;
+    white-space: pre;
+    overflow-wrap: normal;
+}
+
+.mfe-highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 100%;
+    pointer-events: none;
+    will-change: transform;
+    color: var(--mf-text);
+}
+
+.mfe-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    resize: none;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--mf-accent);
+    overflow: auto;
+    outline: none;
+}
+
+.mfe-input::selection {
+    background: var(--mf-accent-soft);
+    color: transparent;
+}
+
+.mfe.is-readonly .mfe-input {
+    caret-color: transparent;
+}
+
+/* Farben der Bausteine - im hellen wie im dunklen Erscheinungsbild lesbar. */
+.tok-comment { color: #6b7a8d; font-style: italic; }
+.tok-string { color: #7ec699; }
+.tok-number { color: #f2a97e; }
+.tok-keyword { color: #7aa2f7; font-weight: 600; }
+.tok-literal { color: #c792ea; }
+.tok-key { color: #79c0ff; }
+.tok-tag { color: #7aa2f7; }
+.tok-attr { color: #e5c07b; }
+.tok-meta { color: #6b7a8d; }
+.tok-entity { color: #c792ea; }
+.tok-section { color: #e5c07b; font-weight: 600; }
+.tok-variable { color: #f2a97e; }
+.tok-heading { color: #7aa2f7; font-weight: 700; }
+.tok-link { color: #56b6c2; text-decoration: underline; }
+.tok-punct { color: var(--mf-text-muted); }
+
+:root[data-theme="light"] .tok-comment { color: #6a737d; }
+:root[data-theme="light"] .tok-string { color: #22863a; }
+:root[data-theme="light"] .tok-number { color: #b45309; }
+:root[data-theme="light"] .tok-keyword { color: #1d4ed8; }
+:root[data-theme="light"] .tok-literal { color: #7c3aed; }
+:root[data-theme="light"] .tok-key { color: #0550ae; }
+:root[data-theme="light"] .tok-tag { color: #1d4ed8; }
+:root[data-theme="light"] .tok-attr { color: #92400e; }
+:root[data-theme="light"] .tok-heading { color: #1d4ed8; }
+
+@media (prefers-color-scheme: light) {
+    :root[data-theme="auto"] .tok-comment { color: #6a737d; }
+    :root[data-theme="auto"] .tok-string { color: #22863a; }
+    :root[data-theme="auto"] .tok-number { color: #b45309; }
+    :root[data-theme="auto"] .tok-keyword { color: #1d4ed8; }
+    :root[data-theme="auto"] .tok-literal { color: #7c3aed; }
+    :root[data-theme="auto"] .tok-key { color: #0550ae; }
+    :root[data-theme="auto"] .tok-tag { color: #1d4ed8; }
+    :root[data-theme="auto"] .tok-attr { color: #92400e; }
+    :root[data-theme="auto"] .tok-heading { color: #1d4ed8; }
 }
