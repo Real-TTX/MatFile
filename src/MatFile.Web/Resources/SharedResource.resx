@@ -193,7 +193,7 @@
   <data name="Permission.ManageSettings"><value>Manage settings</value></data>
   <data name="Permission.ViewActivityLog"><value>View activity log</value></data>
 
-  <data name="Admin.Roots"><value>Root paths</value></data>
+  <data name="Admin.Roots"><value>Storage locations</value></data>
 
   <data name="Root.Name"><value>Name</value></data>
   <data name="Root.Type"><value>Type</value></data>
@@ -248,9 +248,36 @@
   <data name="Access.CanDownload"><value>Download</value></data>
   <data name="Access.CanShare"><value>Share</value></data>
 
-  <data name="Explorer.Roots"><value>Locations</value></data>
+  <data name="Explorer.Roots"><value>Folders</value></data>
+  <data name="Explorer.More"><value>Manage storage locations</value></data>
+  <data name="Explorer.Manage"><value>Open administration</value></data>
+  <data name="Explorer.AddFolder"><value>Add folder</value></data>
+  <data name="Explorer.AddConnection"><value>Add connection</value></data>
+  <data name="Explorer.EditLocation"><value>Edit storage location</value></data>
+  <data name="Explorer.RemoveLocation"><value>Remove storage location</value></data>
+  <data name="Explorer.RemoveLocationQuestion"><value>Remove "{0}"? Files on the storage itself are not deleted.</value></data>
+  <data name="Explorer.LocationSaved"><value>Storage location saved.</value></data>
+  <data name="Explorer.LocationRemoved"><value>Storage location removed.</value></data>
+  <data name="Explorer.LocationHint"><value>Permissions per role are set in the administration. Administrators always have full access.</value></data>
+  <data name="Explorer.TypeLocal"><value>Local folder</value></data>
+  <data name="Explorer.Server"><value>Server</value></data>
+  <data name="Explorer.Port"><value>Port</value></data>
+  <data name="Explorer.PortHint"><value>0 uses the default port.</value></data>
+  <data name="Explorer.Address"><value>Address</value></data>
+  <data name="Explorer.Share"><value>Share</value></data>
+  <data name="Explorer.User"><value>Username</value></data>
+  <data name="Explorer.Password"><value>Password</value></data>
+  <data name="Explorer.PasswordStored"><value>A password is stored. Leave empty to keep it.</value></data>
+  <data name="Explorer.UseTls"><value>Use encrypted connection</value></data>
+  <data name="Explorer.Passive"><value>Passive mode (FTP)</value></data>
+  <data name="Explorer.TestConnection"><value>Test connection</value></data>
+  <data name="Explorer.TestOk"><value>Connection established.</value></data>
+  <data name="Explorer.NameRequired"><value>Please enter a name.</value></data>
+  <data name="Explorer.PathHint"><value>Local: absolute path in the container. Share: optional subfolder.</value></data>
   <data name="Explorer.Bookmarks"><value>Favorites</value></data>
-  <data name="Explorer.NoRoots"><value>No root path has been shared with you yet.</value></data>
+  <data name="Explorer.NoRoots"><value>No storage location has been shared with you yet.</value></data>
+  <data name="Explorer.NoRootsAdmin"><value>No storage location yet. Add a folder or a connection with the plus sign in the sidebar.</value></data>
+  <data name="Explorer.NoLocationsYet"><value>none yet</value></data>
   <data name="Explorer.NoBookmarks"><value>No favorites yet</value></data>
   <data name="Explorer.EmptyFolder"><value>This folder is empty.</value></data>
   <data name="Explorer.Loading"><value>Loading…</value></data>

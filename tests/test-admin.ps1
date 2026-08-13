@@ -74,7 +74,7 @@ $r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $tester -UseBasicParsing
 $t = Get-Token $r.Content
 $r = Post-Form "$BaseUrl/Login" $tester "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.Password=$(Enc $TesterPassword)"
 Add-Result "Testbenutzer angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
-Add-Result "Kein Adminlink fuer Testbenutzer" ($r.Content -notmatch 'Administration') ""
+Add-Result "Kein Adminlink fuer Testbenutzer" ($r.Content -notmatch 'href="/Admin"') ""
 
 $r = Invoke-WebRequest "$BaseUrl/Admin/Users" -WebSession $tester -UseBasicParsing
 Add-Result "Adminbereich gesperrt" ($r.Content -match 'Access denied') $r.BaseResponse.ResponseUri.AbsolutePath

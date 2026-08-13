@@ -76,9 +76,28 @@ builder.Services.AddAuthentication(MatFileClaims.AuthenticationScheme)
         options.ExpireTimeSpan = TimeSpan.FromDays(settings.SessionLifetimeDays);
         options.SlidingExpiration = true;
         options.Events.OnValidatePrincipal = AuthService.ValidatePrincipalAsync;
+        // Seitenaufrufe werden umgeleitet, API-Aufrufe bekommen einen Statuscode.
         options.Events.OnRedirectToAccessDenied = context =>
         {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+
             context.Response.Redirect("/Error?code=403");
+            return Task.CompletedTask;
+        };
+
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
         };
     });
@@ -176,6 +195,7 @@ app.MapFileSystemEndpoints();
 app.MapFileOperationEndpoints();
 app.MapPreviewEndpoints();
 app.MapExplorerEndpoints();
+app.MapRootManagementEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {

@@ -38,6 +38,10 @@
 }
 
 .mfx-side-group h2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mf-space-2);
     margin: 0 0 var(--mf-space-1);
     padding: 0 var(--mf-space-2);
     font-size: 11px;
@@ -45,6 +49,33 @@
     letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--mf-text-muted);
+}
+
+.mfx-side-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: 0;
+    border-radius: var(--mf-radius);
+    background: transparent;
+    color: var(--mf-text-muted);
+    cursor: pointer;
+    opacity: .6;
+}
+
+.mfx-side-group:hover .mfx-side-add,
+.mfx-side-add:focus-visible {
+    opacity: 1;
+}
+
+.mfx-side-add:hover {
+    background: var(--mf-surface-alt);
+    color: var(--mf-accent);
+}
+
+.mfx-root-dialog {
+    width: 620px;
 }
 
 .mfx-side-list {

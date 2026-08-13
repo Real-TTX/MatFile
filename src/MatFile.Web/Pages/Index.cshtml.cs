@@ -60,7 +60,17 @@ public class IndexModel : PageModel
             "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract",
 
             // Verbindungen
-            "Explorer.Connections", "Explorer.Online", "Explorer.Offline"
+            "Explorer.Connections", "Explorer.Online", "Explorer.Offline",
+
+            // Speicherorte anlegen und pflegen
+            "Explorer.More", "Explorer.Manage", "Explorer.AddFolder", "Explorer.AddConnection",
+            "Explorer.EditLocation", "Explorer.RemoveLocation", "Explorer.RemoveLocationQuestion",
+            "Explorer.LocationSaved", "Explorer.LocationRemoved", "Explorer.LocationHint",
+            "Explorer.TypeLocal", "Explorer.Server", "Explorer.Port", "Explorer.PortHint",
+            "Explorer.Address", "Explorer.Share", "Explorer.User", "Explorer.Password",
+            "Explorer.PasswordStored", "Explorer.UseTls", "Explorer.Passive",
+            "Explorer.TestConnection", "Explorer.TestOk", "Explorer.NameRequired", "Explorer.PathHint",
+            "Explorer.NoRootsAdmin", "Explorer.NoLocationsYet"
         ];
 
         var bundle = keys.ToDictionary(

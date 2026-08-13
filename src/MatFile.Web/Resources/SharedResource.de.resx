@@ -193,7 +193,7 @@
   <data name="Permission.ManageSettings"><value>Einstellungen verwalten</value></data>
   <data name="Permission.ViewActivityLog"><value>Protokoll einsehen</value></data>
 
-  <data name="Admin.Roots"><value>Root-Pfade</value></data>
+  <data name="Admin.Roots"><value>Speicherorte</value></data>
 
   <data name="Root.Name"><value>Name</value></data>
   <data name="Root.Type"><value>Typ</value></data>
@@ -248,9 +248,36 @@
   <data name="Access.CanDownload"><value>Herunterladen</value></data>
   <data name="Access.CanShare"><value>Freigeben</value></data>
 
-  <data name="Explorer.Roots"><value>Speicherorte</value></data>
+  <data name="Explorer.Roots"><value>Ordner</value></data>
+  <data name="Explorer.More"><value>Speicherorte verwalten</value></data>
+  <data name="Explorer.Manage"><value>Verwaltung öffnen</value></data>
+  <data name="Explorer.AddFolder"><value>Ordner hinzufügen</value></data>
+  <data name="Explorer.AddConnection"><value>Verbindung hinzufügen</value></data>
+  <data name="Explorer.EditLocation"><value>Speicherort bearbeiten</value></data>
+  <data name="Explorer.RemoveLocation"><value>Speicherort entfernen</value></data>
+  <data name="Explorer.RemoveLocationQuestion"><value>„{0}“ entfernen? Die Dateien auf dem Speicher selbst werden nicht gelöscht.</value></data>
+  <data name="Explorer.LocationSaved"><value>Speicherort gespeichert.</value></data>
+  <data name="Explorer.LocationRemoved"><value>Speicherort entfernt.</value></data>
+  <data name="Explorer.LocationHint"><value>Die Rechte je Rolle werden in der Verwaltung gesetzt. Administratoren haben immer vollen Zugriff.</value></data>
+  <data name="Explorer.TypeLocal"><value>Lokaler Ordner</value></data>
+  <data name="Explorer.Server"><value>Server</value></data>
+  <data name="Explorer.Port"><value>Port</value></data>
+  <data name="Explorer.PortHint"><value>0 verwendet den Standardport.</value></data>
+  <data name="Explorer.Address"><value>Adresse</value></data>
+  <data name="Explorer.Share"><value>Freigabe</value></data>
+  <data name="Explorer.User"><value>Benutzername</value></data>
+  <data name="Explorer.Password"><value>Kennwort</value></data>
+  <data name="Explorer.PasswordStored"><value>Ein Kennwort ist hinterlegt. Leer lassen, um es zu behalten.</value></data>
+  <data name="Explorer.UseTls"><value>Verschlüsselte Verbindung verwenden</value></data>
+  <data name="Explorer.Passive"><value>Passiver Modus (FTP)</value></data>
+  <data name="Explorer.TestConnection"><value>Verbindung testen</value></data>
+  <data name="Explorer.TestOk"><value>Verbindung steht.</value></data>
+  <data name="Explorer.NameRequired"><value>Bitte einen Namen eingeben.</value></data>
+  <data name="Explorer.PathHint"><value>Lokal: absoluter Pfad im Container. Freigabe: optionaler Unterordner.</value></data>
   <data name="Explorer.Bookmarks"><value>Favoriten</value></data>
-  <data name="Explorer.NoRoots"><value>Für dich ist noch kein Root-Pfad freigegeben.</value></data>
+  <data name="Explorer.NoRoots"><value>Für dich ist noch kein Speicherort freigegeben.</value></data>
+  <data name="Explorer.NoRootsAdmin"><value>Noch kein Speicherort vorhanden. Über das Pluszeichen in der Seitenleiste einen Ordner oder eine Verbindung hinzufügen.</value></data>
+  <data name="Explorer.NoLocationsYet"><value>noch keine</value></data>
   <data name="Explorer.NoBookmarks"><value>Noch keine Favoriten</value></data>
   <data name="Explorer.EmptyFolder"><value>Dieser Ordner ist leer.</value></data>
   <data name="Explorer.Loading"><value>Wird geladen…</value></data>

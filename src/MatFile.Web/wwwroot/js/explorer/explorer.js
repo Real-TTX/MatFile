@@ -3,10 +3,14 @@ import { api, t, formatSize, formatDate, fileType, icon, rootIcon, errorKey } fr
 import { askName, askConfirm, showFacts, flash } from './dialogs.js';
 import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
+import { openRootDialog, deleteRoot } from './rootdialog.js';
+
+const can = window.matfileCan || {};
 
 const el = {
     roots: document.getElementById('mfx-roots'),
     bookmarks: document.getElementById('mfx-bookmarks'),
+    rootsGroup: document.getElementById('mfx-roots-group'),
     connections: document.getElementById('mfx-connections'),
     connectionsGroup: document.getElementById('mfx-connections-group'),
     tabs: document.getElementById('mfx-tabs'),
@@ -27,6 +31,7 @@ const el = {
     view: document.getElementById('mfx-view'),
     details: document.getElementById('mfx-details'),
     detailsToggle: document.getElementById('mfx-details-toggle'),
+    more: document.getElementById('mfx-more'),
     sidebarToggle: document.getElementById('mfx-sidebar-toggle')
 };
 
@@ -91,7 +96,7 @@ async function init() {
 
     if (state.tabs.length === 0) {
         renderTabs();
-        el.listing.replaceChildren(message(t('NoRoots')));
+        el.listing.replaceChildren(message(noRootsText()));
         renderStatus();
         return;
     }
@@ -361,8 +366,119 @@ function rootItem(root, withStatus) {
     }
 
     link.addEventListener('click', () => navigate(activeTab(), root.id, ''));
+
+    if (can.manageRoots) {
+        link.addEventListener('contextmenu', event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            openMenu(event.clientX, event.clientY, [
+                { label: t('EditLocation'), icon: 'pencil', action: () => editLocation(root.id) },
+                {
+                    label: t('RemoveLocation'), icon: 'trash', danger: true,
+                    action: () => removeLocation(root)
+                }
+            ]);
+        });
+    }
+
     item.appendChild(link);
     return item;
+}
+
+// ---------------------------------------------------------------- Speicherorte pflegen
+
+/** Speicherorte neu laden und Seitenleiste auffrischen. */
+async function reloadRoots() {
+    state.roots = await api.roots();
+    renderSidebar();
+
+    if (state.roots.length === 0) {
+        el.listing.replaceChildren(message(noRootsText()));
+        renderStatus();
+        return;
+    }
+
+    // Beim ersten Speicherort gibt es noch keinen Tab.
+    if (state.tabs.length === 0) {
+        state.tabs.push(createTab(state.roots[0].id, ''));
+        state.active = 0;
+        await activate(0, false);
+        return;
+    }
+
+    const tab = activeTab();
+
+    if (state.roots.some(root => root.id === tab.rootId)) {
+        await reload();
+    } else {
+        await navigate(tab, state.roots[0].id, '');
+    }
+}
+
+/** Hinweis bei leerer Seitenleiste - mit Recht gibt es einen Weg vorwärts. */
+function noRootsText() {
+    return can.manageRoots ? t('NoRootsAdmin') : t('NoRoots');
+}
+
+async function addLocation(preferRemote) {
+    if (await openRootDialog(null, preferRemote)) {
+        await reloadRoots();
+        flash(t('LocationSaved'));
+    }
+}
+
+async function editLocation(rootId) {
+    try {
+        const detail = await api.root(rootId);
+
+        if (await openRootDialog(detail, false)) {
+            await reloadRoots();
+            flash(t('LocationSaved'));
+        }
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function removeLocation(root) {
+    const confirmed = await askConfirm(
+        t('RemoveLocation'),
+        t('RemoveLocationQuestion').replace('{0}', root.name),
+        t('RemoveLocation'),
+        true);
+
+    if (!confirmed) {
+        return;
+    }
+
+    if (await deleteRoot(root.id)) {
+        await reloadRoots();
+        flash(t('LocationRemoved'));
+    }
+}
+
+/** Kleines Pluszeichen in der Kopfzeile eines Abschnitts. */
+function sectionAdd(group, label, preferRemote) {
+    if (!can.manageRoots || !group) {
+        return;
+    }
+
+    const heading = group.querySelector('h2');
+
+    if (!heading || heading.querySelector('.mfx-side-add')) {
+        return;
+    }
+
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'mfx-side-add';
+    add.title = label;
+    add.setAttribute('aria-label', label);
+    add.appendChild(icon('plus', 14));
+    add.addEventListener('click', () => addLocation(preferRemote));
+
+    heading.appendChild(add);
 }
 
 function renderSidebar() {
@@ -375,14 +491,18 @@ function renderSidebar() {
     if (state.roots.length === 0) {
         const empty = document.createElement('li');
         empty.className = 'mfx-side-empty';
-        empty.textContent = t('NoRoots');
+        empty.textContent = can.manageRoots ? t('NoLocationsYet') : t('NoRoots');
         el.roots.appendChild(empty);
     }
 
     local.forEach(root => el.roots.appendChild(rootItem(root, false)));
     remote.forEach(root => el.connections.appendChild(rootItem(root, true)));
 
-    el.connectionsGroup.hidden = remote.length === 0;
+    // Verbindungen bleiben sichtbar, wenn man sie anlegen darf - sonst gibt es kein Pluszeichen.
+    el.connectionsGroup.hidden = remote.length === 0 && !can.manageRoots;
+
+    sectionAdd(el.rootsGroup, t('AddFolder'), false);
+    sectionAdd(el.connectionsGroup, t('AddConnection'), true);
 
     renderBookmarks();
     highlightSidebar();
@@ -1633,6 +1753,21 @@ el.backdrop.addEventListener('click', () => {
     el.sidebar.classList.remove('is-open');
     el.backdrop.hidden = true;
 });
+
+if (el.more) {
+    el.more.addEventListener('click', event => {
+        const rect = el.more.getBoundingClientRect();
+
+        openMenu(rect.left, rect.bottom + 4, [
+            { label: t('AddFolder'), icon: 'folder', action: () => addLocation(false) },
+            { label: t('AddConnection'), icon: 'hard', action: () => addLocation(true) },
+            '-',
+            { label: t('Manage'), icon: 'settings', action: () => { window.location.href = '/Admin/Roots'; } }
+        ]);
+
+        event.stopPropagation();
+    });
+}
 
 el.detailsToggle.addEventListener('click', () => {
     state.settings.showDetails = !state.settings.showDetails;

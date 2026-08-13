@@ -14,6 +14,12 @@ async function request(url, options) {
         ...options
     });
 
+    // Sitzung abgelaufen: neu laden, damit die Anmeldung erscheint.
+    if (response.status === 401) {
+        window.location.reload();
+        throw Object.assign(new Error('unauthorized'), { status: 401, code: 'unauthorized' });
+    }
+
     if (!response.ok) {
         let code = 'error';
         try {
@@ -97,6 +103,13 @@ export const api = {
 
     uploadFinish: uploadId => request(`/api/fs/upload/finish?uploadId=${encodeURIComponent(uploadId)}`, { method: 'POST' }),
     uploadAbort: uploadId => request(`/api/fs/upload/abort?uploadId=${encodeURIComponent(uploadId)}`, { method: 'POST' }),
+
+    // --- Speicherorte verwalten (nur mit dem Recht Root-Pfade verwalten) ---
+    root: id => request(`/api/roots/${id}`),
+    createRoot: data => send('/api/roots', 'POST', data),
+    updateRoot: (id, data) => send(`/api/roots/${id}`, 'PUT', data),
+    deleteRoot: id => request(`/api/roots/${id}`, { method: 'DELETE' }),
+    testRoot: data => send('/api/roots/test', 'POST', data),
 
     // --- Jobs ---
     jobs: () => request('/api/jobs'),

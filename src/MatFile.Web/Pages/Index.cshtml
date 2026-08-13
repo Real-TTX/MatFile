@@ -11,7 +11,7 @@
 
 <div class="mfx" id="mfx">
     <aside class="mfx-sidebar" id="mfx-sidebar" aria-label="@L["Explorer.Sidebar"]">
-        <section class="mfx-side-group">
+        <section class="mfx-side-group" id="mfx-roots-group">
             <h2>@L["Explorer.Roots"]</h2>
             <ul class="mfx-side-list" id="mfx-roots"></ul>
         </section>
@@ -77,6 +77,13 @@
                     aria-pressed="false" aria-label="@L["Explorer.Details"]">
                 <mf-icon name="info" />
             </button>
+            @if (User.HasPermission(Permission.ManageRoots))
+            {
+                <button type="button" class="mfx-btn" id="mfx-more" title="@L["Explorer.More"]"
+                        aria-label="@L["Explorer.More"]">
+                    <mf-icon name="settings" />
+                </button>
+            }
         </div>
 
         <div class="mfx-body">
@@ -91,6 +98,9 @@
 <ul class="mfx-menu" id="mfx-menu" role="menu" hidden></ul>
 
 @section Scripts {
-    <script>window.matfileText = @Html.Raw(Model.TextBundleJson);</script>
+    <script>
+        window.matfileText = @Html.Raw(Model.TextBundleJson);
+        window.matfileCan = { manageRoots: @(User.HasPermission(Permission.ManageRoots) ? "true" : "false") };
+    </script>
     <script type="module" src="~/js/explorer/explorer.js" asp-append-version="true"></script>
 }

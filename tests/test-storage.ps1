@@ -174,8 +174,8 @@ Add-Result "Gesperrter Root nicht lesbar" ($denied.Status -eq 404) "status=$($de
 
 # Abgemeldet kein API-Zugriff
 $anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$anonApi = Invoke-WebRequest "$BaseUrl/api/fs/roots" -WebSession $anon -UseBasicParsing
-Add-Result "API ohne Anmeldung gesperrt" ($anonApi.BaseResponse.ResponseUri.AbsolutePath -eq '/Login') $anonApi.BaseResponse.ResponseUri.AbsolutePath
+$anonApi = Get-Api "$BaseUrl/api/fs/roots" $anon
+Add-Result "API ohne Anmeldung gesperrt" ($anonApi.Status -eq 401) "status=$($anonApi.Status)"
 
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })

@@ -179,6 +179,46 @@ $b = Api GET "$BaseUrl/api/bookmarks" $tester
 $s = Api GET "$BaseUrl/api/settings" $tester
 Add-Result "Zustand je Benutzer getrennt" (@($b.Data).Count -eq 0 -and $s.Data.viewMode -eq 'list') ""
 
+# --- Speicherorte aus dem Explorer heraus verwalten ----------------------
+$created = Api POST "$BaseUrl/api/roots" $admin @{
+    name = 'Direkt'; type = 'Local'; path = '/storage/sample'
+    port = 0; useTls = $false; passive = $true; isEnabled = $true; sortOrder = 7
+}
+Add-Result "Speicherort ueber API angelegt" ($created.Status -eq 200 -and $created.Data.id -gt 0) "id=$($created.Data.id)"
+
+$newId = $created.Data.id
+$detail = Api GET "$BaseUrl/api/roots/$newId" $admin
+Add-Result "Speicherort abrufbar" ($detail.Status -eq 200 -and $detail.Data.name -eq 'Direkt' -and $detail.Data.hasPassword -eq $false) ""
+
+$renamed = Api PUT "$BaseUrl/api/roots/$newId" $admin @{
+    name = 'Direkt umbenannt'; type = 'Local'; path = '/storage/sample'
+    port = 0; useTls = $false; passive = $true; isEnabled = $true; sortOrder = 7
+}
+$rootNames = (Api GET "$BaseUrl/api/fs/roots" $admin).Data | ForEach-Object { $_.name }
+Add-Result "Speicherort umbenannt" ($renamed.Status -eq 200 -and $rootNames -contains 'Direkt umbenannt') ($rootNames -join ', ')
+
+$badTest = Api POST "$BaseUrl/api/roots/test" $admin @{
+    name = 'Probe'; type = 'Sftp'; path = '/'; host = 'gibtsnicht'
+    port = 22; username = 'x'; password = 'y'; useTls = $false; passive = $true; isEnabled = $true; sortOrder = 0
+}
+Add-Result "Verbindungstest meldet Fehler" ($badTest.Status -eq 200 -and $badTest.Data.ok -eq $false) "ok=$($badTest.Data.ok)"
+
+$removed = Api DELETE "$BaseUrl/api/roots/$newId" $admin
+$rootNames = (Api GET "$BaseUrl/api/fs/roots" $admin).Data | ForEach-Object { $_.name }
+Add-Result "Speicherort entfernt" ($removed.Status -eq 204 -and $rootNames -notcontains 'Direkt umbenannt') ($rootNames -join ', ')
+
+$forbidden = Api POST "$BaseUrl/api/roots" $tester @{
+    name = 'Verboten'; type = 'Local'; path = '/storage/sample'
+    port = 0; useTls = $false; passive = $true; isEnabled = $true; sortOrder = 0
+}
+Add-Result "Ohne Recht kein Speicherort" ($forbidden.Status -eq 403) "status=$($forbidden.Status)"
+
+$page = Invoke-WebRequest "$BaseUrl/" -WebSession $admin -UseBasicParsing
+Add-Result "Verwaltungsknopf nur mit Recht" ($page.Content -match 'id="mfx-more"' -and $page.Content -match 'manageRoots: true') ""
+
+$testerPage = Invoke-WebRequest "$BaseUrl/" -WebSession $tester -UseBasicParsing
+Add-Result "Ohne Recht kein Verwaltungsknopf" ($testerPage.Content -notmatch 'id="mfx-more"' -and $testerPage.Content -match 'manageRoots: false') ""
+
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })
 Write-Host "Ergebnis: $($results.Count - $failed.Count)/$($results.Count) bestanden"

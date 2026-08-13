@@ -167,8 +167,8 @@ $deniedText = Api GET "$BaseUrl/api/fs/text?rootId=$rootId&path=notiz.txt" $test
 Add-Result "Textvorschau ohne Recht gesperrt" ($deniedText.Status -eq 403) "status=$($deniedText.Status)"
 
 $anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$anonPreview = Invoke-WebRequest "$BaseUrl/api/fs/preview?rootId=$rootId&path=bild.png" -WebSession $anon -UseBasicParsing
-Add-Result "Vorschau ohne Anmeldung gesperrt" ($anonPreview.BaseResponse.ResponseUri.AbsolutePath -eq '/Login') $anonPreview.BaseResponse.ResponseUri.AbsolutePath
+$anonPreview = Api GET "$BaseUrl/api/fs/preview?rootId=$rootId&path=bild.png" $anon
+Add-Result "Vorschau ohne Anmeldung gesperrt" ($anonPreview.Status -eq 401) "status=$($anonPreview.Status)"
 
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })
