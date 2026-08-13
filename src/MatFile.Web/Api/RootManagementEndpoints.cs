@@ -135,6 +135,33 @@ public static class RootManagementEndpoints
                 : Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status400BadRequest);
         });
 
+        // Ordner der Gegenstelle durchsehen, bevor der Speicherort gespeichert ist.
+        group.MapPost("/browse", async (
+            RootRequest request,
+            string? path,
+            StorageRootService roots,
+            CancellationToken cancellationToken) =>
+        {
+            if (!Enum.TryParse<StorageType>(request.Type, ignoreCase: true, out var type))
+            {
+                return Results.Json(new { error = "invalid_type" }, statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            try
+            {
+                return await roots.BrowseAsync(type, request.Path, ToConnection(request), request.Password,
+                    path ?? string.Empty, cancellationToken);
+            }
+            catch (StorageException exception)
+            {
+                return Results.Json(new { error = exception.Code }, statusCode: StatusCodes.Status400BadRequest);
+            }
+            catch (Exception)
+            {
+                return Results.Json(new { error = "not_reachable" }, statusCode: StatusCodes.Status400BadRequest);
+            }
+        });
+
         group.MapPost("/test", async (RootRequest request, StorageRootService roots) =>
         {
             if (!Enum.TryParse<StorageType>(request.Type, ignoreCase: true, out var type))

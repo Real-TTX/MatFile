@@ -134,6 +134,19 @@ Add-Result "Gesperrter Root nicht lesbar" ($denied.Status -eq 404) "status=$($de
 $noManage = New-MatRoot $BaseUrl $tester @{ name = 'Verboten'; path = '/storage/sample' }
 Add-Result "Ohne Recht kein Speicherort" ($noManage.Status -eq 403) "status=$($noManage.Status)"
 
+$noBrowse = Send-MatJson 'Post' "$BaseUrl/api/roots/browse?path=" $tester @{
+    name = 'x'; type = 'Local'; path = ''; port = 0; useTls = $false; passive = $true; isEnabled = $true; sortOrder = 0
+}
+Add-Result "Ohne Recht kein Durchsehen" ($noBrowse.Status -eq 403) "status=$($noBrowse.Status)"
+
+# Der Ordnerbrowser des Dialogs zeigt den Container - ohne das Datenverzeichnis
+$adminBrowse = Send-MatJson 'Post' "$BaseUrl/api/roots/browse?path=" $admin @{
+    name = 'x'; type = 'Local'; path = ''; port = 0; useTls = $false; passive = $true; isEnabled = $true; sortOrder = 0
+}
+$browseNames = $adminBrowse.Data.entries | ForEach-Object { $_.name }
+Add-Result "Ordnerbrowser zeigt nur Ordner" (
+    $adminBrowse.Status -eq 200 -and $browseNames -contains 'storage' -and $browseNames -notcontains 'data') "n=$($browseNames.Count)"
+
 # Abgemeldet kein API-Zugriff
 $anon = New-MatSession
 $anonApi = Get-Api "$BaseUrl/api/fs/roots" $anon

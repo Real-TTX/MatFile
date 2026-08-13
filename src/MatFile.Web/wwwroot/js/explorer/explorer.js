@@ -46,7 +46,7 @@ const state = {
     bookmarks: [],
     settings: {
         viewMode: 'list', sortKey: 'name', sortDir: 'asc',
-        showHidden: false, showDetails: false, sidebarWidth: 260
+        showHidden: false, showDetails: false, showSidebar: true, sidebarWidth: 260
     },
     tabs: [],
     active: 0,
@@ -383,17 +383,17 @@ function message(text) {
     return div;
 }
 
-/** Ohne eigenes Symbol bekommt eine Verbindung eines passend zum Protokoll. */
+/** Jeder Speichertyp hat sein Symbol - dasselbe wie auf den Kacheln im Dialog. */
 function iconForRoot(root) {
     if (root.icon) {
         return rootIcon(root.icon);
     }
 
     switch (root.type) {
-        case 'Sftp': return 'lock';
-        case 'Ftp': return 'hard';
-        case 'WebDav': return 'info';
-        case 'Smb':
+        case 'Smb': return 'server';
+        case 'Sftp': return 'key';
+        case 'Ftp': return 'exchange';
+        case 'WebDav': return 'cloud';
         case 'Nfs': return 'hard';
         default: return 'folder';
     }
@@ -407,10 +407,17 @@ function rootItem(root, withStatus) {
     link.className = 'mfx-side-item';
     link.dataset.rootId = root.id;
     link.dataset.path = '';
-    link.title = root.name;
-    link.appendChild(icon(iconForRoot(root), 16));
+    // Der Typ färbt das Symbol - dieselbe Farbe wie im Dialog.
+    link.dataset.type = root.type;
+    link.title = `${root.name} · ${root.type}`;
+
+    const symbol = document.createElement('span');
+    symbol.className = 'mfx-side-icon';
+    symbol.appendChild(icon(iconForRoot(root), 16));
+    link.appendChild(symbol);
 
     const label = document.createElement('span');
+    label.className = 'mfx-side-label';
     label.textContent = root.name;
     link.appendChild(label);
 
@@ -477,6 +484,18 @@ async function reloadRoots() {
     } else {
         await navigate(tab, state.roots[0].id, '');
     }
+}
+
+/** Speicherort öffnen - im aktuellen Tab, aus einem Suchtab heraus in einem neuen. */
+async function openRoot(rootId) {
+    const tab = activeTab();
+
+    if (!tab || tab.kind === 'search') {
+        await openTab(rootId, '');
+        return;
+    }
+
+    await navigate(tab, rootId, '');
 }
 
 /** Hinweis bei leerer Seitenleiste - mit Recht gibt es einen Weg vorwärts. */
@@ -546,24 +565,21 @@ function sectionAdd(group, label, preferRemote) {
 
 function renderSidebar() {
     el.roots.replaceChildren();
-    el.connections.replaceChildren();
 
-    const local = state.roots.filter(root => root.type === 'Local');
+    // Ordner und Verbindungen stehen in einer Liste; der Typ steckt im Symbol,
+    // der Punkt daneben zeigt die Erreichbarkeit einer Gegenstelle.
     const remote = state.roots.filter(root => root.type !== 'Local');
 
-    local.forEach(root => el.roots.appendChild(rootItem(root, false)));
-    remote.forEach(root => el.connections.appendChild(rootItem(root, true)));
+    state.roots.forEach(root => el.roots.appendChild(rootItem(root, root.type !== 'Local')));
 
     // Ein Abschnitt ohne Einträge verschwindet ganz - samt Überschrift.
-    el.rootsGroup.hidden = local.length === 0;
-    el.connectionsGroup.hidden = remote.length === 0;
+    el.rootsGroup.hidden = state.roots.length === 0;
 
     if (el.sideFirst) {
         el.sideFirst.hidden = state.roots.length > 0;
     }
 
-    sectionAdd(el.rootsGroup, t('AddFolder'), false);
-    sectionAdd(el.connectionsGroup, t('AddConnection'), true);
+    sectionAdd(el.rootsGroup, t('AddLocation'), false);
 
     renderBookmarks();
     highlightSidebar();
@@ -1155,7 +1171,20 @@ function renderToolbarState() {
     el.view.disabled = isSearch;
 }
 
+/** Seitenleiste ein- oder ausblenden - die Wahl bleibt am Benutzer. */
+function toggleSidebar() {
+    state.settings.showSidebar = !state.settings.showSidebar;
+    applySidebarVisibility();
+    persistSettings();
+}
+
+function applySidebarVisibility() {
+    document.getElementById('mfx').classList.toggle('is-sidebar-hidden', state.settings.showSidebar === false);
+}
+
 function applySettingsToToolbar() {
+    applySidebarVisibility();
+
     el.hidden.setAttribute('aria-pressed', state.settings.showHidden ? 'true' : 'false');
     el.hidden.classList.toggle('is-active', state.settings.showHidden);
 
@@ -2513,24 +2542,41 @@ function menuItems(name) {
                 icon: 'info',
                 action: () => el.detailsToggle.click()
             },
+            {
+                label: t('Sidebar') + (state.settings.showSidebar !== false ? ' ✓' : ''),
+                icon: 'folder',
+                action: () => toggleSidebar()
+            },
             '-',
             { label: t('Refresh'), icon: 'refresh', action: () => reload() }
         ];
     }
 
     if (name === 'locations') {
-        return [
+        const items = [
             { label: t('AddFolder'), icon: 'folder', action: () => addLocation(false) },
             { label: t('AddConnection'), icon: 'cloud', action: () => addLocation(true) },
             '-',
             {
                 label: t('EditLocation'), icon: 'pencil',
-                disabled: !tab,
+                disabled: !tab || tab.kind === 'search',
                 action: () => editLocation(tab.rootId)
             },
-            '-',
             { label: t('Manage'), icon: 'settings', action: () => openLocations(() => reloadRoots()) }
         ];
+
+        // Darunter die vorhandenen Speicherorte zum direkten Öffnen.
+        if (state.roots.length > 0) {
+            items.push('-');
+
+            state.roots.forEach(root => items.push({
+                label: root.name,
+                icon: iconForRoot(root),
+                action: () => openRoot(root.id)
+            }));
+        }
+
+        return items;
     }
 
     // Einstellungen

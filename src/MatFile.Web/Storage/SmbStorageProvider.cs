@@ -70,6 +70,22 @@ public sealed class SmbStorageProvider : IStorageProvider
             throw new StorageException("share_missing", "No share name configured.");
         }
 
+        var client = Login();
+        var store = client.TreeConnect(_settings.Share, out var status);
+
+        if (status != NTStatus.STATUS_SUCCESS || store is null)
+        {
+            client.Logoff();
+            client.Disconnect();
+            throw new StorageException("share_not_found", status.ToString());
+        }
+
+        return new Session { Client = client, Store = store };
+    }
+
+    /// <summary>Anmeldung ohne Freigabe - reicht, um die Freigaben aufzulisten.</summary>
+    private SMB2Client Login()
+    {
         var client = new SMB2Client();
         IPAddress address;
 
@@ -99,16 +115,42 @@ public sealed class SmbStorageProvider : IStorageProvider
                 : new StorageException("connection_failed", login.ToString());
         }
 
-        var store = client.TreeConnect(_settings.Share, out var status);
+        return client;
+    }
 
-        if (status != NTStatus.STATUS_SUCCESS || store is null)
+    /// <summary>
+    /// Freigaben des Servers - für die Auswahl im Verbindungsdialog.
+    /// Administrative Freigaben (C$, IPC$) bleiben außen vor.
+    /// </summary>
+    public Task<IReadOnlyList<string>> ListSharesAsync()
+    {
+        var client = Login();
+
+        try
         {
-            client.Logoff();
-            client.Disconnect();
-            throw new StorageException("share_not_found", status.ToString());
-        }
+            var shares = client.ListShares(out var status);
 
-        return new Session { Client = client, Store = store };
+            if (status != NTStatus.STATUS_SUCCESS || shares is null)
+            {
+                throw new StorageException("share_list_failed", status.ToString());
+            }
+
+            return Task.FromResult<IReadOnlyList<string>>(
+                shares.Where(share => !share.EndsWith('$')).OrderBy(share => share).ToList());
+        }
+        finally
+        {
+            try
+            {
+                client.Logoff();
+            }
+            catch (Exception)
+            {
+                // Verbindung ist ohnehin am Ende.
+            }
+
+            client.Disconnect();
+        }
     }
 
     /// <summary>Interner Pfad in die Schreibweise der Freigabe übersetzen.</summary>

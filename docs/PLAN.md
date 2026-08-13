@@ -117,8 +117,10 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 ## 5. UI-Konzept
 
 ### Explorer (Hauptanwendung)
-- **Sidebar** (Finder/Explorer-Stil): Home-/Root-Paths, aktive Mounts, Favoriten/Bookmarks,
-  zuletzt verwendet. Ein-/ausklappbar, per Drag sortierbar, auf Mobile als Off-Canvas.
+- **Sidebar** (Finder/Explorer-Stil): **ein Abschnitt „Speicherorte"** für lokale Ordner und
+  Verbindungen zusammen – der Typ steckt im farbigen Symbol, der Punkt daneben zeigt die
+  Erreichbarkeit einer Gegenstelle. Darunter Favoriten. Auf Mobile als Off-Canvas, über
+  *Ansicht → Seitenleiste* ganz ausblendbar (die Wahl bleibt am Benutzer).
   **Ein Abschnitt ohne Einträge verschwindet ganz** – keine Überschrift ohne Inhalt. Solange
   es keinen Speicherort gibt, steht dort nur ein Knopf „Speicherort hinzufügen".
 - **Tab-Leiste** wie Windows Explorer: `+`, Schließen, Mittelklick, Drag-Reorder,
@@ -164,6 +166,16 @@ soll dort sitzen, wo gearbeitet wird, und die Guidelines gelten im Dialog genaus
 - Aktionen der Liste **unterhalb**, linksbündig; **Löschen mit Abstand** abgesetzt.
 - Button-Reihenfolge positiv → negativ: `Speichern · Zurück · ⟨Spacer⟩ · Löschen`.
 - Icons wo sinnvoll, durchgängig mobil optimiert.
+
+Der Dialog für Speicherorte selbst:
+
+- **Typkacheln ohne Überschrift und ohne Erklärzeile**, jeder Typ mit eigener Farbe und
+  festem Symbol – eine eigene Symbolauswahl gibt es nicht mehr, das Symbol folgt dem Typ
+  (auch in der Seitenleiste).
+- **Ordnerauswahl**: Der Knopf am Pfadfeld öffnet einen Browser der Gegenstelle – mit den
+  gerade eingetragenen Zugangsdaten, also bevor der Speicherort gespeichert ist. Bei SMB
+  ohne Freigabe erscheinen zuerst die **Freigaben** des Servers.
+- **Erweitert** (aufklappbar) für Port, Sortierung, TLS, passiven Modus und „aktiv".
 
 Verbindungsdaten eines Speicherorts bearbeitet weiterhin der eigene, plakative Dialog;
 die **Rechtematrix je Rolle** sitzt im Verwaltungsdialog. Die Dialoge sprechen dieselbe

@@ -124,7 +124,7 @@ const report = await evaluate(`(() => {
     const rows = [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent);
     return {
         url: location.pathname,
-        roots: [...document.querySelectorAll('#mfx-roots .mfx-side-item span')].map(e => e.textContent),
+        roots: [...document.querySelectorAll('#mfx-roots .mfx-side-label')].map(e => e.textContent),
         tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent),
         crumbs: [...document.querySelectorAll('.mfx-crumb')].map(e => e.textContent),
         rows,

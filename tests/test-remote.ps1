@@ -94,6 +94,19 @@ Add-Result "Test mit falschem Kennwort schlaegt fehl" (
 $good = Test-Root $admin ($base + @{ password = $SftpPassword })
 Add-Result "Verbindungstest erfolgreich" ($good.Status -eq 200 -and $good.Data.ok -eq $true) "ok=$($good.Data.ok)"
 
+# --- Ordner der Gegenstelle durchsehen, bevor gespeichert wird -----------
+$browse = Api POST "$BaseUrl/api/roots/browse?path=" $admin ($base + @{ password = $SftpPassword })
+$browseNames = $browse.Data.entries | ForEach-Object { $_.name }
+Add-Result "SFTP-Ordner zur Auswahl" (
+    $browse.Status -eq 200 -and $browse.Data.mode -eq 'folders' -and $browseNames -contains 'upload') ($browseNames -join ', ')
+
+$browseSub = Api POST "$BaseUrl/api/roots/browse?path=upload" $admin ($base + @{ password = $SftpPassword })
+Add-Result "Unterordner beim Durchsehen" (
+    $browseSub.Status -eq 200 -and $browseSub.Data.parentPath -eq '') "parent='$($browseSub.Data.parentPath)'"
+
+$browseBad = Api POST "$BaseUrl/api/roots/browse?path=" $admin ($base + @{ password = 'falsch' })
+Add-Result "Durchsehen ohne Zugang scheitert" ($browseBad.Status -eq 400) "status=$($browseBad.Status) error=$($browseBad.Data.error)"
+
 # --- Root speichern -------------------------------------------------------
 Save-Root $admin ($base + @{ password = $SftpPassword }) | Out-Null
 $roots = (Api GET "$BaseUrl/api/fs/roots" $admin).Data
@@ -269,6 +282,19 @@ $smbBase = @{
 
 $smbTest = Test-Root $admin ($smbBase + @{ password = $SmbPassword })
 Add-Result "SMB-Verbindungstest" ($smbTest.Status -eq 200 -and $smbTest.Data.ok -eq $true) "ok=$($smbTest.Data.ok)"
+
+# Ordnerauswahl im Dialog: ohne Freigabe kommen die Freigaben, mit Freigabe die Ordner
+$smbNoShare = $smbBase.Clone()
+$smbNoShare.password = $SmbPassword
+$smbNoShare.share = ''
+$shareList = Api POST "$BaseUrl/api/roots/browse?path=" $admin $smbNoShare
+Add-Result "SMB-Freigaben zur Auswahl" (
+    $shareList.Status -eq 200 -and $shareList.Data.mode -eq 'shares' -and
+    ($shareList.Data.entries | ForEach-Object { $_.name }) -contains 'daten') (($shareList.Data.entries | ForEach-Object { $_.name }) -join ', ')
+
+$smbFolders = Api POST "$BaseUrl/api/roots/browse?path=" $admin ($smbBase + @{ password = $SmbPassword })
+Add-Result "SMB-Ordner zur Auswahl" (
+    $smbFolders.Status -eq 200 -and $smbFolders.Data.mode -eq 'folders') "n=$(@($smbFolders.Data.entries).Count)"
 
 Save-Root $admin ($smbBase + @{ password = $SmbPassword }) | Out-Null
 $smbRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Freigabe' })

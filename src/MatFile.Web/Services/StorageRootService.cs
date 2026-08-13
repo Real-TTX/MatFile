@@ -82,6 +82,59 @@ public sealed class StorageRootService
         }
     }
 
+    /// <summary>
+    /// Ordner einer noch nicht gespeicherten Verbindung auflisten - für die Auswahl
+    /// im Dialog. Bei SMB ohne Freigabe kommen erst die Freigaben.
+    /// </summary>
+    public async Task<IResult> BrowseAsync(
+        StorageType storageType,
+        string? basePath,
+        ConnectionSettings connection,
+        string? password,
+        string path,
+        CancellationToken cancellationToken)
+    {
+        if (!StorageProviderFactory.IsSupported(storageType))
+        {
+            return Results.Json(new { error = "type_not_supported" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // Beim Durchsehen zählt die ganze Gegenstelle, nicht der eingetragene Unterordner.
+        var probe = new StorageRoot
+        {
+            Name = "browse",
+            StorageType = storageType,
+            BasePath = storageType == StorageType.Local ? "/" : string.Empty
+        };
+
+        var provider = _providers.Create(probe, connection, password);
+
+        if (provider is SmbStorageProvider smb && string.IsNullOrWhiteSpace(connection.Share))
+        {
+            var shares = await smb.ListSharesAsync();
+
+            return Results.Ok(new
+            {
+                mode = "shares",
+                path = string.Empty,
+                parentPath = (string?)null,
+                entries = shares.Select(share => new { name = share, path = string.Empty })
+            });
+        }
+
+        var listing = await provider.ListAsync(path, cancellationToken);
+
+        return Results.Ok(new
+        {
+            mode = "folders",
+            path = listing.Path,
+            listing.ParentPath,
+            entries = listing.Entries
+                .Where(entry => entry.IsDirectory && !entry.IsHidden)
+                .Select(entry => new { entry.Name, entry.Path })
+        });
+    }
+
     public record RootListItem(
         long Id,
         string Name,

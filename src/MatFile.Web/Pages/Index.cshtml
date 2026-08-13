@@ -21,14 +21,10 @@
 <div class="mfx" id="mfx">
     <aside class="mfx-sidebar" id="mfx-sidebar" aria-label="@L["Explorer.Sidebar"]">
         <div class="mfx-side-scroll">
-        <section class="mfx-side-group" id="mfx-roots-group">
+        @* Ordner und Verbindungen stehen zusammen - der Typ steckt im Symbol. *@
+        <section class="mfx-side-group" id="mfx-roots-group" hidden>
             <h2>@L["Explorer.Roots"]</h2>
             <ul class="mfx-side-list" id="mfx-roots"></ul>
-        </section>
-
-        <section class="mfx-side-group" id="mfx-connections-group" hidden>
-            <h2>@L["Explorer.Connections"]</h2>
-            <ul class="mfx-side-list" id="mfx-connections"></ul>
         </section>
 
         <section class="mfx-side-group" id="mfx-bookmarks-group" hidden>

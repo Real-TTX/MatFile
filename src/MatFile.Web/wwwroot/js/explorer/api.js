@@ -139,6 +139,9 @@ export const api = {
     deleteRoot: id => request(`/api/roots/${id}`, { method: 'DELETE' }),
     testRoot: data => send('/api/roots/test', 'POST', data),
 
+    browseRoot: (data, path) =>
+        send(`/api/roots/browse?path=${encodeURIComponent(path || '')}`, 'POST', data),
+
     // --- Rekursive Suche ---
     startSearch: options => send('/api/search', 'POST', options),
 

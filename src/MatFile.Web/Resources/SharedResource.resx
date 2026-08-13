@@ -250,7 +250,18 @@
   <data name="Access.CanDownload"><value>Download</value></data>
   <data name="Access.CanShare"><value>Share</value></data>
 
-  <data name="Explorer.Roots"><value>Folders</value></data>
+  <data name="Explorer.Roots"><value>Storage locations</value></data>
+  <data name="Explorer.Browse"><value>Browse…</value></data>
+  <data name="Explorer.ChooseFolder"><value>Choose folder</value></data>
+  <data name="Explorer.ChooseShare"><value>Choose share</value></data>
+  <data name="Explorer.Apply"><value>Use this folder</value></data>
+  <data name="Explorer.Advanced"><value>Advanced</value></data>
+  <data name="Explorer.SortOrder"><value>Sort order</value></data>
+  <data name="Explorer.SortOrderHint"><value>Lower numbers come first in the sidebar.</value></data>
+  <data name="Explorer.Enabled"><value>Storage location is enabled</value></data>
+  <data name="Explorer.ErrorNotReachable"><value>The connection could not be established.</value></data>
+  <data name="Explorer.ErrorConnectionFailed"><value>No connection. Please check server and credentials.</value></data>
+  <data name="Explorer.ErrorShareMissing"><value>Please choose a share first.</value></data>
   <data name="Explorer.More"><value>Manage storage locations</value></data>
   <data name="Explorer.Manage"><value>Open administration</value></data>
   <data name="Explorer.AddFolder"><value>Add folder</value></data>
@@ -262,16 +273,8 @@
   <data name="Explorer.LocationRemoved"><value>Storage location removed.</value></data>
   <data name="Explorer.LocationHint"><value>Permissions per role are set in the administration. Administrators always have full access.</value></data>
   <data name="Explorer.TypeLocal"><value>Local folder</value></data>
-  <data name="Explorer.TypeLocalSub"><value>Mounted volume</value></data>
-  <data name="Explorer.TypeSmbSub"><value>Windows share</value></data>
-  <data name="Explorer.TypeSftpSub"><value>over SSH</value></data>
-  <data name="Explorer.TypeFtpSub"><value>FTP or FTPS</value></data>
-  <data name="Explorer.TypeWebDavSub"><value>Nextcloud &amp; co.</value></data>
-  <data name="Explorer.SectionType"><value>Kind of storage location</value></data>
-  <data name="Explorer.SectionGeneral"><value>Display</value></data>
   <data name="Explorer.SectionTarget"><value>Target</value></data>
   <data name="Explorer.SectionLogin"><value>Sign-in</value></data>
-  <data name="Explorer.Icon"><value>Icon</value></data>
   <data name="Explorer.Testing"><value>Testing connection…</value></data>
   <data name="Explorer.MenuBar"><value>Menu</value></data>
   <data name="Explorer.MenuFile"><value>File</value></data>
@@ -433,7 +436,6 @@
   <data name="Explorer.ActionCompress"><value>Compressed</value></data>
   <data name="Explorer.ActionExtract"><value>Extracted</value></data>
   <data name="Explorer.ActionEdit"><value>Edited</value></data>
-  <data name="Explorer.Connections"><value>Connections</value></data>
   <data name="Explorer.Online"><value>reachable</value></data>
   <data name="Explorer.Offline"><value>not reachable</value></data>
 </root>

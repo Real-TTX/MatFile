@@ -72,7 +72,7 @@ public class IndexModel : PageModel
             "Explorer.ErrorModifiedElsewhere",
 
             // Verbindungen
-            "Explorer.Connections", "Explorer.Online", "Explorer.Offline",
+            "Explorer.Online", "Explorer.Offline",
 
             // Speicherorte anlegen und pflegen
             "Explorer.More", "Explorer.Manage", "Explorer.AddFolder", "Explorer.AddConnection",
@@ -84,10 +84,10 @@ public class IndexModel : PageModel
             "Explorer.TestConnection", "Explorer.TestOk", "Explorer.NameRequired",
             "Explorer.PathHint", "Explorer.PathHintRemote",
             "Explorer.NoRootsAdmin", "Explorer.AddLocation",
-            "Explorer.TypeLocalSub", "Explorer.TypeSmbSub", "Explorer.TypeSftpSub",
-            "Explorer.TypeFtpSub", "Explorer.TypeWebDavSub",
-            "Explorer.SectionType", "Explorer.SectionGeneral", "Explorer.SectionTarget",
-            "Explorer.SectionLogin", "Explorer.Icon", "Explorer.Testing",
+            "Explorer.SectionTarget", "Explorer.SectionLogin", "Explorer.Testing",
+            "Explorer.Browse", "Explorer.ChooseFolder", "Explorer.ChooseShare", "Explorer.Apply",
+            "Explorer.Advanced", "Explorer.SortOrder", "Explorer.SortOrderHint", "Explorer.Enabled",
+            "Explorer.ErrorNotReachable", "Explorer.ErrorConnectionFailed", "Explorer.ErrorShareMissing",
 
             // Rekursive Suche
             "Explorer.SearchRecursive", "Explorer.SearchContent",

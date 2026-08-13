@@ -218,7 +218,7 @@
     /* Feste Größe: beim Wechsel des Typs fallen Felder weg - ohne das
        springt der Dialog bei jedem Klick auf eine andere Höhe. */
     width: min(720px, 96vw);
-    height: min(820px, 92vh);
+    height: min(700px, 90vh);
     padding: 0;
     overflow: hidden;
 }
@@ -294,7 +294,7 @@
     text-transform: uppercase;
 }
 
-/* Typauswahl als Kacheln */
+/* Typauswahl als Kacheln - jeder Typ mit eigener Farbe, ohne Erklärzeile. */
 .mfx-type-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -306,9 +306,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
-    min-height: 66px;
-    padding: 6px;
+    gap: var(--mf-space-2);
+    min-height: 84px;
+    padding: var(--mf-space-3) 6px;
     border: 1px solid var(--mf-border);
     border-radius: var(--mf-radius-lg);
     background: var(--mf-bg);
@@ -316,17 +316,34 @@
     font: inherit;
     text-align: center;
     cursor: pointer;
+    transition: border-color .12s ease, background .12s ease;
+}
+
+.mfx-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--mf-tile-soft, var(--mf-surface-alt));
+    color: var(--mf-tile, var(--mf-text-muted));
 }
 
 .mfx-type-tile:hover {
-    border-color: var(--mf-accent);
+    border-color: var(--mf-tile, var(--mf-accent));
     color: var(--mf-text);
 }
 
 .mfx-type-tile.is-active {
-    border-color: var(--mf-accent);
-    background: var(--mf-accent-soft);
-    color: var(--mf-accent);
+    border-color: var(--mf-tile, var(--mf-accent));
+    background: var(--mf-tile-soft, var(--mf-accent-soft));
+    color: var(--mf-text);
+}
+
+.mfx-type-tile.is-active .mfx-type-icon {
+    background: var(--mf-tile, var(--mf-accent));
+    color: #fff;
 }
 
 .mfx-type-label {
@@ -334,48 +351,125 @@
     font-weight: 600;
 }
 
-.mfx-type-sub {
+/* Eine Farbe je Speichertyp - dieselbe Zuordnung wie in der Seitenleiste. */
+[data-type="Local"], .mfx-type-tile[data-value="Local"] { --mf-tile: #3b82f6; --mf-tile-soft: rgba(59, 130, 246, .16); }
+[data-type="Smb"], .mfx-type-tile[data-value="Smb"] { --mf-tile: #a78bfa; --mf-tile-soft: rgba(167, 139, 250, .16); }
+[data-type="Sftp"], .mfx-type-tile[data-value="Sftp"] { --mf-tile: #34d399; --mf-tile-soft: rgba(52, 211, 153, .16); }
+[data-type="Ftp"], .mfx-type-tile[data-value="Ftp"] { --mf-tile: #fbbf24; --mf-tile-soft: rgba(251, 191, 36, .16); }
+[data-type="WebDav"], .mfx-type-tile[data-value="WebDav"] { --mf-tile: #22d3ee; --mf-tile-soft: rgba(34, 211, 238, .16); }
+
+/* Pfadfeld mit Auswahlknopf */
+.mfx-path-row {
+    display: flex;
+    gap: var(--mf-space-2);
+}
+
+.mfx-path-row input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mfx-path-browse {
+    flex: 0 0 auto;
+    height: 34px;
+}
+
+/* Aufklappbarer Bereich für selten benutzte Einstellungen */
+.mfx-advanced {
+    padding-bottom: var(--mf-space-3);
+}
+
+.mfx-advanced > summary {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    margin-bottom: var(--mf-space-2);
     color: var(--mf-text-muted);
     font-size: 11px;
-    line-height: 1.25;
-}
-
-.mfx-type-tile.is-active .mfx-type-sub {
-    color: var(--mf-accent);
-    opacity: .8;
-}
-
-/* Symbolauswahl - eine Reihe, damit keine einzelne Zeile übrig bleibt. */
-.mfx-icon-picker {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 3px;
-    height: 34px;
-}
-
-.mfx-icon-choice {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    width: 30px;
-    height: 34px;
-    border: 1px solid var(--mf-border);
-    border-radius: var(--mf-radius);
-    background: var(--mf-surface);
-    color: var(--mf-text-muted);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
     cursor: pointer;
+    list-style: none;
 }
 
-.mfx-icon-choice:hover {
-    border-color: var(--mf-accent);
+.mfx-advanced > summary::-webkit-details-marker {
+    display: none;
+}
+
+.mfx-advanced > summary::after {
+    content: '▸';
+    margin-left: auto;
+    font-size: 12px;
+}
+
+.mfx-advanced[open] > summary::after {
+    content: '▾';
+}
+
+.mfx-advanced > summary:hover {
     color: var(--mf-text);
 }
 
-.mfx-icon-choice.is-active {
-    border-color: var(--mf-accent);
-    background: var(--mf-accent-soft);
-    color: var(--mf-accent);
+/* Ordnerauswahl auf der Gegenstelle */
+.mfx-browse-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(560px, 96vw);
+    height: min(560px, 88vh);
+    overflow: hidden;
+}
+
+.mfx-browse-path {
+    flex: 0 0 auto;
+    padding: var(--mf-space-2) var(--mf-space-4);
+    border-bottom: 1px solid var(--mf-border);
+    background: var(--mf-bg);
+    color: var(--mf-text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfx-browse-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding: var(--mf-space-2) 0;
+    list-style: none;
+    overflow-y: auto;
+}
+
+.mfx-browse-item {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-3);
+    width: 100%;
+    padding: 7px var(--mf-space-4);
+    border: 0;
+    background: transparent;
+    color: var(--mf-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mfx-browse-item:hover {
+    background: var(--mf-surface-alt);
+}
+
+.mfx-browse-message {
+    padding: var(--mf-space-4);
+    text-align: center;
+}
+
+.mfx-browse-dialog > .mf-actions {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: var(--mf-space-3) var(--mf-space-4);
+    border-top: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
 }
 
 /* Zwei Schalter nebeneinander statt untereinander. */
@@ -1254,7 +1348,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--mf-space-1);
-    margin-top: calc(-1 * var(--mf-space-2));
+    /* Eigener Abstand nach oben - im Dialog haben Felder keinen Aussenabstand. */
+    margin: var(--mf-space-3) 0 0;
 }
 
 .mf-chip {
@@ -1658,6 +1753,14 @@
 
 /* --- Dialog und Hinweis --- */
 
+/* Dialoge mit eigener Kopf- und Fusszeile füllen den Rahmen ganz aus.
+   Zwei Klassen im Selektor, damit die Regel unabhängig von der Reihenfolge greift. */
+.mfx-dialog.mfx-root-dialog,
+.mfx-dialog.mfx-manage,
+.mfx-dialog.mfx-browse-dialog {
+    padding: 0;
+}
+
 .mfx-dialog {
     min-width: 320px;
     max-width: 90vw;
@@ -1912,4 +2015,22 @@
     :root[data-theme="auto"] .tok-tag { color: #1d4ed8; }
     :root[data-theme="auto"] .tok-attr { color: #92400e; }
     :root[data-theme="auto"] .tok-heading { color: #1d4ed8; }
+}
+
+/* Seitenleiste über Ansicht ausblenden. */
+.mfx.is-sidebar-hidden .mfx-sidebar {
+    display: none;
+}
+
+/* Symbol des Speicherorts in der Farbe seines Typs. */
+.mfx-side-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: var(--mf-tile, var(--mf-text-muted));
+}
+
+.mfx-side-item.is-active .mfx-side-icon {
+    color: inherit;
 }

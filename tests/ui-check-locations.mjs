@@ -72,10 +72,10 @@ const visibleBlocks = () => evaluate(`(() => {
     const shown = sel => { const el = document.querySelector(sel); return !!el && !el.hidden && el.getBoundingClientRect().height > 0; };
     return {
         headings: [...document.querySelectorAll('.mfx-side-group')].filter(g => !g.hidden).map(g => g.querySelector('h2').textContent),
-        folders: shown('#mfx-roots-group'),
-        connections: shown('#mfx-connections-group'),
+        locations: shown('#mfx-roots-group'),
         favorites: shown('#mfx-bookmarks-group'),
-        firstButton: shown('#mfx-side-first')
+        firstButton: shown('#mfx-side-first'),
+        items: [...document.querySelectorAll('#mfx-roots .mfx-side-item')].map(i => i.dataset.type)
     };
 })()`);
 
@@ -98,9 +98,13 @@ const dialog = await evaluate(`(() => {
         title: box.querySelector('h2')?.textContent,
         tiles: [...box.querySelectorAll('.mfx-type-tile .mfx-type-label')].map(e => e.textContent),
         activeTile: box.querySelector('.mfx-type-tile.is-active .mfx-type-label')?.textContent,
-        iconChoices: box.querySelectorAll('.mfx-icon-choice').length,
+        tileSubs: box.querySelectorAll('.mfx-type-sub').length,
+        iconPicker: box.querySelectorAll('.mfx-icon-picker').length,
         sections: [...box.querySelectorAll('.mfx-dialog-section')].filter(s => !s.hidden)
-            .map(s => s.querySelector('h3 span')?.textContent),
+            .map(s => (s.querySelector('h3 span') || s.querySelector('summary span'))?.textContent)
+            .filter(Boolean),
+        advanced: !!box.querySelector('.mfx-advanced'),
+        browseButton: !!box.querySelector('.mfx-path-browse'),
         visibleFields: [...box.querySelectorAll('.mf-field')].filter(f => !f.hidden)
             .map(f => f.querySelector('label')?.textContent).filter(Boolean)
     };
@@ -130,7 +134,7 @@ await evaluate(`(() => {
 await sleep(1800);
 
 const afterCreate = await evaluate(`(() => ({
-    sidebar: [...document.querySelectorAll('#mfx-roots .mfx-side-item span')].map(e => e.textContent),
+    sidebar: [...document.querySelectorAll('#mfx-roots .mfx-side-label')].map(e => e.textContent),
     rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
     flash: document.querySelector('.mfx-flash')?.textContent || null,
     plusOnFolders: !!document.querySelector('#mfx-roots-group .mfx-side-add')
@@ -163,7 +167,7 @@ await evaluate(`(() => {
 })()`);
 await sleep(1800);
 
-const afterEdit = await evaluate(`[...document.querySelectorAll('#mfx-roots .mfx-side-item span')].map(e => e.textContent)`);
+const afterEdit = await evaluate(`[...document.querySelectorAll('#mfx-roots .mfx-side-label')].map(e => e.textContent)`);
 
 // Rechtsklick: entfernen
 await evaluate(`(() => {
@@ -183,15 +187,67 @@ await evaluate(`(() => {
 await sleep(1800);
 
 const afterDelete = await evaluate(`(() => ({
-    sidebar: [...document.querySelectorAll('#mfx-roots .mfx-side-item span')].map(e => e.textContent),
+    sidebar: [...document.querySelectorAll('#mfx-roots .mfx-side-label')].map(e => e.textContent),
     message: document.querySelector('.mfx-message')?.textContent?.trim() || null
 }))()`);
 
 const blocksAfterDelete = await visibleBlocks();
 
+// Speicherorte stehen auch im Menue - und die Seitenleiste laesst sich ausblenden
+await evaluate(`(() => {
+    const box = document.querySelector('#mfx-side-first');
+    if (box) box.click();
+    return true;
+})()`);
+await sleep(500);
+await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-root-dialog');
+    const fields = [...box.querySelectorAll('.mf-field')].filter(f => !f.hidden);
+    fields[0].querySelector('input').value = 'Beispiele';
+    fields.find(f => f.querySelector('input.mf-mono')).querySelector('input').value = '/storage/sample';
+    box.querySelector('.mf-btn-primary').click();
+    return true;
+})()`);
+await sleep(1800);
+
+await evaluate(`document.querySelector('.mfx-menubar-item[data-menu="locations"]').click(); true;`);
+await sleep(400);
+
+const locationMenu = await evaluate(`[...document.querySelectorAll('#mfx-menu .mfx-menu-item span')].map(e => e.textContent)`);
+
+await evaluate(`document.body.click(); true;`);
+await sleep(200);
+await evaluate(`document.querySelector('.mfx-menubar-item[data-menu="view"]').click(); true;`);
+await sleep(300);
+await evaluate(`(() => {
+    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => b.textContent.includes('Seitenleiste') || b.textContent.includes('Sidebar'));
+    item.click();
+    return true;
+})()`);
+await sleep(600);
+
+const sidebarHidden = await evaluate(`(() => ({
+    hidden: document.querySelector('#mfx-sidebar').getBoundingClientRect().width === 0,
+    listingWider: document.querySelector('.mfx-main').getBoundingClientRect().width > 1200
+}))()`);
+
+await evaluate(`document.querySelector('.mfx-menubar-item[data-menu="view"]').click(); true;`);
+await sleep(300);
+await evaluate(`(() => {
+    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => b.textContent.includes('Seitenleiste') || b.textContent.includes('Sidebar'));
+    item.click();
+    return true;
+})()`);
+await sleep(600);
+
+const sidebarBack = await evaluate(`document.querySelector('#mfx-sidebar').getBoundingClientRect().width > 0`);
+
 console.log(JSON.stringify({
     before, blocksEmpty, dialog, smbFields, afterCreate, blocksWithFolder,
-    sidebarMenu, afterEdit, afterDelete, blocksAfterDelete, consoleErrors
+    sidebarMenu, afterEdit, afterDelete, blocksAfterDelete,
+    locationMenu, sidebarHidden, sidebarBack, consoleErrors
 }, null, 2));
 
 socket.close();
