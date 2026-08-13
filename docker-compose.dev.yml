@@ -46,6 +46,16 @@ services:
       ADDRESS: ftp
     restart: unless-stopped
 
+  smb:
+    image: dperson/samba
+    container_name: matfile-smb
+    profiles: ["testing"]
+    command: >
+      -u "matfile;Smb-Geheim-2026"
+      -s "daten;/share;yes;no;no;matfile;matfile;matfile"
+      -p
+    restart: unless-stopped
+
   webdav:
     image: bytemark/webdav
     container_name: matfile-webdav

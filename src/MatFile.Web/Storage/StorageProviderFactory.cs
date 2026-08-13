@@ -29,13 +29,15 @@ public sealed class StorageProviderFactory
         StorageType.Local => new LocalStorageProvider(root),
         StorageType.Sftp => new SftpStorageProvider(root, settings, password),
         StorageType.Ftp => new FtpStorageProvider(root, settings, password),
+        StorageType.Smb => new SmbStorageProvider(root, settings, password),
         StorageType.WebDav => new WebDavStorageProvider(root, settings, password, _httpClients.CreateClient(WebDavClient)),
         _ => throw new StorageException("provider_not_supported",
             $"Storage type {root.StorageType} is not supported yet.")
     };
 
     public static bool IsSupported(StorageType type)
-        => type is StorageType.Local or StorageType.Sftp or StorageType.Ftp or StorageType.WebDav;
+        => type is StorageType.Local or StorageType.Sftp or StorageType.Ftp
+            or StorageType.WebDav or StorageType.Smb;
 
     /// <summary>Speichertypen, die Verbindungsdaten brauchen.</summary>
     public static bool NeedsConnection(StorageType type) => type is not StorageType.Local;

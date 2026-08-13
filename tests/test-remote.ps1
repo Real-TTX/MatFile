@@ -4,6 +4,7 @@ param(
     [string]$AdminPassword = "admin",
     [string]$SftpPassword = "Sftp-Geheim-2026",
     [string]$FtpPassword = "Ftp-Geheim-2026",
+    [string]$SmbPassword = "Smb-Geheim-2026",
     [string]$Container = "matfile-dev",
     [string]$Compose = "$PSScriptRoot\..\docker-compose.dev.yml"
 )
@@ -261,6 +262,58 @@ Add-Result "FTP-Ordner geloescht" ($job.status -eq 'Completed' -and (Names $admi
 
 $ftpEscape = Api GET "$BaseUrl/api/fs/list?rootId=$($ftpRoot.id)&path=$(Enc '../..')" $admin
 Add-Result "Basispfad begrenzt den FTP-Zugriff" ($ftpEscape.Status -eq 400) "status=$($ftpEscape.Status)"
+
+# --- SMB ------------------------------------------------------------------
+Invoke-Docker compose -f $Compose --profile testing up -d smb | Out-Null
+$smbReady = $false
+for ($i = 0; $i -lt 60; $i++) {
+    $state = (docker inspect -f '{{.State.Running}}' matfile-smb | Out-String).Trim()
+    if ($state -eq 'true') { $smbReady = $true; break }
+    Start-Sleep -Milliseconds 500
+}
+Start-Sleep -Seconds 5
+Invoke-Docker exec matfile-smb sh -c "mkdir -p /share && rm -rf /share/* 2>/dev/null; echo 'Datei per SMB' > /share/smb.txt; chown -R matfile /share" | Out-Null
+Add-Result "SMB-Server laeuft" $smbReady "running=$smbReady"
+
+$smbBase = "Input.Name=Freigabe&Input.StorageType=Smb&Input.BasePath=&Input.Host=smb&Input.Port=445&Input.Share=daten&Input.Username=matfile&Input.SortOrder=5&Input.IsEnabled=true"
+
+$page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
+$t = Get-Token $page.Content
+$smbTest = Post-Form "$BaseUrl/Admin/Roots/Edit?handler=Test" $admin "__RequestVerificationToken=$(Enc $t)&$smbBase&Input.Password=$(Enc $SmbPassword)"
+Add-Result "SMB-Verbindungstest" ($smbTest.Content -match 'Connection established') ""
+
+Save-Root $admin "$smbBase&Input.Password=$(Enc $SmbPassword)" | Out-Null
+$smbRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Freigabe' })
+Add-Result "SMB-Root angelegt" ($null -ne $smbRoot -and $smbRoot.type -eq 'Smb') "type=$($smbRoot.type)"
+
+$smbNames = Names $admin $smbRoot.id ''
+Add-Result "SMB-Verzeichnis gelesen" ($smbNames -contains 'smb.txt') ($smbNames -join ', ')
+
+$smbDownload = Invoke-WebRequest "$BaseUrl/api/fs/download?rootId=$($smbRoot.id)&path=smb.txt" -WebSession $admin -UseBasicParsing
+Add-Result "SMB-Datei heruntergeladen" ($smbDownload.Content -match 'Datei per SMB') ""
+
+$smbFolder = Api POST "$BaseUrl/api/fs/folder" $admin @{ rootId = $smbRoot.id; path = ''; name = 'Ablage' }
+Add-Result "SMB-Ordner angelegt" ($smbFolder.Status -eq 200 -and (Names $admin $smbRoot.id '') -contains 'Ablage') "status=$($smbFolder.Status)"
+
+$smbCopy = Api POST "$BaseUrl/api/fs/transfer" $admin @{
+    sourceRootId = $localRoot.id; paths = @('lokal.txt'); targetRootId = $smbRoot.id
+    targetPath = 'Ablage'; move = $false; overwrite = $false
+}
+$job = Wait-Job $admin $smbCopy.Data.token
+Add-Result "Kopie lokal nach SMB" ($job.status -eq 'Completed' -and (Names $admin $smbRoot.id 'Ablage') -contains 'lokal.txt') "status=$($job.status)"
+
+$smbBack = Invoke-WebRequest "$BaseUrl/api/fs/download?rootId=$($smbRoot.id)&path=$(Enc 'Ablage/lokal.txt')" -WebSession $admin -UseBasicParsing
+Add-Result "Inhalt auf SMB korrekt" ($smbBack.Content -match 'lokale Datei') ""
+
+$smbRen = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $smbRoot.id; path = 'Ablage/lokal.txt'; newName = 'neu.txt' }
+Add-Result "SMB-Datei umbenannt" ($smbRen.Status -eq 200 -and (Names $admin $smbRoot.id 'Ablage') -contains 'neu.txt') "status=$($smbRen.Status)"
+
+$smbDel = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $smbRoot.id; paths = @('Ablage') }
+$job = Wait-Job $admin $smbDel.Data.token
+Add-Result "SMB-Ordner geloescht" ($job.status -eq 'Completed' -and (Names $admin $smbRoot.id '') -notcontains 'Ablage') "status=$($job.status)"
+
+$smbEscape = Api GET "$BaseUrl/api/fs/list?rootId=$($smbRoot.id)&path=$(Enc '../..')" $admin
+Add-Result "Pfadausbruch auf SMB blockiert" ($smbEscape.Status -eq 400) "status=$($smbEscape.Status)"
 
 # --- Erreichbarkeit fuer die Seitenleiste --------------------------------
 $status = Api GET "$BaseUrl/api/fs/status?rootId=$($ftpRoot.id)" $admin

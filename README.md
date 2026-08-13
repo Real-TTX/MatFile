@@ -4,7 +4,8 @@ Web-basierter Datei-Explorer / File-Manager für NAS-Systeme (TrueNAS & Co.), di
 keinen komfortablen Zugriff auf Dateien bieten.
 
 - Mehrere frei konfigurierbare **Home-/Root-Pfade** (nur diese sind sichtbar)
-- Zusätzliche Freigaben per **SMB, NFS, SFTP, FTP, WebDAV** – dauerhaft oder nur für die Sitzung
+- Zusätzliche Freigaben per **SMB, SFTP, FTP und WebDAV** – ohne Zusatzrechte im Container
+  (NFS folgt über einen OS-Mount)
 - Explorer-Bedienung: Sidebar, **Tabs**, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
@@ -23,8 +24,8 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
 | M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
 | M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
-| M7 | Remote-Verbindungen: **SFTP, FTP, WebDAV** inkl. Verbindungstest, Seitenleiste mit Statuspunkt | teilweise |
-| M7b | SMB, NFS über OS-Mount, Mounts nur für die Sitzung | offen |
+| M7 | Remote-Verbindungen: **SMB, SFTP, FTP, WebDAV** inkl. Verbindungstest, Seitenleiste mit Statuspunkt | ✅ |
+| M7b | NFS über OS-Mount, Mounts nur für die Sitzung | offen |
 | M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
 
 Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).
