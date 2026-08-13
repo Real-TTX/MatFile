@@ -81,22 +81,37 @@ await sleep(500);
 const dialog = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-root-dialog');
     if (!box) return null;
-    const inputs = box.querySelectorAll('input');
     return {
         open: true,
         title: box.querySelector('h2')?.textContent,
+        tiles: [...box.querySelectorAll('.mfx-type-tile .mfx-type-label')].map(e => e.textContent),
+        activeTile: box.querySelector('.mfx-type-tile.is-active .mfx-type-label')?.textContent,
+        iconChoices: box.querySelectorAll('.mfx-icon-choice').length,
+        sections: [...box.querySelectorAll('.mfx-dialog-section')].filter(s => !s.hidden)
+            .map(s => s.querySelector('h3 span')?.textContent),
         visibleFields: [...box.querySelectorAll('.mf-field')].filter(f => !f.hidden)
             .map(f => f.querySelector('label')?.textContent).filter(Boolean)
     };
 })()`);
 
+// Zum Vergleich: bei SMB muessen Server, Freigabe und Anmeldung erscheinen
+const smbFields = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-root-dialog');
+    [...box.querySelectorAll('.mfx-type-tile')].find(t => t.dataset.value === 'Smb').click();
+    return {
+        fields: [...box.querySelectorAll('.mf-field')].filter(f => !f.hidden)
+            .map(f => f.querySelector('label')?.textContent).filter(Boolean),
+        sections: [...box.querySelectorAll('.mfx-dialog-section')].filter(s => !s.hidden)
+            .map(s => s.querySelector('h3 span')?.textContent)
+    };
+})()`);
+
 await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-root-dialog');
-    const fields = [...box.querySelectorAll('.mf-field')];
-    const nameField = fields[0].querySelector('input');
-    nameField.value = 'Beispiele';
-    const pathField = fields.find(f => f.querySelector('input.mf-mono'))?.querySelector('input');
-    pathField.value = '/storage/sample';
+    [...box.querySelectorAll('.mfx-type-tile')].find(t => t.dataset.value === 'Local').click();
+    const fields = [...box.querySelectorAll('.mf-field')].filter(f => !f.hidden);
+    fields[0].querySelector('input').value = 'Beispiele';
+    fields.find(f => f.querySelector('input.mf-mono')).querySelector('input').value = '/storage/sample';
     box.querySelector('.mf-btn-primary').click();
     return true;
 })()`);
@@ -157,7 +172,7 @@ const afterDelete = await evaluate(`(() => ({
     message: document.querySelector('.mfx-message')?.textContent?.trim() || null
 }))()`);
 
-console.log(JSON.stringify({ before, dialog, afterCreate, sidebarMenu, afterEdit, afterDelete, consoleErrors }, null, 2));
+console.log(JSON.stringify({ before, dialog, smbFields, afterCreate, sidebarMenu, afterEdit, afterDelete, consoleErrors }, null, 2));
 
 socket.close();
 edge.kill();

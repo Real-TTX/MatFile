@@ -74,8 +74,183 @@
     color: var(--mf-accent);
 }
 
+/* --- Dialog für Speicherorte --- */
+
 .mfx-root-dialog {
-    width: 620px;
+    display: flex;
+    flex-direction: column;
+    width: 680px;
+    max-width: 94vw;
+    max-height: 88vh;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Kopf und Fuss bleiben stehen, der Mittelteil scrollt. */
+.mfx-dialog-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: var(--mf-space-4);
+}
+
+.mfx-dialog-head {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-3);
+    padding: var(--mf-space-4) var(--mf-space-5);
+    border-bottom: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+    color: var(--mf-accent);
+}
+
+.mfx-dialog-head h2 {
+    margin: 0;
+    color: var(--mf-text);
+    font-size: 18px;
+}
+
+.mfx-dialog-section {
+    padding: var(--mf-space-4) var(--mf-space-5) 0;
+}
+
+.mfx-dialog-section[hidden] {
+    display: none;
+}
+
+.mfx-dialog-section h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    margin: 0 0 var(--mf-space-3);
+    color: var(--mf-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.mfx-root-dialog .mf-field {
+    margin-bottom: var(--mf-space-3);
+}
+
+/* Typauswahl als Kacheln */
+.mfx-type-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--mf-space-2);
+    margin-bottom: var(--mf-space-2);
+}
+
+.mfx-type-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+    padding: var(--mf-space-3) var(--mf-space-1);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-lg);
+    background: var(--mf-bg);
+    color: var(--mf-text-muted);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+}
+
+.mfx-type-tile:hover {
+    border-color: var(--mf-accent);
+    color: var(--mf-text);
+}
+
+.mfx-type-tile.is-active {
+    border-color: var(--mf-accent);
+    background: var(--mf-accent-soft);
+    color: var(--mf-accent);
+}
+
+.mfx-type-label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.mfx-type-sub {
+    color: var(--mf-text-muted);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.mfx-type-tile.is-active .mfx-type-sub {
+    color: var(--mf-accent);
+    opacity: .8;
+}
+
+/* Symbolauswahl */
+.mfx-icon-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mf-space-1);
+}
+
+.mfx-icon-choice {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface);
+    color: var(--mf-text-muted);
+    cursor: pointer;
+}
+
+.mfx-icon-choice:hover {
+    border-color: var(--mf-accent);
+    color: var(--mf-text);
+}
+
+.mfx-icon-choice.is-active {
+    border-color: var(--mf-accent);
+    background: var(--mf-accent-soft);
+    color: var(--mf-accent);
+}
+
+/* Rückmeldung des Verbindungstests */
+.mfx-dialog-status {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    margin: var(--mf-space-3) var(--mf-space-5) 0;
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-radius: var(--mf-radius);
+    font-size: 13px;
+}
+
+.mfx-dialog-status.is-ok {
+    background: rgba(22, 163, 74, .14);
+    color: var(--mf-success);
+}
+
+.mfx-dialog-status.is-error {
+    background: rgba(220, 38, 38, .14);
+    color: var(--mf-danger);
+}
+
+.mfx-dialog-status.is-busy {
+    background: var(--mf-surface-alt);
+    color: var(--mf-text-muted);
+}
+
+.mfx-root-dialog > .mf-muted {
+    margin: var(--mf-space-3) var(--mf-space-5) 0;
+}
+
+.mfx-root-dialog > .mf-actions {
+    margin: var(--mf-space-4) 0 0;
+    padding: var(--mf-space-4) var(--mf-space-5);
+    border-top: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
 }
 
 .mfx-side-list {
@@ -1024,6 +1199,10 @@
         flex: 0 0 100%;
         width: 100%;
         border-left: 0;
+    }
+
+    .mfx-type-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .mfx-body:has(.mfx-details:not([hidden])) .mfx-listing {

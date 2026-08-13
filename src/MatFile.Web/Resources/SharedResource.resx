@@ -260,6 +260,17 @@
   <data name="Explorer.LocationRemoved"><value>Storage location removed.</value></data>
   <data name="Explorer.LocationHint"><value>Permissions per role are set in the administration. Administrators always have full access.</value></data>
   <data name="Explorer.TypeLocal"><value>Local folder</value></data>
+  <data name="Explorer.TypeLocalSub"><value>Mounted volume</value></data>
+  <data name="Explorer.TypeSmbSub"><value>Windows / Samba share</value></data>
+  <data name="Explorer.TypeSftpSub"><value>Transfer over SSH</value></data>
+  <data name="Explorer.TypeFtpSub"><value>FTP or FTPS</value></data>
+  <data name="Explorer.TypeWebDavSub"><value>Nextcloud, ownCloud &amp; co.</value></data>
+  <data name="Explorer.SectionType"><value>Kind of storage location</value></data>
+  <data name="Explorer.SectionGeneral"><value>Display</value></data>
+  <data name="Explorer.SectionTarget"><value>Target</value></data>
+  <data name="Explorer.SectionLogin"><value>Sign-in</value></data>
+  <data name="Explorer.Icon"><value>Icon</value></data>
+  <data name="Explorer.Testing"><value>Testing connection…</value></data>
   <data name="Explorer.Server"><value>Server</value></data>
   <data name="Explorer.Port"><value>Port</value></data>
   <data name="Explorer.PortHint"><value>0 uses the default port.</value></data>

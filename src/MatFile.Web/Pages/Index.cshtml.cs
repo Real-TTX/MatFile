@@ -70,7 +70,11 @@ public class IndexModel : PageModel
             "Explorer.Address", "Explorer.Share", "Explorer.User", "Explorer.Password",
             "Explorer.PasswordStored", "Explorer.UseTls", "Explorer.Passive",
             "Explorer.TestConnection", "Explorer.TestOk", "Explorer.NameRequired", "Explorer.PathHint",
-            "Explorer.NoRootsAdmin", "Explorer.NoLocationsYet"
+            "Explorer.NoRootsAdmin", "Explorer.NoLocationsYet",
+            "Explorer.TypeLocalSub", "Explorer.TypeSmbSub", "Explorer.TypeSftpSub",
+            "Explorer.TypeFtpSub", "Explorer.TypeWebDavSub",
+            "Explorer.SectionType", "Explorer.SectionGeneral", "Explorer.SectionTarget",
+            "Explorer.SectionLogin", "Explorer.Icon", "Explorer.Testing"
         ];
 
         var bundle = keys.ToDictionary(
