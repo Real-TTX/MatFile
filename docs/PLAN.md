@@ -125,10 +125,13 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   Speicherorte · Einstellungen, jeweils als Ausklappmenü in der Optik des Rechtsklick-Menüs.
   Punkte ohne Recht oder ohne passende Auswahl sind ausgegraut.
 - **Toolbar**: Zurück/Vor/Hoch, Breadcrumb-Pfad, Suche, Sortierung, Ansicht (Liste/Kacheln), Upload, Neu.
-- **Suche**: Tippen filtert den aktuellen Ordner, Enter (oder der Knopf im Suchfeld) startet
-  die **rekursive Suche** über alle Unterordner – auf Wunsch inklusive Dateiinhalt. Ergebnisse
-  laufen in ein **eigenes, verschiebbares Fenster** mit Fortschritt (Ordner/Dateien, aktueller
-  Pfad), Abbruch, Fundstelle als hervorgehobene Textzeile und „Im Ordner anzeigen".
+- **Suche**: Tippen filtert den aktuellen Ordner. Alles darüber hinaus ist die **erweiterte
+  Suche in einem eigenen Tab** – das `+` in der Tab-Leiste öffnet sie, Enter im Suchfeld
+  ebenso (mit dem eingetippten Begriff). Der Tab enthält Suchbegriff, Speicherort, Ordner
+  und die Häkchen für Dateiinhalt und versteckte Dateien, darunter Fortschritt
+  (Ordner/Dateien, aktueller Pfad), Abbruch und die Treffer mit Pfad, Fundstelle als
+  hervorgehobene Textzeile und „Im Ordner anzeigen". Der Sprung landet im Ordnertab, der
+  Suchtab bleibt mit seinem Ergebnis stehen. Suchtabs werden nicht gemerkt.
 - **Dateiliste**: Mehrfachauswahl (Klick, Ctrl+Klick, Shift+Klick, Rubber-Band, Ctrl+A),
   Spalten sortierbar, Inline-Rename, Drag&Drop (intern verschieben, extern hochladen).
 - **Kontextmenü (Rechtsklick)**: Öffnen · Vorschau · Download · Umbenennen · Kopieren ·
@@ -273,7 +276,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Komprimieren, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
 | **M7** | Remote-Provider **SMB, SFTP, FTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung, Abschnitt „Verbindungen" in der Seitenleiste mit Statuspunkt | Externe Freigaben eingebunden |
-| **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **rekursive Suche mit Inhaltssuche** in eigenem Fenster, Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste | Bedienung aus einer Fläche |
+| **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **erweiterte Suche als eigener Tab** (rekursiv, mit Inhaltssuche), Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste, starre Hülle gegen Layoutsprünge | Bedienung aus einer Fläche |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
@@ -318,6 +321,11 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   (ImageSharp oder SkiaSharp). Offen bis M8, die Vorschau selbst funktioniert ohne.
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.
 - **Rollen** starten mit `Admin` und `User`; feinere Rechte laufen über `RootAccess` je Root/Mount.
+- Alle Leisten der Hülle (Kopfzeile, Menüleiste, Tab-Leiste, Werkzeugleiste, Statuszeile)
+  sind `flex: 0 0 auto` mit fester Höhe. Ohne das nimmt der Umbruch ihnen Höhe weg, sobald
+  der Inhalt wächst — die Kopfzeile schrumpfte von 52 auf 37 px und die Seite wackelte bei
+  jedem Neuladen und jedem Klick. Die Dateiliste hat zusätzlich `scrollbar-gutter: stable`,
+  damit die Spalten beim Erscheinen der Bildlaufleiste nicht seitwärts rutschen.
 - Kein Node/npm im Build und keine JS-Bibliothek: der Explorer läuft mit eigenen ES-Modulen
   (`wwwroot/js/explorer/`). Alpine.js hätte eine vendorte Fremddatei bedeutet und wurde
   nicht gebraucht. Node wird nur für die optionale Oberflächenprüfung `tests/ui-check.mjs` benötigt.

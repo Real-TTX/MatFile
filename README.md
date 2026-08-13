@@ -8,8 +8,8 @@ keinen komfortablen Zugriff auf Dateien bieten.
   (NFS folgt über einen OS-Mount)
 - Explorer-Bedienung: Sidebar, **Tabs**, Menüleiste, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
-- **Rekursive Suche** über alle Unterordner, auf Wunsch im Dateiinhalt – mit Fortschritt
-  in einem eigenen Ergebnisfenster
+- **Erweiterte Suche als eigener Tab** (über das `+` in der Tab-Leiste): rekursiv über alle
+  Unterordner, auf Wunsch im Dateiinhalt, mit Fortschritt und Sprung in den Trefferordner
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
 - Verwaltung von Benutzern, Rollen und Speicherorten **als Dialoge im Explorer** – ohne
   eigenen Adminbereich

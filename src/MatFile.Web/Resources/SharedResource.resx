@@ -343,7 +343,14 @@
 
   <data name="Explorer.SearchPlaceholder"><value>Filter · Enter searches subfolders</value></data>
   <data name="Explorer.SearchRecursive"><value>Search in all subfolders</value></data>
-  <data name="Explorer.SearchResults"><value>Search results</value></data>
+  <data name="Explorer.SearchTab"><value>Search</value></data>
+  <data name="Explorer.SearchNewTab"><value>Advanced search in a new tab</value></data>
+  <data name="Explorer.SearchTerm"><value>Search term</value></data>
+  <data name="Explorer.SearchScope"><value>Storage location</value></data>
+  <data name="Explorer.SearchFolder"><value>Folder</value></data>
+  <data name="Explorer.SearchWholeLocation"><value>entire location</value></data>
+  <data name="Explorer.SearchStart"><value>Search</value></data>
+  <data name="Explorer.SearchNothingYet"><value>No search started yet</value></data>
   <data name="Explorer.SearchContent"><value>Search file contents</value></data>
   <data name="Explorer.SearchRunning"><value>Searching</value></data>
   <data name="Explorer.SearchDone"><value>Search finished</value></data>

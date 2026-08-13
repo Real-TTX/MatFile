@@ -82,7 +82,10 @@ public class IndexModel : PageModel
             "Explorer.SectionLogin", "Explorer.Icon", "Explorer.Testing",
 
             // Rekursive Suche
-            "Explorer.SearchRecursive", "Explorer.SearchResults", "Explorer.SearchContent",
+            "Explorer.SearchRecursive", "Explorer.SearchContent",
+            "Explorer.SearchTab", "Explorer.SearchNewTab", "Explorer.SearchTerm",
+            "Explorer.SearchScope", "Explorer.SearchFolder", "Explorer.SearchWholeLocation",
+            "Explorer.SearchStart", "Explorer.SearchNothingYet", "Explorer.SearchPlaceholder",
             "Explorer.SearchRunning", "Explorer.SearchDone", "Explorer.SearchCancelled",
             "Explorer.SearchProgress", "Explorer.SearchHits", "Explorer.SearchNoHits",
             "Explorer.SearchTruncated", "Explorer.SearchQueryTooShort", "Explorer.ErrorQueryTooShort",

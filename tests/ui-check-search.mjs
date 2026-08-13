@@ -1,5 +1,5 @@
-// Prueft die rekursive Suche: Fortschritt, eigenes Fenster, Treffer aus Unterordnern,
-// Inhaltssuche und der Sprung in den Ordner des Treffers.
+// Prueft die erweiterte Suche als eigenen Tab: das Pluszeichen oeffnet sie,
+// Fortschritt und Treffer erscheinen im Tab, der Sprung in den Ordner nutzt den Ordnertab.
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdtempSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -82,7 +82,9 @@ const toolbar = await evaluate(`(() => ({
     placeholder: document.querySelector('#mfx-search')?.placeholder,
     goButton: !!document.querySelector('#mfx-search-go'),
     version: document.querySelector('#mfx-version')?.textContent?.replace(/\\s+/g, ' ').trim() || null,
-    rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent)
+    rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
+    addTitle: document.querySelector('.mfx-tab-add')?.title,
+    tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent)
 }))()`);
 
 // Tippen filtert nur den aktuellen Ordner
@@ -96,96 +98,129 @@ await sleep(300);
 
 const filtered = await evaluate(`[...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent)`);
 
-// Enter startet die Suche ueber alle Unterordner
-await evaluate(`(() => {
-    const box = document.querySelector('#mfx-search');
-    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    return true;
-})()`);
-await sleep(400);
+// Das Pluszeichen oeffnet die erweiterte Suche in einem neuen Tab
+await evaluate(`document.querySelector('.mfx-tab-add').click(); true;`);
+await sleep(700);
 
-const running = await evaluate(`(() => {
-    const win = document.querySelector('.mfx-window');
-    if (!win) return null;
+const searchTab = await evaluate(`(() => {
+    const view = document.querySelector('.mfx-search-view');
     return {
-        open: !win.hidden,
-        title: win.querySelector('.mfx-window-title')?.textContent,
-        sub: win.querySelector('.mfx-window-sub')?.textContent,
-        options: [...win.querySelectorAll('.mfx-window-option')].map(o => o.textContent.trim()),
-        stopVisible: !win.querySelectorAll('.mfx-window-foot .mf-btn')[0].hidden
+        opened: !!view,
+        tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent),
+        activeTab: document.querySelector('.mfx-tab.is-active .mfx-tab-title')?.textContent,
+        breadcrumb: document.querySelector('#mfx-breadcrumb')?.textContent?.trim(),
+        fields: [...document.querySelectorAll('.mfx-search-field > span')].map(e => e.textContent),
+        options: [...document.querySelectorAll('.mfx-search-options .mf-check span')].map(e => e.textContent),
+        scopeOptions: [...document.querySelectorAll('.mfx-search-field select option')].map(o => o.textContent),
+        buttons: [...document.querySelectorAll('.mfx-search-actions .mf-btn')].map(b => b.textContent.trim()),
+        stats: document.querySelector('.mfx-search-stats')?.textContent,
+        status: document.querySelector('#mfx-status')?.textContent?.trim(),
+        pinButton: !!document.querySelector('.mfx-tab.is-active .mfx-tab-pin'),
+        upDisabled: document.querySelector('#mfx-up')?.disabled,
+        uploadDisabled: document.querySelector('#mfx-upload')?.disabled
     };
 })()`);
 
-// Auf das Ende der Suche warten
+// Suchbegriff eintragen und suchen
+await evaluate(`(() => {
+    const term = document.querySelector('.mfx-search-term');
+    term.value = 'zebra';
+    term.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('.mfx-search-actions .mf-btn-primary').click();
+    return true;
+})()`);
+
 let done = null;
 for (let i = 0; i < 40; i++) {
     done = await evaluate(`(() => {
-        const win = document.querySelector('.mfx-window');
-        const foot = win.querySelector('.mfx-window-foot');
+        const view = document.querySelector('.mfx-search-view');
         return {
-            stats: win.querySelector('.mfx-search-stats')?.textContent,
-            count: win.querySelector('.mfx-search-count')?.textContent,
-            percent: win.querySelector('.mfx-progress-fill')?.style.width,
-            finished: foot.querySelectorAll('.mf-btn')[0].hidden,
-            hits: [...win.querySelectorAll('.mfx-hit')].map(h => ({
+            stats: view.querySelector('.mfx-search-stats')?.textContent,
+            percent: view.querySelector('.mfx-progress-fill')?.style.width,
+            status: document.querySelector('#mfx-status')?.textContent?.trim(),
+            tabTitle: document.querySelector('.mfx-tab.is-active .mfx-tab-title')?.textContent,
+            stopDisabled: [...view.querySelectorAll('.mfx-search-actions .mf-btn')][1].disabled,
+            hits: [...view.querySelectorAll('.mfx-hit')].map(h => ({
                 name: h.querySelector('.mfx-hit-name')?.textContent,
                 path: h.querySelector('.mfx-hit-path')?.textContent,
                 snippet: h.querySelector('.mfx-hit-snippet')?.textContent || null
             }))
         };
     })()`);
-    if (done && done.finished) break;
+    if (done && done.stopDisabled) break;
     await sleep(250);
 }
 
 const shot = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(OUT, Buffer.from(shot.data, 'base64'));
 
-// Inhaltssuche einschalten - die Suche laeuft neu
+// Inhaltssuche einschalten und erneut suchen
 await evaluate(`(() => {
-    document.querySelector('.mfx-window .mfx-window-option input').click();
+    document.querySelector('.mfx-search-options .mf-check input').click();
+    document.querySelector('.mfx-search-actions .mf-btn-primary').click();
     return true;
 })()`);
-await sleep(400);
 
 let withContent = null;
 for (let i = 0; i < 40; i++) {
     withContent = await evaluate(`(() => {
-        const win = document.querySelector('.mfx-window');
+        const view = document.querySelector('.mfx-search-view');
         return {
-            finished: win.querySelector('.mfx-window-foot .mf-btn').hidden,
-            count: win.querySelector('.mfx-search-count')?.textContent,
-            hits: [...win.querySelectorAll('.mfx-hit')].map(h => ({
+            finished: [...view.querySelectorAll('.mfx-search-actions .mf-btn')][1].disabled,
+            status: document.querySelector('#mfx-status')?.textContent?.trim(),
+            hits: [...view.querySelectorAll('.mfx-hit')].map(h => ({
                 name: h.querySelector('.mfx-hit-name')?.textContent,
                 snippet: h.querySelector('.mfx-hit-snippet')?.textContent || null,
                 marked: h.querySelector('.mfx-hit-snippet mark')?.textContent || null
             }))
         };
     })()`);
-    if (withContent && withContent.finished) break;
+    if (withContent && withContent.finished && withContent.hits.length > 0) break;
     await sleep(250);
 }
 
 const contentShot = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(OUT.replace(/\.png$/, '-content.png'), Buffer.from(contentShot.data, 'base64'));
 
-// Im Ordner anzeigen: der Treffer mit Fundstelle
+// Im Ordner anzeigen: springt im Ordnertab, der Suchtab bleibt offen
 await evaluate(`(() => {
-    const hit = [...document.querySelectorAll('.mfx-window .mfx-hit')]
-        .find(h => h.querySelector('.mfx-hit-snippet'));
-    (hit || document.querySelector('.mfx-window .mfx-hit')).querySelector('.mfx-btn').click();
+    const hit = [...document.querySelectorAll('.mfx-hit')].find(h => h.querySelector('.mfx-hit-snippet'))
+        || document.querySelector('.mfx-hit');
+    hit.querySelector('.mfx-btn').click();
     return true;
 })()`);
-await sleep(1500);
+await sleep(1600);
 
 const revealed = await evaluate(`(() => ({
     breadcrumb: [...document.querySelectorAll('#mfx-breadcrumb .mfx-crumb')].map(c => c.textContent),
     selected: [...document.querySelectorAll('.mfx-row.is-selected .mfx-name')].map(e => e.textContent),
     rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
-    windowStillOpen: !document.querySelector('.mfx-window').hidden
+    tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent),
+    activeTab: document.querySelector('.mfx-tab.is-active .mfx-tab-title')?.textContent,
+    searchTabStillThere: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].some(e => e.textContent.startsWith('Suche'))
 }))()`);
 
-console.log(JSON.stringify({ toolbar, filtered, running, done, withContent, revealed, consoleErrors }, null, 2));
+// Zurueck in den Suchtab: die Treffer stehen noch
+await evaluate(`(() => {
+    const tab = [...document.querySelectorAll('.mfx-tab')]
+        .find(t => t.querySelector('.mfx-tab-title').textContent.startsWith('Suche'));
+    tab.click();
+    return true;
+})()`);
+await sleep(900);
+
+const backInSearch = await evaluate(`(() => {
+    const view = document.querySelector('.mfx-search-view');
+    return {
+        view: !!view,
+        term: view?.querySelector('.mfx-search-term')?.value,
+        hits: view ? view.querySelectorAll('.mfx-hit').length : 0,
+        status: document.querySelector('#mfx-status')?.textContent?.trim(),
+        toolbarField: document.querySelector('#mfx-search')?.value
+    };
+})()`);
+
+console.log(JSON.stringify({ toolbar, filtered, searchTab, done, withContent, revealed, backInSearch, consoleErrors }, null, 2));
 
 socket.close();
 edge.kill();

@@ -73,7 +73,7 @@ node .\tests\ui-check.mjs http://localhost:2222 admin admin .\explorer.png
 # Speicherort über das Pluszeichen anlegen, bearbeiten, entfernen
 node .\tests\ui-check-locations.mjs http://localhost:2222 admin .\rootflow.png
 
-# Rekursive Suche: Fortschritt, Ergebnisfenster, Inhaltssuche, Sprung in den Ordner
+# Erweiterte Suche als Tab: Pluszeichen, Fortschritt, Inhaltssuche, Sprung in den Ordner
 node .\tests\ui-check-search.mjs http://localhost:2222 admin Suche .\search.png
 
 # Verwaltungsdialoge: Benutzer, Rollen, Rechtematrix eines Speicherorts
@@ -90,7 +90,7 @@ mit `-SeedPassword <kennwort>` übergeben.
 | `test-auth.ps1` | Zugriffsschutz, Anmeldung, Kontosperre, erzwungener Kennwortwechsel, Sitzung übersteht Container-Neustart, Abmeldung, Sprachumschaltung und gespeicherte Sprachwahl, `/healthz` |
 | `test-admin.ps1` | Verwaltung über die API: Benutzerliste mit Suche/Sortierung/Seiten, Benutzer anlegen/ändern/löschen, doppelter Benutzername, Kennwortpflicht, Rollen anlegen/ändern/löschen samt Rechtekatalog, Schutz von Systemrollen, benutzten Rollen und des eigenen Kontos, Rechteprüfung für Nicht-Administratoren, entfernte Adminseiten, Oberfläche auf Deutsch |
 | `test-storage.ps1` | Speicherorte anlegen inkl. Pfadprüfungen (relativ, fehlend, Datenverzeichnis, fehlender Name, doppelter Name), Rechtematrix je Rolle inkl. nachträglicher Erweiterung, Listing-API, Sortierung Ordner vor Dateien, ausgeblendete Symlinks nach außen, blockierte Pfadausbrüche, Sichtbarkeit je Rolle, API ohne Anmeldung gesperrt, **Speicherort auf der Containerwurzel `/`** mit unsichtbarem Datenverzeichnis |
-| `test-search.ps1` | Rekursive Suche nach Namen über mehrere Ebenen, Ordner als Treffer, Schreibweise egal, Suche ab einem Unterordner, Inhaltssuche mit Fundstelle als Textzeile, übersprungene Binärdateien, versteckte Dateien nur auf Wunsch, Fortschrittszählung, Abbruch, stückweises Nachladen der Treffer, zu kurze Eingabe, Inhaltssuche ohne Downloadrecht gesperrt, fremde Suche nicht lesbar |
+| `test-search.ps1` | Suche nach Namen über mehrere Ebenen, Ordner als Treffer, Schreibweise egal, Suche ab einem Unterordner, Inhaltssuche mit Fundstelle als Textzeile, übersprungene Binärdateien, versteckte Dateien nur auf Wunsch, Fortschrittszählung, Abbruch, stückweises Nachladen der Treffer, zu kurze Eingabe, Inhaltssuche ohne Downloadrecht gesperrt, fremde Suche nicht lesbar |
 
 | `test-remote.ps1` | Verbindungstest mit richtigem und falschem Kennwort, Zugangsdaten verschlüsselt gespeichert (Klartext-Suche in der Datenbank), **SFTP, WebDAV, FTP und SMB** jeweils lesen/schreiben/umbenennen/löschen, **Kopieren zwischen lokalem Speicher und Gegenstelle in beide Richtungen**, Pfadausbruch blockiert, Basispfad begrenzt den Zugriff, Statusabfrage für die Seitenleiste (erreichbar und Ausfall). Startet die Testserver `sftp`, `webdav`, `ftp` und `smb` über das Compose-Profil `testing`. |
 | `test-preview.ps1` | Vorschautypen im Listing, Bild inline mit Schutzheadern, Video per Range-Anfrage, **HTML und unbekannte Typen nie inline**, Textvorschau inkl. Kürzung großer Dateien, Protokoll zu einem Eintrag, Vorschau ohne Downloadrecht und ohne Anmeldung gesperrt |

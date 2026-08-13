@@ -343,7 +343,14 @@
 
   <data name="Explorer.SearchPlaceholder"><value>Filtern · Enter durchsucht Unterordner</value></data>
   <data name="Explorer.SearchRecursive"><value>In allen Unterordnern suchen</value></data>
-  <data name="Explorer.SearchResults"><value>Suchergebnisse</value></data>
+  <data name="Explorer.SearchTab"><value>Suche</value></data>
+  <data name="Explorer.SearchNewTab"><value>Erweiterte Suche in neuem Tab</value></data>
+  <data name="Explorer.SearchTerm"><value>Suchbegriff</value></data>
+  <data name="Explorer.SearchScope"><value>Speicherort</value></data>
+  <data name="Explorer.SearchFolder"><value>Ordner</value></data>
+  <data name="Explorer.SearchWholeLocation"><value>gesamter Speicherort</value></data>
+  <data name="Explorer.SearchStart"><value>Suchen</value></data>
+  <data name="Explorer.SearchNothingYet"><value>Noch keine Suche gestartet</value></data>
   <data name="Explorer.SearchContent"><value>Dateiinhalte durchsuchen</value></data>
   <data name="Explorer.SearchRunning"><value>Suche läuft</value></data>
   <data name="Explorer.SearchDone"><value>Suche abgeschlossen</value></data>

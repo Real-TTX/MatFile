@@ -122,7 +122,11 @@ a:hover {
     display: flex;
     align-items: center;
     gap: var(--mf-space-3);
+    /* Feste Höhe und nicht schrumpfbar: sonst nimmt der Umbruch der Kopfzeile
+       Höhe weg, sobald der Inhalt darunter wächst - die Seite würde wackeln. */
+    flex: 0 0 auto;
     height: var(--mf-topbar-height);
+    min-height: var(--mf-topbar-height);
     padding: 0 var(--mf-space-4);
     background: var(--mf-surface);
     border-bottom: 1px solid var(--mf-border);

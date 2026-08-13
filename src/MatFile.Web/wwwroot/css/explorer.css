@@ -469,10 +469,13 @@
 
 /* --- Menüleiste über den Tabs --- */
 
+/* Alle Leisten der Hülle sind starr - nur die Dateiliste gibt Höhe her. */
 .mfx-menubar {
     display: flex;
     align-items: center;
     gap: 2px;
+    flex: 0 0 auto;
+    min-height: 34px;
     padding: 2px var(--mf-space-2);
     background: var(--mf-surface);
     border-bottom: 1px solid var(--mf-border);
@@ -497,10 +500,16 @@
     display: flex;
     align-items: stretch;
     gap: var(--mf-space-1);
+    /* Höhe = Innenabstand + Tabhöhe + Rahmen. Ohne diese Angabe schrumpft die
+       Leiste unter die Tabs und schneidet sie unten ab. */
+    flex: 0 0 auto;
+    height: 47px;
+    min-height: 47px;
     padding: var(--mf-space-2) var(--mf-space-2) 0;
     background: var(--mf-surface-alt);
     border-bottom: 1px solid var(--mf-border);
     overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
 }
 
@@ -578,6 +587,7 @@
     display: flex;
     align-items: center;
     gap: var(--mf-space-1);
+    flex: 0 0 auto;
     min-height: 52px;
     padding: var(--mf-space-2) var(--mf-space-3);
     border-bottom: 1px solid var(--mf-border);
@@ -703,6 +713,9 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    /* Platz für die Bildlaufleiste bleibt immer reserviert, sonst rutschen die
+       Spalten seitwärts, sobald eine Liste lang genug wird. */
+    scrollbar-gutter: stable;
     outline: none;
 }
 
@@ -1249,87 +1262,6 @@
     color: var(--mf-danger);
 }
 
-/* --- Eigenes Fenster: Suchergebnisse --- */
-
-.mfx-window {
-    position: fixed;
-    right: var(--mf-space-4);
-    bottom: var(--mf-space-4);
-    z-index: 60;
-    display: flex;
-    flex-direction: column;
-    width: 620px;
-    max-width: calc(100vw - 2 * var(--mf-space-4));
-    max-height: min(70vh, 640px);
-    background: var(--mf-surface);
-    border: 1px solid var(--mf-border);
-    border-radius: var(--mf-radius-lg);
-    box-shadow: var(--mf-shadow);
-    overflow: hidden;
-}
-
-.mfx-window[hidden] {
-    display: none;
-}
-
-.mfx-window.is-dragging {
-    user-select: none;
-}
-
-.mfx-window-head {
-    display: flex;
-    align-items: center;
-    gap: var(--mf-space-2);
-    padding: var(--mf-space-2) var(--mf-space-3);
-    border-bottom: 1px solid var(--mf-border);
-    background: var(--mf-surface-alt);
-    cursor: grab;
-}
-
-.mfx-window.is-dragging .mfx-window-head {
-    cursor: grabbing;
-}
-
-.mfx-window-titles {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.mfx-window-title {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.mfx-window-sub {
-    font-size: 12px;
-    color: var(--mf-text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.mfx-window-tools {
-    display: flex;
-    align-items: center;
-    gap: var(--mf-space-4);
-    padding: var(--mf-space-2) var(--mf-space-3);
-    border-bottom: 1px solid var(--mf-border);
-    font-size: 13px;
-}
-
-.mfx-window-option {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--mf-space-2);
-    cursor: pointer;
-}
-
-.mfx-window-tools .mf-btn {
-    margin-left: auto;
-}
-
 .mfx-search-progress {
     padding: var(--mf-space-2) var(--mf-space-3);
     border-bottom: 1px solid var(--mf-border);
@@ -1432,15 +1364,82 @@
     font-variant-numeric: tabular-nums;
 }
 
-.mfx-window-foot {
+/* --- Erweiterte Suche als eigener Tab --- */
+
+.mfx-search-view {
     display: flex;
-    align-items: center;
-    gap: var(--mf-space-2);
-    padding: var(--mf-space-2) var(--mf-space-3);
-    border-top: 1px solid var(--mf-border);
-    background: var(--mf-surface-alt);
-    font-size: 13px;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.mfx-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--mf-space-3);
+    flex: 0 0 auto;
+    padding: var(--mf-space-4) var(--mf-space-4) var(--mf-space-3);
+    border-bottom: 1px solid var(--mf-border);
+    background: var(--mf-surface);
+}
+
+.mfx-search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    min-width: 0;
+}
+
+.mfx-search-field > span {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
     color: var(--mf-text-muted);
+}
+
+.mfx-search-field input,
+.mfx-search-field select {
+    height: 34px;
+    padding: 0 var(--mf-space-3);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-bg);
+    color: var(--mf-text);
+    font: inherit;
+    font-size: 14px;
+}
+
+.mfx-search-field:first-child {
+    flex: 1 1 260px;
+}
+
+.mfx-search-field:nth-child(3) {
+    flex: 1 1 200px;
+}
+
+.mfx-search-options {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+}
+
+.mfx-search-actions {
+    margin: 0;
+}
+
+.mfx-search-empty {
+    padding: var(--mf-space-5) var(--mf-space-4);
+    text-align: center;
+    list-style: none;
+}
+
+.mfx-crumb-static {
+    padding: 0 var(--mf-space-1);
+    font-weight: 600;
 }
 
 /* --- Rahmenauswahl, Meldungen, Statuszeile --- */
@@ -1463,6 +1462,7 @@
     display: flex;
     align-items: center;
     gap: var(--mf-space-4);
+    flex: 0 0 auto;
     min-height: 32px;
     padding: var(--mf-space-1) var(--mf-space-3);
     border-top: 1px solid var(--mf-border);
@@ -1646,12 +1646,14 @@
 }
 
 @media (max-width: 720px) {
-    .mfx-window {
-        left: var(--mf-space-2);
-        right: var(--mf-space-2);
-        bottom: var(--mf-space-2);
-        width: auto;
-        max-height: 80vh;
+    .mfx-search-form {
+        gap: var(--mf-space-2);
+        padding: var(--mf-space-3);
+    }
+
+    .mfx-search-field:first-child,
+    .mfx-search-field:nth-child(3) {
+        flex: 1 1 100%;
     }
 
     .mfx-hit-meta {

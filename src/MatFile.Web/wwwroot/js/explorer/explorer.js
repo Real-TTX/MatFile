@@ -4,7 +4,7 @@ import { askName, askConfirm, showFacts, flash } from './dialogs.js';
 import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
-import { openSearch } from './search.js';
+import { newSearch, startSearch, cancelSearch, disposeSearch, isRunning } from './search.js';
 import { openUsers, openRoles, openLocations } from './manage.js';
 
 const can = window.matfileCan || {};
@@ -55,6 +55,8 @@ const activeTab = () => state.tabs[state.active];
 
 function createTab(rootId, path, pinned) {
     return {
+        kind: 'folder',
+        search: null,
         rootId,
         rootName: '',
         path: path || '',
@@ -141,6 +143,12 @@ async function activate(index, push) {
     state.active = index;
     const tab = activeTab();
 
+    // Ein Suchtab holt nichts nach - seine Treffer stehen schon im Zustand.
+    if (tab.kind === 'search') {
+        renderAll();
+        return;
+    }
+
     if (tab.entries.length === 0 && tab.historyIndex < 0) {
         await navigate(tab, tab.rootId, tab.path, push !== false);
     } else {
@@ -160,6 +168,10 @@ async function openTab(rootId, path, activateNew) {
 async function closeTab(index) {
     if (state.tabs.length <= 1) {
         return;
+    }
+
+    if (state.tabs[index].search) {
+        disposeSearch(state.tabs[index].search);
     }
 
     state.tabs.splice(index, 1);
@@ -184,9 +196,10 @@ let persistTimer = null;
 function persistTabs() {
     clearTimeout(persistTimer);
     persistTimer = setTimeout(() => {
+        // Suchtabs sind flüchtig und werden nicht gemerkt.
         const pinned = state.tabs
             .map((tab, index) => ({ tab, index }))
-            .filter(item => item.tab.pinned)
+            .filter(item => item.tab.pinned && item.tab.kind !== 'search')
             .map((item, order) => ({
                 rootId: item.tab.rootId,
                 path: item.tab.path,
@@ -307,10 +320,29 @@ function renderAll() {
     renderStatus();
     renderDetails();
     renderToolbarState();
+    syncSearchField();
     highlightSidebar();
 }
 
+/** Das Suchfeld filtert im Ordnertab und trägt im Suchtab den Suchbegriff. */
+function syncSearchField() {
+    const tab = activeTab();
+
+    if (tab && tab.kind === 'search') {
+        el.search.value = tab.search.term;
+        el.search.placeholder = t('SearchTerm');
+        return;
+    }
+
+    el.search.value = state.filter;
+    el.search.placeholder = t('SearchPlaceholder');
+}
+
 function tabTitle(tab) {
+    if (tab.kind === 'search') {
+        return tab.search.term ? `${t('SearchTab')}: ${tab.search.term}` : t('SearchTab');
+    }
+
     if (tab.path) {
         return tab.path.split('/').pop();
     }
@@ -418,6 +450,12 @@ async function reloadRoots() {
     }
 
     const tab = activeTab();
+
+    // Ein Suchtab hängt an keinem Ordner - er bleibt, wie er ist.
+    if (tab.kind === 'search') {
+        renderAll();
+        return;
+    }
 
     if (state.roots.some(root => root.id === tab.rootId)) {
         await reload();
@@ -576,6 +614,7 @@ function highlightSidebar() {
 
     el.sidebar.querySelectorAll('.mfx-side-item').forEach(item => {
         const matches = tab
+            && tab.kind !== 'search'
             && Number(item.dataset.rootId) === tab.rootId
             && item.dataset.path === tab.path;
 
@@ -592,19 +631,22 @@ function renderTabs() {
         item.setAttribute('role', 'tab');
         item.setAttribute('aria-selected', index === state.active ? 'true' : 'false');
 
-        item.appendChild(icon('folder', 14));
+        item.appendChild(icon(tab.kind === 'search' ? 'search-deep' : 'folder', 14));
 
         const label = document.createElement('span');
         label.className = 'mfx-tab-title';
         label.textContent = tabTitle(tab);
         item.appendChild(label);
 
-        const pin = button('mfx-tab-pin', 'pin', tab.pinned ? t('Unpin') : t('Pin'), event => {
-            event.stopPropagation();
-            togglePin(index);
-        });
-        pin.classList.toggle('is-pinned', tab.pinned);
-        item.appendChild(pin);
+        // Suchtabs lassen sich nicht anheften - sie werden nicht gemerkt.
+        if (tab.kind !== 'search') {
+            const pin = button('mfx-tab-pin', 'pin', tab.pinned ? t('Unpin') : t('Pin'), event => {
+                event.stopPropagation();
+                togglePin(index);
+            });
+            pin.classList.toggle('is-pinned', tab.pinned);
+            item.appendChild(pin);
+        }
 
         if (state.tabs.length > 1) {
             item.appendChild(button('mfx-tab-close', 'x', t('CloseTab'), event => {
@@ -624,10 +666,8 @@ function renderTabs() {
         el.tabs.appendChild(item);
     });
 
-    const add = button('mfx-tab-add', 'plus', t('NewTab'), () => {
-        const tab = activeTab();
-        openTab(tab ? tab.rootId : state.roots[0].id, tab ? tab.path : '');
-    });
+    // Das Pluszeichen öffnet die erweiterte Suche in einem neuen Tab.
+    const add = button('mfx-tab-add', 'plus', t('SearchNewTab'), () => openSearchTab('', false));
 
     el.tabs.appendChild(add);
 }
@@ -637,6 +677,15 @@ function renderBreadcrumb() {
 
     const tab = activeTab();
     if (!tab) {
+        return;
+    }
+
+    if (tab.kind === 'search') {
+        const label = document.createElement('span');
+        label.className = 'mfx-crumb-static';
+        label.textContent = t('SearchTab');
+        el.breadcrumb.appendChild(icon('search-deep', 14));
+        el.breadcrumb.appendChild(label);
         return;
     }
 
@@ -698,6 +747,12 @@ function visibleEntries(tab) {
 
 function renderListing() {
     const tab = activeTab();
+
+    if (tab && tab.kind === 'search') {
+        renderSearchView(tab);
+        return;
+    }
+
     el.listing.replaceChildren();
 
     if (!tab) {
@@ -882,6 +937,22 @@ function renderStatus() {
         return;
     }
 
+    if (tab.kind === 'search') {
+        const info = document.createElement('span');
+        info.textContent = tab.search.state === 'idle'
+            ? t('SearchNothingYet')
+            : t('SearchHits').replace('{0}', tab.search.total.toLocaleString());
+        el.status.appendChild(info);
+
+        if (tab.search.truncated) {
+            const limit = document.createElement('span');
+            limit.textContent = t('SearchTruncated');
+            el.status.appendChild(limit);
+        }
+
+        return;
+    }
+
     const entries = visibleEntries(tab);
 
     if (tab.selection.size > 0) {
@@ -916,13 +987,15 @@ function renderStatus() {
 let detailsTab = 'details';
 
 function renderDetails() {
-    el.details.hidden = !state.settings.showDetails;
+    const tab = activeTab();
 
-    if (!state.settings.showDetails) {
+    // Im Suchtab gibt es keine Auswahl, zu der ein Detailbereich passen würde.
+    const show = state.settings.showDetails && (!tab || tab.kind !== 'search');
+    el.details.hidden = !show;
+
+    if (!show) {
         return;
     }
-
-    const tab = activeTab();
     el.details.replaceChildren();
 
     if (!tab) {
@@ -1056,14 +1129,17 @@ function renderDetails() {
 
 function renderToolbarState() {
     const tab = activeTab();
+    const isSearch = !!tab && tab.kind === 'search';
 
-    el.back.disabled = !tab || tab.historyIndex <= 0;
-    el.forward.disabled = !tab || tab.historyIndex >= tab.history.length - 1;
-    el.up.disabled = !tab || tab.parentPath === null || tab.parentPath === undefined;
+    el.back.disabled = isSearch || !tab || tab.historyIndex <= 0;
+    el.forward.disabled = isSearch || !tab || tab.historyIndex >= tab.history.length - 1;
+    el.up.disabled = isSearch || !tab || tab.parentPath === null || tab.parentPath === undefined;
 
     const rights = permissions();
-    el.upload.disabled = !rights.canUpload;
-    el.newFolder.disabled = !rights.canWrite;
+    el.upload.disabled = isSearch || !rights.canUpload;
+    el.newFolder.disabled = isSearch || !rights.canWrite;
+    el.refresh.disabled = false;
+    el.view.disabled = isSearch;
 }
 
 function applySettingsToToolbar() {
@@ -1260,9 +1336,20 @@ function permissions() {
 
 async function reload() {
     const tab = activeTab();
-    if (tab) {
-        await navigate(tab, tab.rootId, tab.path, false);
+    if (!tab) {
+        return;
     }
+
+    // Im Suchtab heißt aktualisieren: noch einmal suchen.
+    if (tab.kind === 'search') {
+        if (tab.search.term.trim().length >= 2) {
+            runSearch(tab);
+        }
+
+        return;
+    }
+
+    await navigate(tab, tab.rootId, tab.path, false);
 }
 
 function handleError(error) {
@@ -1421,38 +1508,58 @@ async function addBookmark(entry) {
     highlightSidebar();
 }
 
-// ---------------------------------------------------------------- Rekursive Suche
+// ---------------------------------------------------------------- Erweiterte Suche
 
-/** Sucht ab dem aktuellen Ordner über alle Unterordner - in einem eigenen Fenster. */
-function startSearch(withContent) {
-    const tab = activeTab();
-    if (!tab) {
+/** Ein Tab, der nicht einen Ordner zeigt, sondern eine Suche. */
+function createSearchTab(rootId, path, term) {
+    const tab = createTab(rootId, path, false);
+
+    tab.kind = 'search';
+    tab.search = newSearch(rootId, path);
+    tab.search.term = term || '';
+    tab.search.hidden = state.settings.showHidden;
+
+    return tab;
+}
+
+/** Öffnet die erweiterte Suche in einem neuen Tab - der Bereich ist der aktuelle Ordner. */
+async function openSearchTab(term, startNow) {
+    const current = activeTab();
+    const rootId = current ? current.rootId : (state.roots[0] || {}).id;
+
+    if (rootId === undefined || rootId === null) {
+        flash(noRootsText(), true);
         return;
     }
 
-    const query = el.search.value.trim();
+    const tab = createSearchTab(rootId, current && current.kind !== 'search' ? current.path : '', term);
+    state.tabs.push(tab);
+    state.active = state.tabs.length - 1;
 
-    if (query.length < 2) {
+    renderAll();
+
+    if (startNow && tab.search.term.trim().length >= 2) {
+        runSearch(tab);
+    } else {
+        const field = el.listing.querySelector('.mfx-search-term');
+        (field || el.search).focus();
+    }
+}
+
+/** Startet die Suche des Tabs, sofern die Eingabe lang genug ist. */
+function runSearch(tab) {
+    if (tab.search.term.trim().length < 2) {
         flash(t('SearchQueryTooShort').replace('{0}', 2), true);
-        el.search.focus();
         return;
     }
 
-    const rootId = tab.rootId;
-
-    openSearch(
-        {
-            rootId,
-            rootName: tab.rootName,
-            path: tab.path,
-            query,
-            content: withContent,
-            includeHidden: state.settings.showHidden
-        },
-        {
-            open: hit => openHit(rootId, hit),
-            reveal: hit => revealHit(rootId, hit)
-        });
+    startSearch(tab.search, () => {
+        if (activeTab() === tab) {
+            updateSearchView(tab);
+            renderStatus();
+            renderTabs();
+        }
+    });
 }
 
 /** Rechte eines Speicherorts, auch wenn gerade ein anderer Tab aktiv ist. */
@@ -1463,7 +1570,7 @@ function rootRights(rootId) {
 /** Treffer öffnen: Ordner betreten, Datei anzeigen oder herunterladen. */
 async function openHit(rootId, hit) {
     if (hit.isDirectory) {
-        await revealTarget(rootId, hit.path, null);
+        await revealInFolderTab(rootId, hit.path, null);
         return;
     }
 
@@ -1480,32 +1587,341 @@ async function openHit(rootId, hit) {
     window.location.href = api.downloadUrl(rootId, hit.path);
 }
 
-/** Zum Ordner des Treffers springen und ihn dort markieren. */
-function revealHit(rootId, hit) {
-    return revealTarget(rootId, hit.parentPath || '', hit.path);
-}
+/**
+ * Zeigt den Treffer in einem Ordnertab: der Suchtab bleibt mit seinen
+ * Ergebnissen offen, gesprungen wird im nächstgelegenen Ordnertab.
+ */
+async function revealInFolderTab(rootId, path, selectPath) {
+    let index = -1;
 
-async function revealTarget(rootId, path, selectPath) {
-    const tab = activeTab();
-    if (!tab) {
-        return;
+    for (let i = state.active - 1; i >= 0; i--) {
+        if (state.tabs[i].kind !== 'search') {
+            index = i;
+            break;
+        }
     }
 
-    await navigate(tab, rootId, path);
+    if (index < 0) {
+        index = state.tabs.findIndex(tab => tab.kind !== 'search');
+    }
+
+    if (index < 0) {
+        state.tabs.push(createTab(rootId, path));
+        index = state.tabs.length - 1;
+    }
+
+    const target = state.tabs[index];
+    state.active = index;
+
+    await navigate(target, rootId, path);
 
     if (!selectPath) {
         return;
     }
 
-    tab.selection.clear();
-    tab.selection.add(selectPath);
-    tab.anchor = selectPath;
+    target.selection.clear();
+    target.selection.add(selectPath);
+    target.anchor = selectPath;
     selectionChanged();
 
     const row = el.listing.querySelector(`.mfx-row[data-path="${CSS.escape(selectPath)}"]`);
     if (row) {
         row.scrollIntoView({ block: 'center' });
     }
+}
+
+// ---------------------------------------------------------------- Anzeige der Suche
+
+function searchStateText(search) {
+    if (search.state === 'running') {
+        return t('SearchRunning');
+    }
+
+    if (search.state === 'completed') {
+        return t('SearchDone');
+    }
+
+    if (search.state === 'cancelled') {
+        return t('SearchCancelled');
+    }
+
+    if (search.state === 'failed') {
+        return t(errorKey(search.error), t('Error'));
+    }
+
+    return t('SearchNothingYet');
+}
+
+function renderSearchView(tab) {
+    const search = tab.search;
+
+    const view = document.createElement('div');
+    view.className = 'mfx-search-view';
+
+    // --- Suchformular
+    const form = document.createElement('div');
+    form.className = 'mfx-search-form';
+
+    const term = document.createElement('input');
+    term.type = 'search';
+    term.className = 'mfx-search-term';
+    term.value = search.term;
+    term.placeholder = t('SearchTerm');
+    term.setAttribute('aria-label', t('SearchTerm'));
+    term.addEventListener('input', () => {
+        search.term = term.value;
+        el.search.value = term.value;
+    });
+    term.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            runSearch(tab);
+        }
+    });
+    form.appendChild(labelled(t('SearchTerm'), term));
+
+    const scope = document.createElement('select');
+    state.roots.forEach(root => {
+        const option = document.createElement('option');
+        option.value = root.id;
+        option.textContent = root.name;
+        option.selected = root.id === search.scopeRootId;
+        scope.appendChild(option);
+    });
+    scope.addEventListener('change', () => {
+        search.scopeRootId = Number(scope.value);
+        tab.rootId = search.scopeRootId;
+    });
+    form.appendChild(labelled(t('SearchScope'), scope));
+
+    const folder = document.createElement('input');
+    folder.type = 'text';
+    folder.className = 'mf-mono';
+    folder.value = search.scopePath;
+    folder.placeholder = t('SearchWholeLocation');
+    folder.addEventListener('input', () => {
+        search.scopePath = folder.value.trim();
+    });
+    form.appendChild(labelled(t('SearchFolder'), folder));
+
+    const options = document.createElement('div');
+    options.className = 'mfx-search-options';
+    options.appendChild(searchOption(t('SearchContent'), search.content, value => { search.content = value; }));
+    options.appendChild(searchOption(t('ShowHidden'), search.hidden, value => { search.hidden = value; }));
+    form.appendChild(options);
+
+    const actions = document.createElement('div');
+    actions.className = 'mf-actions mfx-search-actions';
+
+    const start = document.createElement('button');
+    start.type = 'button';
+    start.className = 'mf-btn mf-btn-primary';
+    start.appendChild(icon('search-deep', 14));
+    start.appendChild(document.createTextNode(t('SearchStart')));
+    start.addEventListener('click', () => runSearch(tab));
+    actions.appendChild(start);
+
+    const stop = document.createElement('button');
+    stop.type = 'button';
+    stop.className = 'mf-btn';
+    stop.textContent = t('Cancel');
+    stop.disabled = !isRunning(search);
+    stop.addEventListener('click', () => cancelSearch(search));
+    actions.appendChild(stop);
+
+    form.appendChild(actions);
+    view.appendChild(form);
+
+    // --- Fortschritt
+    const progress = document.createElement('div');
+    progress.className = 'mfx-search-progress';
+
+    const bar = document.createElement('div');
+    bar.className = 'mfx-progress';
+    const fill = document.createElement('div');
+    fill.className = 'mfx-progress-fill';
+    bar.appendChild(fill);
+    progress.appendChild(bar);
+
+    const stats = document.createElement('div');
+    stats.className = 'mfx-search-stats';
+    progress.appendChild(stats);
+
+    const current = document.createElement('div');
+    current.className = 'mfx-search-current';
+    progress.appendChild(current);
+
+    view.appendChild(progress);
+
+    // --- Treffer
+    const hits = document.createElement('ul');
+    hits.className = 'mfx-search-hits';
+    view.appendChild(hits);
+
+    el.listing.replaceChildren(view);
+
+    tab.view = { fill, stats, current, hits, stop, rendered: 0 };
+    updateSearchView(tab);
+}
+
+function labelled(text, input) {
+    const field = document.createElement('label');
+    field.className = 'mf-field mfx-search-field';
+
+    const caption = document.createElement('span');
+    caption.textContent = text;
+    field.appendChild(caption);
+    field.appendChild(input);
+
+    return field;
+}
+
+function searchOption(text, checked, onChange) {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'mf-check';
+
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = checked;
+    box.addEventListener('change', () => onChange(box.checked));
+
+    const caption = document.createElement('span');
+    caption.textContent = text;
+
+    wrapper.append(box, caption);
+    return wrapper;
+}
+
+/** Fortschritt auffrischen und neue Treffer anhängen - ohne alles neu zu bauen. */
+function updateSearchView(tab) {
+    const view = tab.view;
+    const search = tab.search;
+
+    if (!view || !view.hits.isConnected) {
+        return;
+    }
+
+    // Neuer Lauf: die Trefferliste beginnt wieder bei null.
+    if (view.rendered > search.hits.length) {
+        view.hits.replaceChildren();
+        view.rendered = 0;
+    }
+
+    view.fill.style.width = `${search.percent}%`;
+    view.stop.disabled = !isRunning(search);
+
+    const scanned = t('SearchProgress')
+        .replace('{0}', search.folders.toLocaleString())
+        .replace('{1}', search.files.toLocaleString());
+
+    view.stats.textContent = search.state === 'idle'
+        ? t('SearchNothingYet')
+        : `${searchStateText(search)} · ${scanned}`;
+
+    view.current.textContent = search.current ? `${rootName(search.scopeRootId)}/${search.current}` : '';
+
+    for (let i = view.rendered; i < search.hits.length; i++) {
+        view.hits.appendChild(hitRow(tab, search.hits[i]));
+    }
+
+    view.rendered = search.hits.length;
+
+    if (search.state !== 'running' && search.hits.length === 0) {
+        const empty = el.listing.querySelector('.mfx-search-empty');
+
+        if (!empty && search.state !== 'idle') {
+            const note = document.createElement('li');
+            note.className = 'mfx-search-empty mf-muted';
+            note.textContent = t('SearchNoHits');
+            view.hits.appendChild(note);
+        }
+    }
+}
+
+function rootName(rootId) {
+    return (state.roots.find(root => root.id === rootId) || {}).name || '';
+}
+
+/** Schreibt Text und hebt die Fundstelle hervor - ohne HTML aus dem Inhalt. */
+function highlight(target, text, needle) {
+    const index = needle ? text.toLowerCase().indexOf(needle.toLowerCase()) : -1;
+
+    if (index < 0) {
+        target.textContent = text;
+        return;
+    }
+
+    target.appendChild(document.createTextNode(text.slice(0, index)));
+
+    const mark = document.createElement('mark');
+    mark.textContent = text.slice(index, index + needle.length);
+    target.appendChild(mark);
+
+    target.appendChild(document.createTextNode(text.slice(index + needle.length)));
+}
+
+function hitRow(tab, hit) {
+    const rootId = tab.search.scopeRootId;
+
+    const row = document.createElement('li');
+    row.className = 'mfx-hit';
+    row.tabIndex = 0;
+
+    const symbol = document.createElement('span');
+    symbol.className = 'mfx-hit-icon';
+    symbol.appendChild(icon(hit.isDirectory ? 'folder' : 'file', 18));
+    row.appendChild(symbol);
+
+    const text = document.createElement('div');
+    text.className = 'mfx-hit-text';
+
+    const name = document.createElement('span');
+    name.className = 'mfx-hit-name';
+    name.textContent = hit.name;
+    text.appendChild(name);
+
+    const where = document.createElement('span');
+    where.className = 'mfx-hit-path';
+    where.textContent = hit.parentPath ? `${rootName(rootId)}/${hit.parentPath}` : rootName(rootId);
+    text.appendChild(where);
+
+    if (hit.snippet) {
+        const snippet = document.createElement('span');
+        snippet.className = 'mfx-hit-snippet';
+        highlight(snippet, hit.snippet, tab.search.term);
+        text.appendChild(snippet);
+    }
+
+    row.appendChild(text);
+
+    const meta = document.createElement('div');
+    meta.className = 'mfx-hit-meta';
+
+    const size = document.createElement('span');
+    size.textContent = hit.isDirectory ? '' : formatSize(hit.size);
+    meta.appendChild(size);
+
+    const date = document.createElement('span');
+    date.textContent = formatDate(hit.modified);
+    meta.appendChild(date);
+
+    row.appendChild(meta);
+
+    const reveal = button('mfx-btn', 'folder', t('ShowInFolder'), event => {
+        event.stopPropagation();
+        revealInFolderTab(rootId, hit.parentPath || '', hit.path);
+    });
+    row.appendChild(reveal);
+
+    row.addEventListener('dblclick', () => openHit(rootId, hit));
+    row.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            openHit(rootId, hit);
+        }
+    });
+
+    return row;
 }
 
 function entryMenu(entry) {
@@ -1589,7 +2005,17 @@ function entryFromRow(row) {
     return (tab.entries || []).find(entry => entry.path === row.dataset.path);
 }
 
+/** Die Liste reagiert nur im Ordnertab - der Suchtab hat seine eigenen Zeilen. */
+function isSearchTab() {
+    const tab = activeTab();
+    return !!tab && tab.kind === 'search';
+}
+
 el.listing.addEventListener('mousedown', event => {
+    if (isSearchTab()) {
+        return;
+    }
+
     const row = event.target.closest('.mfx-row');
 
     if (!row) {
@@ -1614,6 +2040,10 @@ el.listing.addEventListener('mousedown', event => {
 });
 
 el.listing.addEventListener('dblclick', event => {
+    if (isSearchTab()) {
+        return;
+    }
+
     const row = event.target.closest('.mfx-row');
     if (row) {
         const entry = entryFromRow(row);
@@ -1624,6 +2054,10 @@ el.listing.addEventListener('dblclick', event => {
 });
 
 el.listing.addEventListener('contextmenu', event => {
+    if (isSearchTab()) {
+        return;
+    }
+
     event.preventDefault();
 
     const row = event.target.closest('.mfx-row');
@@ -1712,6 +2146,16 @@ document.addEventListener('keydown', event => {
             focusSearch(false);
             return;
         }
+    }
+
+    // Im Suchtab gibt es keine Dateiliste, auf die sich die Tasten beziehen könnten.
+    if (tab.kind === 'search') {
+        if (event.key === 'F5') {
+            event.preventDefault();
+            reload();
+        }
+
+        return;
     }
 
     if (event.key === 'F2') {
@@ -1826,12 +2270,22 @@ function startRubberBand(startEvent) {
 el.back.addEventListener('click', goBack);
 el.forward.addEventListener('click', goForward);
 el.up.addEventListener('click', goUp);
-el.refresh.addEventListener('click', () => {
-    const tab = activeTab();
-    navigate(tab, tab.rootId, tab.path, false);
-});
+el.refresh.addEventListener('click', () => reload());
 
 el.search.addEventListener('input', () => {
+    const tab = activeTab();
+
+    // Im Suchtab ist das Feld der Suchbegriff, sonst der Filter des Ordners.
+    if (tab && tab.kind === 'search') {
+        tab.search.term = el.search.value;
+        const field = el.listing.querySelector('.mfx-search-term');
+        if (field) {
+            field.value = el.search.value;
+        }
+        renderTabs();
+        return;
+    }
+
     state.filter = el.search.value.trim();
     renderListing();
     renderStatus();
@@ -1841,21 +2295,46 @@ el.search.addEventListener('input', () => {
 el.search.addEventListener('keydown', event => {
     if (event.key === 'Enter') {
         event.preventDefault();
-        startSearch(false);
+        startSearchFromField(false);
     }
 });
 
-el.searchGo.addEventListener('click', () => startSearch(false));
+el.searchGo.addEventListener('click', () => startSearchFromField(false));
+
+/** Sucht im aktuellen Suchtab weiter oder öffnet einen neuen für die Eingabe. */
+function startSearchFromField(withContent) {
+    const tab = activeTab();
+    const term = el.search.value.trim();
+
+    if (tab && tab.kind === 'search') {
+        tab.search.term = term;
+        tab.search.content = tab.search.content || withContent;
+        runSearch(tab);
+        return;
+    }
+
+    openSearchTab(term, true).then(() => {
+        if (!withContent) {
+            return;
+        }
+
+        const fresh = activeTab();
+        if (fresh && fresh.kind === 'search') {
+            fresh.search.content = true;
+            runSearch(fresh);
+            renderListing();
+        }
+    });
+}
 
 /** Steht schon etwas im Feld, geht die Suche gleich los - sonst wartet der Fokus dort. */
 function focusSearch(withContent) {
     if (el.search.value.trim().length >= 2) {
-        startSearch(withContent);
+        startSearchFromField(withContent);
         return;
     }
 
-    el.search.focus();
-    el.search.select();
+    openSearchTab('', false);
 }
 
 el.hidden.addEventListener('click', () => {
@@ -1913,8 +2392,17 @@ function menuItems(name) {
                 action: () => compressSelected()
             },
             '-',
-            { label: t('NewTab'), icon: 'plus', action: () => openTab(tab.rootId, tab.path) },
-            { label: t('Properties'), icon: 'settings', action: () => showProperties(single ? selected[0] : null) }
+            {
+                label: t('NewTab'), icon: 'plus',
+                disabled: !tab,
+                action: () => openTab(tab.rootId, tab.kind === 'search' ? '' : tab.path)
+            },
+            { label: t('SearchNewTab'), icon: 'search-deep', action: () => openSearchTab('', false) },
+            {
+                label: t('Properties'), icon: 'settings',
+                disabled: !tab || tab.kind === 'search',
+                action: () => showProperties(single ? selected[0] : null)
+            }
         ];
     }
 
