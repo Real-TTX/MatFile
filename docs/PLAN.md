@@ -253,7 +253,8 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks, **Download** (aus M5 vorgezogen) | Navigation komplett |
 | **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Komprimieren, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
-| **M7** | Remote-Provider SFTP, FTP, WebDAV, SMB (+ NFS via OS-Mount), Mount-Verwaltung im UI, persistent vs. nur Sitzung, Credential-Verschlüsselung | Externe Freigaben eingebunden |
+| **M7** | Remote-Provider **SFTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung | Externe Freigaben eingebunden |
+| **M7b** | FTP (FluentFTP), SMB (SMBLibrary), NFS über OS-Mount, Mounts nur für die Sitzung, Abschnitt „Verbindungen" in der Seitenleiste | Alle Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
 
@@ -267,6 +268,16 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   HTML und SVG gehören bewusst **nicht** dazu, sonst könnte fremdes Skript auf unserer Domain laufen und
   das Sitzungscookie abgreifen; beide werden stattdessen als Quelltext angezeigt. Jede Vorschauantwort
   trägt zusätzlich `X-Content-Type-Options: nosniff` und eine restriktive Content-Security-Policy.
+- **Zugangsdaten** der Freigaben liegen mit DataProtection verschlüsselt in der Datenbank,
+  die Schlüssel im Volume unter `/data/keys`. Ohne das Volume sind sie wertlos.
+- **SFTP** baut derzeit je Operation eine Verbindung auf. Das ist robust, aber bei vielen
+  kleinen Dateien langsam — ein Verbindungspool wäre die nächste Optimierung.
+- **WebDAV**: Apache leitet Ordner ohne abschließenden Schrägstrich per 301 um, und
+  `HttpClient` verwirft beim automatischen Folgen den Authorization-Header. Der Provider
+  folgt Umleitungen deshalb selbst; automatisches Folgen ist im Handler abgeschaltet.
+- **Kennwortwechsel beim ersten Start** ist über `RequirePasswordChangeOnFirstLogin`
+  in `matfile.json` steuerbar und standardmäßig **aus**, damit `admin`/`admin` beim
+  Entwickeln direkt funktioniert. Für den produktiven Betrieb einschalten.
 - **Thumbnails** in der Kachelansicht fehlen noch: dafür wird eine Bildbibliothek gebraucht
   (ImageSharp oder SkiaSharp). Offen bis M8, die Vorschau selbst funktioniert ohne.
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.

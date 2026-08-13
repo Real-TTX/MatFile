@@ -28,5 +28,24 @@ services:
       # Testdaten für den Explorer:
       - ./sample-data:/storage/sample
 
+  # Test-Gegenstelle fuer die Remote-Provider.
+  # Start nur bei Bedarf: docker compose -f docker-compose.dev.yml --profile testing up -d
+  sftp:
+    image: atmoz/sftp:alpine
+    container_name: matfile-sftp
+    profiles: ["testing"]
+    command: matfile:Sftp-Geheim-2026:1001:::upload
+    restart: unless-stopped
+
+  webdav:
+    image: bytemark/webdav
+    container_name: matfile-webdav
+    profiles: ["testing"]
+    environment:
+      AUTH_TYPE: Basic
+      USERNAME: matfile
+      PASSWORD: Dav-Geheim-2026
+    restart: unless-stopped
+
 volumes:
   matfile-dev-data:

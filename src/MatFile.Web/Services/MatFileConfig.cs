@@ -19,6 +19,12 @@ public sealed class MatFileSettings
 
     /// <summary>Cookie nur über HTTPS senden. Bei TLS-Terminierung im NAS-Proxy meist nicht nötig.</summary>
     public bool RequireSecureCookie { get; set; }
+
+    /// <summary>
+    /// Verlangt vom mitgelieferten Administrator einen Kennwortwechsel bei der ersten Anmeldung.
+    /// Für produktive Installationen einschalten.
+    /// </summary>
+    public bool RequirePasswordChangeOnFirstLogin { get; set; }
 }
 
 /// <summary>Lädt und speichert die JSON-Konfiguration.</summary>

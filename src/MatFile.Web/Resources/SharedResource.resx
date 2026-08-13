@@ -222,6 +222,25 @@
   <data name="Root.Error.PathIsDataDirectory"><value>The MatFile data directory cannot be shared.</value></data>
   <data name="Root.Error.TypeNotSupported"><value>This storage type is not supported yet.</value></data>
 
+  <data name="Root.Connection"><value>Connection</value></data>
+  <data name="Root.ConnectionHint"><value>Credentials are stored encrypted in the data volume and never leave the server.</value></data>
+  <data name="Root.Host"><value>Server</value></data>
+  <data name="Root.Port"><value>Port</value></data>
+  <data name="Root.PortHint"><value>0 uses the default port of the protocol.</value></data>
+  <data name="Root.Url"><value>Address</value></data>
+  <data name="Root.UrlHint"><value>Full WebDAV address including path.</value></data>
+  <data name="Root.Share"><value>Share</value></data>
+  <data name="Root.Username"><value>Username</value></data>
+  <data name="Root.Password"><value>Password</value></data>
+  <data name="Root.PasswordStored"><value>A password is stored. Leave empty to keep it.</value></data>
+  <data name="Root.ClearPassword"><value>Remove stored password</value></data>
+  <data name="Root.UseTls"><value>Use encrypted connection</value></data>
+  <data name="Root.Passive"><value>Passive mode (FTP)</value></data>
+  <data name="Root.Test"><value>Test connection</value></data>
+  <data name="Root.TestOk"><value>Connection established.</value></data>
+  <data name="Root.Error.HostRequired"><value>Please enter a server or address.</value></data>
+  <data name="Root.Error.NotReachable"><value>The connection could not be established.</value></data>
+
   <data name="Access.CanRead"><value>Read</value></data>
   <data name="Access.CanWrite"><value>Write</value></data>
   <data name="Access.CanDelete"><value>Delete</value></data>

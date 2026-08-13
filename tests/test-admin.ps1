@@ -1,7 +1,7 @@
 param(
     [string]$BaseUrl = "http://localhost:2222",
     [string]$SeedPassword = "admin",
-    [string]$AdminPassword = "MatFile-Test-2026",
+    [string]$AdminPassword = "admin",
     [string]$TesterPassword = "Tester-2026-abc"
 )
 
@@ -31,9 +31,7 @@ $admin = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $admin -UseBasicParsing
 $t = Get-Token $r.Content
 $r = Post-Form "$BaseUrl/Login" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=admin&Input.Password=$(Enc $SeedPassword)"
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Account/ChangePassword" $admin "__RequestVerificationToken=$(Enc $t)&Input.CurrentPassword=$(Enc $SeedPassword)&Input.NewPassword=$(Enc $AdminPassword)&Input.ConfirmPassword=$(Enc $AdminPassword)"
-Add-Result "Administrator angemeldet" ($r.Content -match 'The password was changed') ""
+Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
 # --- Adminbereich ---------------------------------------------------------
 $r = Invoke-WebRequest "$BaseUrl/Admin" -WebSession $admin -UseBasicParsing

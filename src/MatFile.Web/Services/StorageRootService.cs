@@ -17,18 +17,69 @@ public sealed class StorageRootService
     private readonly MatFileDbContext _db;
     private readonly MatFilePaths _paths;
     private readonly StorageProviderFactory _providers;
+    private readonly SecretProtector _protector;
     private readonly IStringLocalizer<SharedResource> _text;
 
     public StorageRootService(
         MatFileDbContext db,
         MatFilePaths paths,
         StorageProviderFactory providers,
+        SecretProtector protector,
         IStringLocalizer<SharedResource> text)
     {
         _db = db;
         _paths = paths;
         _providers = providers;
+        _protector = protector;
         _text = text;
+    }
+
+    /// <summary>
+    /// Prüft eine Verbindung, ohne sie zu speichern. Ohne neues Kennwort wird
+    /// das bereits hinterlegte verwendet.
+    /// </summary>
+    public async Task<SaveResult> TestConnectionAsync(
+        long? id, string name, StorageType storageType, string basePath, ConnectionSettings connection, string? password)
+    {
+        if (!StorageProviderFactory.IsSupported(storageType))
+        {
+            return new SaveResult(false, _text["Root.Error.TypeNotSupported"]);
+        }
+
+        var secret = password;
+
+        if (string.IsNullOrEmpty(secret) && id is { } rootId)
+        {
+            var stored = await _db.StorageRoot.AsNoTracking().FirstOrDefaultAsync(r => r.Id == rootId);
+            secret = _protector.Unprotect(stored?.SecretEncrypted);
+        }
+
+        var probe = new StorageRoot
+        {
+            Id = id ?? 0,
+            Name = name ?? string.Empty,
+            StorageType = storageType,
+            // Leere Formularfelder kommen als null an.
+            BasePath = (basePath ?? string.Empty).Trim()
+        };
+
+        try
+        {
+            var provider = _providers.Create(probe, connection, secret);
+            var available = await provider.IsAvailableAsync();
+
+            return available
+                ? new SaveResult(true)
+                : new SaveResult(false, _text["Root.Error.NotReachable"]);
+        }
+        catch (StorageException exception)
+        {
+            return new SaveResult(false, _text["Root.Error.NotReachable"] + " (" + exception.Code + ")");
+        }
+        catch (Exception exception)
+        {
+            return new SaveResult(false, _text["Root.Error.NotReachable"] + " (" + exception.GetType().Name + ")");
+        }
     }
 
     public record RootListItem(
@@ -124,10 +175,15 @@ public sealed class StorageRootService
         string? displayIcon,
         int sortOrder,
         bool isEnabled,
-        IReadOnlyList<RoleAccess> access)
+        IReadOnlyList<RoleAccess> access,
+        ConnectionSettings? connection = null,
+        string? password = null,
+        bool clearPassword = false)
     {
-        name = name.Trim();
-        basePath = basePath.Trim();
+        // Leere Formularfelder bindet ASP.NET als null.
+        name = (name ?? string.Empty).Trim();
+        basePath = (basePath ?? string.Empty).Trim();
+        connection ??= new ConnectionSettings();
 
         if (await _db.StorageRoot.AnyAsync(r => r.Name == name && r.Id != id))
         {
@@ -139,8 +195,25 @@ public sealed class StorageRootService
             return new SaveResult(false, _text["Root.Error.TypeNotSupported"]);
         }
 
+        if (StorageProviderFactory.NeedsConnection(storageType))
+        {
+            var hasTarget = storageType == StorageType.WebDav
+                ? !string.IsNullOrWhiteSpace(connection.Url) || !string.IsNullOrWhiteSpace(connection.Host)
+                : !string.IsNullOrWhiteSpace(connection.Host);
+
+            if (!hasTarget)
+            {
+                return new SaveResult(false, _text["Root.Error.HostRequired"]);
+            }
+        }
+
         if (storageType == StorageType.Local)
         {
+            if (basePath.Length == 0)
+            {
+                return new SaveResult(false, _text["Root.Error.PathRequired"]);
+            }
+
             if (!Path.IsPathRooted(basePath))
             {
                 return new SaveResult(false, _text["Root.Error.PathNotAbsolute"]);
@@ -188,6 +261,26 @@ public sealed class StorageRootService
         root.SortOrder = sortOrder;
         root.IsEnabled = isEnabled;
         root.Persistence = StoragePersistence.Persistent;
+
+        if (StorageProviderFactory.NeedsConnection(storageType))
+        {
+            root.SettingsJson = connection.ToJson();
+
+            // Ein leeres Kennwortfeld lässt das gespeicherte Kennwort unangetastet.
+            if (clearPassword)
+            {
+                root.SecretEncrypted = null;
+            }
+            else if (!string.IsNullOrEmpty(password))
+            {
+                root.SecretEncrypted = _protector.Protect(password);
+            }
+        }
+        else
+        {
+            root.SettingsJson = null;
+            root.SecretEncrypted = null;
+        }
 
         await _db.SaveChangesAsync();
         await UpdateAccessAsync(root.Id, access);

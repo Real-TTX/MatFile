@@ -13,6 +13,10 @@
     {
         <div class="mf-alert mf-alert-error" role="alert">@Model.ErrorMessage</div>
     }
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="mf-alert mf-alert-success" role="status">@Model.StatusMessage</div>
+    }
 
     <form method="post" class="mf-card">
         <input type="hidden" asp-for="Id" />
@@ -24,7 +28,7 @@
             </mf-field>
 
             <mf-field label="@L["Root.Type"]" for="Input.StorageType">
-                <select asp-for="Input.StorageType">
+                <select asp-for="Input.StorageType" data-visibility-source>
                     @foreach (var type in Model.SupportedTypes)
                     {
                         <option value="@type" disabled="@(!StorageProviderFactory.IsSupported(type))"
@@ -36,7 +40,7 @@
             </mf-field>
 
             <mf-field label="@L["Root.Path"]" for="Input.BasePath" hint="@L["Root.PathHint"].Value" wide="true">
-                <input asp-for="Input.BasePath" class="mf-mono" placeholder="/storage/tank" required />
+                <input asp-for="Input.BasePath" class="mf-mono" placeholder="/storage/tank" />
             </mf-field>
 
             <mf-field label="@L["Root.Icon"]" for="Input.DisplayIcon">
@@ -58,6 +62,64 @@
                     <span>@L["Root.IsEnabled"]</span>
                 </label>
             </mf-field>
+        </div>
+
+        <div data-visible-for="Sftp,Ftp,Smb,WebDav">
+            <h2>@L["Root.Connection"]</h2>
+            <p class="mf-muted mf-small">@L["Root.ConnectionHint"]</p>
+
+            <div class="mf-form-grid">
+                <mf-field label="@L["Root.Host"]" for="Input.Host" data-visible-for="Sftp,Ftp,Smb">
+                    <input asp-for="Input.Host" placeholder="192.168.1.100" />
+                </mf-field>
+
+                <mf-field label="@L["Root.Port"]" for="Input.Port" hint="@L["Root.PortHint"].Value"
+                          data-visible-for="Sftp,Ftp,Smb">
+                    <input asp-for="Input.Port" type="number" min="0" max="65535" />
+                </mf-field>
+
+                <mf-field label="@L["Root.Url"]" for="Input.Url" wide="true" data-visible-for="WebDav"
+                          hint="@L["Root.UrlHint"].Value">
+                    <input asp-for="Input.Url" class="mf-mono" placeholder="https://nas.example.com/remote.php/dav/files/user" />
+                </mf-field>
+
+                <mf-field label="@L["Root.Share"]" for="Input.Share" data-visible-for="Smb">
+                    <input asp-for="Input.Share" placeholder="data" />
+                </mf-field>
+
+                <mf-field label="@L["Root.Username"]" for="Input.Username">
+                    <input asp-for="Input.Username" autocomplete="off" />
+                </mf-field>
+
+                <mf-field label="@L["Root.Password"]" for="Input.Password"
+                          hint="@(Model.HasStoredPassword ? L["Root.PasswordStored"].Value : null)">
+                    <input asp-for="Input.Password" type="password" autocomplete="new-password" />
+                </mf-field>
+
+                <mf-field wide="true">
+                    @if (Model.HasStoredPassword)
+                    {
+                        <label class="mf-check">
+                            <input asp-for="Input.ClearPassword" type="checkbox" />
+                            <span>@L["Root.ClearPassword"]</span>
+                        </label>
+                    }
+                    <label class="mf-check" data-visible-for="Ftp,WebDav">
+                        <input asp-for="Input.UseTls" type="checkbox" />
+                        <span>@L["Root.UseTls"]</span>
+                    </label>
+                    <label class="mf-check" data-visible-for="Ftp">
+                        <input asp-for="Input.Passive" type="checkbox" />
+                        <span>@L["Root.Passive"]</span>
+                    </label>
+                </mf-field>
+            </div>
+
+            <mf-actions>
+                <button type="submit" class="mf-btn" asp-page-handler="Test" formnovalidate>
+                    <mf-icon name="refresh" />@L["Root.Test"]
+                </button>
+            </mf-actions>
         </div>
 
         <h2>@L["Root.Access"]</h2>

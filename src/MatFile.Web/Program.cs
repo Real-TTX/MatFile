@@ -42,6 +42,18 @@ builder.Services.AddScoped<UploadService>();
 builder.Services.AddSingleton<JobService>();
 builder.Services.AddHostedService<JobRunner>();
 builder.Services.AddSingleton<StorageProviderFactory>();
+builder.Services.AddSingleton<SecretProtector>();
+
+builder.Services.AddHttpClient(StorageProviderFactory.WebDavClient, client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    // Umleitungen behandelt der Provider selbst - beim automatischen Folgen
+    // verwirft HttpClient den Authorization-Header.
+    AllowAutoRedirect = false
+});
 
 // Schlüssel im Volume -> Cookies und damit Sitzungen überleben einen Container-Neustart.
 builder.Services.AddDataProtection()
@@ -101,7 +113,13 @@ builder.Services.AddRazorPages(options =>
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization(options =>
-    options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
+    options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)))
+.AddMvcOptions(options =>
+{
+    // Nicht jedes Non-Nullable-Feld ist ein Pflichtfeld - sonst entstehen zudem
+    // unübersetzte Meldungen. Pflichtfelder werden ausdrücklich mit [Required] markiert.
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+});
 
 // MatFile läuft typischerweise hinter einem Reverse-Proxy des NAS.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>

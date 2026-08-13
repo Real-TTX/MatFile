@@ -23,7 +23,9 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
 | M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
 | M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
-| M7–M9 | Remote-Mounts (SMB/NFS/SFTP/FTP/WebDAV), Thumbnails, Feinschliff | offen |
+| M7 | Remote-Verbindungen: **SFTP und WebDAV** inkl. Verbindungstest | teilweise |
+| M7b | FTP, SMB, NFS über OS-Mount, Sitzungs-Mounts | offen |
+| M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
 
 Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).
 
@@ -54,7 +56,13 @@ Anschließend erreichbar unter **http://localhost:2222** (Health-Check: `/health
 Beim ersten Start wird das Konto **`admin` / `admin`** angelegt. Ein anderes Startkennwort
 lässt sich über `MATFILE_ADMIN_PASSWORD` vorgeben.
 
-Nach der Anmeldung verlangt MatFile sofort ein eigenes Kennwort. Die Oberfläche startet
+Für den produktiven Betrieb in `/data/config/matfile.json` setzen:
+
+```json
+{ "RequirePasswordChangeOnFirstLogin": true }
+```
+
+Dann verlangt MatFile bei der ersten Anmeldung ein eigenes Kennwort. Die Oberfläche startet
 auf Englisch; über den Schalter `EN | DE` in der Kopfzeile lässt sich Deutsch wählen –
 die Auswahl wird am Benutzerkonto gespeichert.
 

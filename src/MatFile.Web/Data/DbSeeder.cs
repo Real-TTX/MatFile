@@ -35,13 +35,15 @@ public static class DbSeeder
         var useDefault = string.IsNullOrWhiteSpace(configured);
         var password = useDefault ? DefaultAdminPassword : configured!;
 
+        var settings = scope.ServiceProvider.GetRequiredService<Services.MatFileConfigStore>().Settings;
+
         var admin = new User
         {
             Username = DefaultAdminUsername,
             DisplayName = "Administrator",
             PasswordHash = hasher.Hash(password),
             IsActive = true,
-            MustChangePassword = true
+            MustChangePassword = settings.RequirePasswordChangeOnFirstLogin
         };
 
         db.User.Add(admin);
@@ -53,9 +55,9 @@ public static class DbSeeder
         if (useDefault)
         {
             logger.LogWarning(
-                "Erster Start: Benutzer '{Username}' wurde mit dem Standardkennwort '{Password}' angelegt - "
-                + "es muss bei der ersten Anmeldung geändert werden.",
-                DefaultAdminUsername, DefaultAdminPassword);
+                "Erster Start: Benutzer '{Username}' wurde mit dem Standardkennwort '{Password}' angelegt. "
+                + "Kennwortwechsel erzwungen: {Forced}. Für den produktiven Betrieb bitte ändern.",
+                DefaultAdminUsername, DefaultAdminPassword, settings.RequirePasswordChangeOnFirstLogin);
         }
         else
         {

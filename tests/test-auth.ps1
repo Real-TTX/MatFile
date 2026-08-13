@@ -41,14 +41,14 @@ $r3 = Invoke-WebRequest "$BaseUrl/Login" -Method Post -WebSession $session -UseB
     'Input.Username'           = 'admin'
     'Input.Password'           = $SeedPassword
 }
-Add-Result "Anmeldung -> Kennwortwechsel" ($r3.BaseResponse.ResponseUri.AbsolutePath -eq '/Account/ChangePassword') $r3.BaseResponse.ResponseUri.AbsolutePath
+Add-Result "Anmeldung ohne erzwungenen Wechsel" ($r3.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r3.BaseResponse.ResponseUri.AbsolutePath
 
 $cookie = $session.Cookies.GetCookies($BaseUrl) | Where-Object { $_.Name -eq 'matfile.session' }
 Add-Result "Session-Cookie gesetzt" ($null -ne $cookie) $(if ($cookie) { "HttpOnly=$($cookie.HttpOnly)" } else { "" })
 
-# 4. Andere Seiten sind bis zum Wechsel gesperrt
-$r4 = Invoke-WebRequest "$BaseUrl/" -WebSession $session -UseBasicParsing
-Add-Result "Kennwortwechsel erzwungen" ($r4.BaseResponse.ResponseUri.AbsolutePath -eq '/Account/ChangePassword') $r4.BaseResponse.ResponseUri.AbsolutePath
+# 4. Seite zum Kennwortwechsel ist erreichbar
+$r4 = Invoke-WebRequest "$BaseUrl/Account/ChangePassword" -WebSession $session -UseBasicParsing
+Add-Result "Kennwortwechsel erreichbar" ($r4.BaseResponse.ResponseUri.AbsolutePath -eq '/Account/ChangePassword') $r4.BaseResponse.ResponseUri.AbsolutePath
 
 # 5. Kennwort aendern
 $token = Get-Token $r4.Content

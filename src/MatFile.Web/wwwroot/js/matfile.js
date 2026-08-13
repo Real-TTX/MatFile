@@ -23,6 +23,29 @@
         }
     });
 
+    // Felder mit data-visible-for erscheinen nur bei passendem Wert der Quelle.
+    function applyVisibility() {
+        var source = document.querySelector('[data-visibility-source]');
+        if (!source) {
+            return;
+        }
+
+        var value = source.value;
+
+        document.querySelectorAll('[data-visible-for]').forEach(function (element) {
+            var allowed = element.getAttribute('data-visible-for').split(',');
+            element.hidden = allowed.indexOf(value) < 0;
+        });
+    }
+
+    document.addEventListener('change', function (event) {
+        if (event.target.matches && event.target.matches('[data-visibility-source]')) {
+            applyVisibility();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', applyVisibility);
+
     // Kopfzeilen-Checkbox wählt alle Zeilen der Tabelle aus.
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('table.mf-table').forEach(function (table) {

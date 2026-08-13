@@ -222,6 +222,25 @@
   <data name="Root.Error.PathIsDataDirectory"><value>Das Datenverzeichnis von MatFile kann nicht freigegeben werden.</value></data>
   <data name="Root.Error.TypeNotSupported"><value>Dieser Speichertyp wird noch nicht unterstützt.</value></data>
 
+  <data name="Root.Connection"><value>Verbindung</value></data>
+  <data name="Root.ConnectionHint"><value>Zugangsdaten werden verschlüsselt im Datenvolume abgelegt und verlassen den Server nicht.</value></data>
+  <data name="Root.Host"><value>Server</value></data>
+  <data name="Root.Port"><value>Port</value></data>
+  <data name="Root.PortHint"><value>0 verwendet den Standardport des Protokolls.</value></data>
+  <data name="Root.Url"><value>Adresse</value></data>
+  <data name="Root.UrlHint"><value>Vollständige WebDAV-Adresse inklusive Pfad.</value></data>
+  <data name="Root.Share"><value>Freigabe</value></data>
+  <data name="Root.Username"><value>Benutzername</value></data>
+  <data name="Root.Password"><value>Kennwort</value></data>
+  <data name="Root.PasswordStored"><value>Ein Kennwort ist hinterlegt. Leer lassen, um es zu behalten.</value></data>
+  <data name="Root.ClearPassword"><value>Gespeichertes Kennwort entfernen</value></data>
+  <data name="Root.UseTls"><value>Verschlüsselte Verbindung verwenden</value></data>
+  <data name="Root.Passive"><value>Passiver Modus (FTP)</value></data>
+  <data name="Root.Test"><value>Verbindung testen</value></data>
+  <data name="Root.TestOk"><value>Verbindung steht.</value></data>
+  <data name="Root.Error.HostRequired"><value>Bitte einen Server oder eine Adresse angeben.</value></data>
+  <data name="Root.Error.NotReachable"><value>Die Verbindung konnte nicht hergestellt werden.</value></data>
+
   <data name="Access.CanRead"><value>Lesen</value></data>
   <data name="Access.CanWrite"><value>Schreiben</value></data>
   <data name="Access.CanDelete"><value>Löschen</value></data>

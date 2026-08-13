@@ -33,6 +33,8 @@ public class EditModel : PageModel
 
     public bool IsNew => Id is null;
     public string? ErrorMessage { get; private set; }
+    public string? StatusMessage { get; private set; }
+    public bool HasStoredPassword { get; private set; }
 
     public IEnumerable<StorageType> SupportedTypes => Enum.GetValues<StorageType>();
 
@@ -44,7 +46,7 @@ public class EditModel : PageModel
 
         public StorageType StorageType { get; set; } = StorageType.Local;
 
-        [Required(ErrorMessage = "Root.Error.PathRequired")]
+        /// <summary>Bei lokalen Roots Pflicht, bei Freigaben optional (Unterordner auf der Gegenstelle).</summary>
         [StringLength(1024)]
         public string BasePath { get; set; } = string.Empty;
 
@@ -55,6 +57,44 @@ public class EditModel : PageModel
         public bool IsEnabled { get; set; } = true;
 
         public List<RoleAccessInput> Access { get; set; } = [];
+
+        // --- Verbindungsdaten für Freigaben ---
+        [StringLength(255)]
+        public string? Host { get; set; }
+
+        public int Port { get; set; }
+
+        [StringLength(128)]
+        public string? Username { get; set; }
+
+        public string? Password { get; set; }
+
+        /// <summary>Gespeichertes Kennwort entfernen.</summary>
+        public bool ClearPassword { get; set; }
+
+        [StringLength(128)]
+        public string? Share { get; set; }
+
+        [StringLength(512)]
+        public string? Url { get; set; }
+
+        public bool UseTls { get; set; }
+
+        public bool Passive { get; set; } = true;
+
+        public bool IgnoreCertificateErrors { get; set; }
+
+        public ConnectionSettings ToConnection() => new()
+        {
+            Host = (Host ?? string.Empty).Trim(),
+            Port = Port,
+            Username = string.IsNullOrWhiteSpace(Username) ? null : Username.Trim(),
+            Share = string.IsNullOrWhiteSpace(Share) ? null : Share.Trim(),
+            Url = string.IsNullOrWhiteSpace(Url) ? null : Url.Trim(),
+            UseTls = UseTls,
+            Passive = Passive,
+            IgnoreCertificateErrors = IgnoreCertificateErrors
+        };
     }
 
     public class RoleAccessInput
@@ -85,6 +125,9 @@ public class EditModel : PageModel
             return NotFound();
         }
 
+        var connection = ConnectionSettings.Parse(root.SettingsJson);
+        HasStoredPassword = !string.IsNullOrEmpty(root.SecretEncrypted);
+
         Input = new RootInput
         {
             Name = root.Name,
@@ -93,8 +136,35 @@ public class EditModel : PageModel
             DisplayIcon = root.DisplayIcon ?? "folder",
             SortOrder = root.SortOrder,
             IsEnabled = root.IsEnabled,
-            Access = access.Select(ToInput).ToList()
+            Access = access.Select(ToInput).ToList(),
+            Host = connection.Host,
+            Port = connection.Port,
+            Username = connection.Username,
+            Share = connection.Share,
+            Url = connection.Url,
+            UseTls = connection.UseTls,
+            Passive = connection.Passive,
+            IgnoreCertificateErrors = connection.IgnoreCertificateErrors
         };
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostTestAsync()
+    {
+        await RestoreRoleNamesAsync();
+
+        var result = await _roots.TestConnectionAsync(
+            Id, Input.Name, Input.StorageType, Input.BasePath, Input.ToConnection(), Input.Password);
+
+        if (result.Success)
+        {
+            StatusMessage = _text["Root.TestOk"];
+        }
+        else
+        {
+            ErrorMessage = result.Error;
+        }
 
         return Page();
     }
@@ -117,7 +187,8 @@ public class EditModel : PageModel
 
         var result = await _roots.SaveAsync(
             Id, Input.Name, Input.StorageType, Input.BasePath,
-            Input.DisplayIcon, Input.SortOrder, Input.IsEnabled, access);
+            Input.DisplayIcon, Input.SortOrder, Input.IsEnabled, access,
+            Input.ToConnection(), Input.Password, Input.ClearPassword);
 
         if (!result.Success)
         {
