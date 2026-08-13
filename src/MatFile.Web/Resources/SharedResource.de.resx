@@ -272,6 +272,17 @@
   <data name="Explorer.SectionLogin"><value>Anmeldung</value></data>
   <data name="Explorer.Icon"><value>Symbol</value></data>
   <data name="Explorer.Testing"><value>Verbindung wird geprüft…</value></data>
+  <data name="Explorer.MenuBar"><value>Menü</value></data>
+  <data name="Explorer.MenuFile"><value>Datei</value></data>
+  <data name="Explorer.MenuEdit"><value>Bearbeiten</value></data>
+  <data name="Explorer.MenuView"><value>Ansicht</value></data>
+  <data name="Explorer.MenuSettings"><value>Einstellungen</value></data>
+  <data name="Explorer.Language"><value>Sprache…</value></data>
+  <data name="Explorer.ThemeSystem"><value>Erscheinungsbild: System</value></data>
+  <data name="Explorer.ThemeLight"><value>Erscheinungsbild: hell</value></data>
+  <data name="Explorer.ThemeDark"><value>Erscheinungsbild: dunkel</value></data>
+  <data name="Explorer.ChangePassword"><value>Kennwort ändern</value></data>
+  <data name="Explorer.Logout"><value>Abmelden</value></data>
   <data name="Explorer.Server"><value>Server</value></data>
   <data name="Explorer.Port"><value>Port</value></data>
   <data name="Explorer.PortHint"><value>0 verwendet den Standardport.</value></data>

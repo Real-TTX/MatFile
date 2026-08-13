@@ -58,16 +58,7 @@
                 }
 
                 <partial name="_ThemeToggle" />
-
-                <form method="post" asp-page="/SetLanguage" class="mf-lang" title="@L["Common.Language"]">
-                    <input type="hidden" name="returnUrl" value="/" />
-                    @foreach (var (code, label) in MatFileCultures.Supported)
-                    {
-                        <button type="submit" name="culture" value="@code"
-                                class="mf-lang-btn @(code == currentCulture ? "is-active" : "")"
-                                aria-current="@(code == currentCulture ? "true" : "false")">@label</button>
-                    }
-                </form>
+                <partial name="_LanguageDialog" />
 
                 <span class="mf-spacer"></span>
 
@@ -84,6 +75,18 @@
     <div class="mfx-backdrop" id="mfx-backdrop" hidden></div>
 
     <div class="mfx-main">
+        @* Menüleiste über den Tabs, wie im Datei-Explorer. *@
+        <nav class="mfx-menubar" id="mfx-menubar" aria-label="@L["Explorer.MenuBar"]">
+            <button type="button" class="mfx-menubar-item" data-menu="file">@L["Explorer.MenuFile"]</button>
+            <button type="button" class="mfx-menubar-item" data-menu="edit">@L["Explorer.MenuEdit"]</button>
+            <button type="button" class="mfx-menubar-item" data-menu="view">@L["Explorer.MenuView"]</button>
+            @if (User.HasPermission(Permission.ManageRoots))
+            {
+                <button type="button" class="mfx-menubar-item" data-menu="locations">@L["Admin.Roots"]</button>
+            }
+            <button type="button" class="mfx-menubar-item" data-menu="settings">@L["Explorer.MenuSettings"]</button>
+        </nav>
+
         <div class="mfx-tabbar" id="mfx-tabs" role="tablist"></div>
 
         <div class="mfx-toolbar">

@@ -1,0 +1,43 @@
+@using System.Globalization
+@{
+    var languageCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var languageReturnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+@* Knopf mit Kürzel; die Auswahl selbst passiert im Dialog. *@
+<button type="button" class="mf-lang-button" data-dialog-open="mf-language-dialog"
+        title="@L["Common.Language"]" aria-label="@L["Common.Language"]">
+    <mf-icon name="globe" />
+    <span>@MatFileCultures.LabelOf(languageCulture)</span>
+</button>
+
+<dialog class="mfx-dialog mf-language-dialog" id="mf-language-dialog">
+    <div class="mfx-dialog-head">
+        <mf-icon name="globe" size="22" />
+        <h2>@L["Common.Language"]</h2>
+    </div>
+
+    <form method="post" asp-page="/SetLanguage" class="mf-language-list">
+        <input type="hidden" name="returnUrl" value="@languageReturnUrl" />
+
+        @foreach (var (code, label, name) in MatFileCultures.Supported)
+        {
+            var isActive = string.Equals(code, languageCulture, StringComparison.OrdinalIgnoreCase);
+
+            <button type="submit" name="culture" value="@code"
+                    class="mf-language-option @(isActive ? "is-active" : string.Empty)"
+                    aria-current="@(isActive ? "true" : "false")">
+                <span class="mf-language-code">@label</span>
+                <span class="mf-language-name">@name</span>
+                @if (isActive)
+                {
+                    <mf-icon name="check" />
+                }
+            </button>
+        }
+    </form>
+
+    <div class="mf-actions">
+        <button type="button" class="mf-btn" data-dialog-close>@L["Common.Cancel"]</button>
+    </div>
+</dialog>

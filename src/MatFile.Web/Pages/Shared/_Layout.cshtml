@@ -36,16 +36,7 @@
             @* Im Explorer sitzen Sprache, Erscheinungsbild und Konto unten links in der Seitenleiste. *@
             @if (!isFullBleed)
             {
-                <form method="post" asp-page="/SetLanguage" class="mf-lang" title="@L["Common.Language"]">
-                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-                    @foreach (var (code, label) in MatFileCultures.Supported)
-                    {
-                        <button type="submit" name="culture" value="@code"
-                                class="mf-lang-btn @(code == currentCulture ? "is-active" : "")"
-                                aria-current="@(code == currentCulture ? "true" : "false")">@label</button>
-                    }
-                </form>
-
+                <partial name="_LanguageDialog" />
                 <partial name="_ThemeToggle" />
 
                 if (User.Identity?.IsAuthenticated == true)

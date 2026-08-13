@@ -441,6 +441,32 @@
 
 /* --- Tabs --- */
 
+/* --- Menüleiste über den Tabs --- */
+
+.mfx-menubar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px var(--mf-space-2);
+    background: var(--mf-surface);
+    border-bottom: 1px solid var(--mf-border);
+}
+
+.mfx-menubar-item {
+    padding: 5px var(--mf-space-3);
+    border: 0;
+    border-radius: var(--mf-radius);
+    background: transparent;
+    color: var(--mf-text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.mfx-menubar-item:hover {
+    background: var(--mf-surface-alt);
+}
+
 .mfx-tabbar {
     display: flex;
     align-items: stretch;

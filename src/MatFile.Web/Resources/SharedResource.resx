@@ -272,6 +272,17 @@
   <data name="Explorer.SectionLogin"><value>Sign-in</value></data>
   <data name="Explorer.Icon"><value>Icon</value></data>
   <data name="Explorer.Testing"><value>Testing connection…</value></data>
+  <data name="Explorer.MenuBar"><value>Menu</value></data>
+  <data name="Explorer.MenuFile"><value>File</value></data>
+  <data name="Explorer.MenuEdit"><value>Edit</value></data>
+  <data name="Explorer.MenuView"><value>View</value></data>
+  <data name="Explorer.MenuSettings"><value>Settings</value></data>
+  <data name="Explorer.Language"><value>Language…</value></data>
+  <data name="Explorer.ThemeSystem"><value>Appearance: system</value></data>
+  <data name="Explorer.ThemeLight"><value>Appearance: light</value></data>
+  <data name="Explorer.ThemeDark"><value>Appearance: dark</value></data>
+  <data name="Explorer.ChangePassword"><value>Change password</value></data>
+  <data name="Explorer.Logout"><value>Sign out</value></data>
   <data name="Explorer.Server"><value>Server</value></data>
   <data name="Explorer.Port"><value>Port</value></data>
   <data name="Explorer.PortHint"><value>0 uses the default port.</value></data>

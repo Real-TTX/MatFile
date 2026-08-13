@@ -23,6 +23,26 @@
         }
     });
 
+    // Dialoge oeffnen und schliessen ueber data-dialog-open / data-dialog-close.
+    document.addEventListener('click', function (event) {
+        var opener = event.target.closest('[data-dialog-open]');
+        if (opener) {
+            var dialog = document.getElementById(opener.getAttribute('data-dialog-open'));
+            if (dialog) {
+                dialog.showModal();
+            }
+            return;
+        }
+
+        var closer = event.target.closest('[data-dialog-close]');
+        if (closer) {
+            var open = closer.closest('dialog');
+            if (open) {
+                open.close();
+            }
+        }
+    });
+
     // Erscheinungsbild umschalten: System -> hell -> dunkel -> System.
     var THEMES = ['auto', 'light', 'dark'];
 

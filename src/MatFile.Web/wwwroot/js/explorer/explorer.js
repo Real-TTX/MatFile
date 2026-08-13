@@ -1754,6 +1754,125 @@ el.backdrop.addEventListener('click', () => {
     el.backdrop.hidden = true;
 });
 
+// ---------------------------------------------------------------- Menüleiste
+
+/** Einträge der Menüs über den Tabs. */
+function menuItems(name) {
+    const tab = activeTab();
+    const rights = permissions();
+    const selected = selectedEntries();
+    const single = selected.length === 1;
+
+    if (name === 'file') {
+        return [
+            { label: t('NewFolder'), icon: 'folder', disabled: !rights.canWrite, action: () => newFolder() },
+            { label: t('Upload'), icon: 'upload', disabled: !rights.canUpload, action: () => chooseUpload() },
+            '-',
+            {
+                label: t('Download'), icon: 'download',
+                disabled: !rights.canDownload || selected.length === 0,
+                action: () => (single && !selected[0].isDirectory ? openEntry(selected[0]) : downloadZip())
+            },
+            {
+                label: t('DownloadZip'), icon: 'archive',
+                disabled: !rights.canDownload || selected.length === 0,
+                action: () => downloadZip()
+            },
+            {
+                label: t('Compress'), icon: 'archive',
+                disabled: !rights.canWrite || selected.length === 0,
+                action: () => compressSelected()
+            },
+            '-',
+            { label: t('NewTab'), icon: 'plus', action: () => openTab(tab.rootId, tab.path) },
+            { label: t('Properties'), icon: 'settings', action: () => showProperties(single ? selected[0] : null) }
+        ];
+    }
+
+    if (name === 'edit') {
+        return [
+            { label: t('Cut'), icon: 'file', disabled: !rights.canDelete || selected.length === 0, action: () => setClipboard(true) },
+            { label: t('Copy'), icon: 'file', disabled: selected.length === 0, action: () => setClipboard(false) },
+            { label: t('Paste'), icon: 'file', disabled: !state.clipboard || !rights.canWrite, action: () => paste() },
+            '-',
+            { label: t('Rename'), icon: 'pencil', disabled: !rights.canWrite || !single, action: () => renameEntry(selected[0]) },
+            { label: t('Delete'), icon: 'trash', danger: true, disabled: !rights.canDelete || selected.length === 0, action: () => deleteSelected() },
+            '-',
+            { label: t('SelectAll'), icon: 'list', action: () => selectAll() },
+            { label: t('AddBookmark'), icon: 'star', action: () => addBookmark(single && selected[0].isDirectory ? selected[0] : null) }
+        ];
+    }
+
+    if (name === 'view') {
+        return [
+            {
+                label: state.settings.viewMode === 'grid' ? t('ViewList') : t('ViewGrid'),
+                icon: state.settings.viewMode === 'grid' ? 'list' : 'grid',
+                action: () => el.view.click()
+            },
+            {
+                label: t('ShowHidden') + (state.settings.showHidden ? ' ✓' : ''),
+                icon: 'eye',
+                action: () => el.hidden.click()
+            },
+            {
+                label: t('Details') + (state.settings.showDetails ? ' ✓' : ''),
+                icon: 'info',
+                action: () => el.detailsToggle.click()
+            },
+            '-',
+            { label: t('Refresh'), icon: 'refresh', action: () => reload() }
+        ];
+    }
+
+    if (name === 'locations') {
+        return [
+            { label: t('AddFolder'), icon: 'folder', action: () => addLocation(false) },
+            { label: t('AddConnection'), icon: 'cloud', action: () => addLocation(true) },
+            '-',
+            {
+                label: t('EditLocation'), icon: 'pencil',
+                disabled: !tab,
+                action: () => editLocation(tab.rootId)
+            },
+            '-',
+            { label: t('Manage'), icon: 'settings', action: () => { window.location.href = '/Admin/Roots'; } }
+        ];
+    }
+
+    // Einstellungen
+    const theme = document.documentElement.getAttribute('data-theme') || 'auto';
+    const setTheme = value => {
+        document.documentElement.setAttribute('data-theme', value);
+        document.cookie = 'matfile.theme=' + value + ';path=/;max-age=31536000;samesite=lax';
+    };
+
+    return [
+        {
+            label: t('Language'), icon: 'globe',
+            action: () => document.getElementById('mf-language-dialog')?.showModal()
+        },
+        '-',
+        { label: t('ThemeSystem') + (theme === 'auto' ? ' ✓' : ''), icon: 'monitor', action: () => setTheme('auto') },
+        { label: t('ThemeLight') + (theme === 'light' ? ' ✓' : ''), icon: 'sun', action: () => setTheme('light') },
+        { label: t('ThemeDark') + (theme === 'dark' ? ' ✓' : ''), icon: 'moon', action: () => setTheme('dark') },
+        '-',
+        { label: t('ChangePassword'), icon: 'lock', action: () => { window.location.href = '/Account/ChangePassword'; } },
+        {
+            label: t('Logout'), icon: 'log-out',
+            action: () => document.querySelector('.mfx-side-foot form[action="/Logout"]')?.submit()
+        }
+    ];
+}
+
+document.querySelectorAll('.mfx-menubar-item').forEach(button => {
+    button.addEventListener('click', event => {
+        const rect = button.getBoundingClientRect();
+        openMenu(rect.left, rect.bottom + 2, menuItems(button.dataset.menu));
+        event.stopPropagation();
+    });
+});
+
 if (el.more) {
     el.more.addEventListener('click', event => {
         const rect = el.more.getBoundingClientRect();

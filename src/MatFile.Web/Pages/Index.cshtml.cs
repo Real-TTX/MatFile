@@ -74,7 +74,12 @@ public class IndexModel : PageModel
             "Explorer.TypeLocalSub", "Explorer.TypeSmbSub", "Explorer.TypeSftpSub",
             "Explorer.TypeFtpSub", "Explorer.TypeWebDavSub",
             "Explorer.SectionType", "Explorer.SectionGeneral", "Explorer.SectionTarget",
-            "Explorer.SectionLogin", "Explorer.Icon", "Explorer.Testing"
+            "Explorer.SectionLogin", "Explorer.Icon", "Explorer.Testing",
+
+            // Menüleiste
+            "Explorer.MenuBar", "Explorer.MenuFile", "Explorer.MenuEdit", "Explorer.MenuView",
+            "Explorer.MenuSettings", "Explorer.Language", "Explorer.ThemeSystem",
+            "Explorer.ThemeLight", "Explorer.ThemeDark", "Explorer.ChangePassword", "Explorer.Logout"
         ];
 
         var bundle = keys.ToDictionary(

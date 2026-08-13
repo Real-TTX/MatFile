@@ -8,12 +8,17 @@ public static class MatFileCultures
     public const string Default = "en";
     public const string UserSettingKey = "Language";
 
-    /// <summary>Sprachcode und Anzeigename für die Sprachauswahl.</summary>
-    public static readonly (string Code, string Label)[] Supported =
+    /// <summary>Sprachcode, Kürzel und Eigenbezeichnung für die Sprachauswahl.</summary>
+    public static readonly (string Code, string Label, string Name)[] Supported =
     [
-        ("en", "EN"),
-        ("de", "DE")
+        ("en", "EN", "English"),
+        ("de", "DE", "Deutsch")
     ];
+
+    /// <summary>Kürzel der aktuellen Sprache, z. B. für den Knopf.</summary>
+    public static string LabelOf(string? culture)
+        => Supported.FirstOrDefault(c => string.Equals(c.Code, culture, StringComparison.OrdinalIgnoreCase)).Label
+           ?? Supported[0].Label;
 
     public static string[] Codes => Supported.Select(c => c.Code).ToArray();
 
