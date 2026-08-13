@@ -346,4 +346,7 @@
   <data name="Explorer.ActionMove"><value>Verschoben</value></data>
   <data name="Explorer.ActionCompress"><value>Komprimiert</value></data>
   <data name="Explorer.ActionExtract"><value>Entpackt</value></data>
+  <data name="Explorer.Connections"><value>Verbindungen</value></data>
+  <data name="Explorer.Online"><value>erreichbar</value></data>
+  <data name="Explorer.Offline"><value>nicht erreichbar</value></data>
 </root>

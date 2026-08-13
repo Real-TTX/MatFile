@@ -37,6 +37,15 @@ services:
     command: matfile:Sftp-Geheim-2026:1001:::upload
     restart: unless-stopped
 
+  ftp:
+    image: delfer/alpine-ftp-server
+    container_name: matfile-ftp
+    profiles: ["testing"]
+    environment:
+      USERS: "matfile|Ftp-Geheim-2026|/ftp/matfile"
+      ADDRESS: ftp
+    restart: unless-stopped
+
   webdav:
     image: bytemark/webdav
     container_name: matfile-webdav

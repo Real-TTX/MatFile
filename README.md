@@ -23,8 +23,8 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
 | M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
 | M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
-| M7 | Remote-Verbindungen: **SFTP und WebDAV** inkl. Verbindungstest | teilweise |
-| M7b | FTP, SMB, NFS über OS-Mount, Sitzungs-Mounts | offen |
+| M7 | Remote-Verbindungen: **SFTP, FTP, WebDAV** inkl. Verbindungstest, Seitenleiste mit Statuspunkt | teilweise |
+| M7b | SMB, NFS über OS-Mount, Mounts nur für die Sitzung | offen |
 | M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
 
 Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).

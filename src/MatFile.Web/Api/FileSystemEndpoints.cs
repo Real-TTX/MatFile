@@ -40,6 +40,30 @@ public static class FileSystemEndpoints
                 r.Id, r.Name, r.StorageType.ToString(), r.DisplayIcon, r.SortOrder, r.Permissions)));
         });
 
+        // Erreichbarkeit einer Freigabe - wird von der Seitenleiste nachgeladen,
+        // damit der erste Aufbau nicht auf die Gegenstellen warten muss.
+        group.MapGet("/status", async (
+            long rootId,
+            StorageRootService roots,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var opened = await roots.OpenAsync(user, rootId);
+            if (opened is not { } access)
+            {
+                return Results.Json(new { error = "root_not_found" }, statusCode: StatusCodes.Status404NotFound);
+            }
+
+            try
+            {
+                return Results.Ok(new { rootId, available = await access.Provider.IsAvailableAsync(cancellationToken) });
+            }
+            catch (StorageException)
+            {
+                return Results.Ok(new { rootId, available = false });
+            }
+        });
+
         group.MapGet("/list", async (
             long rootId,
             string? path,

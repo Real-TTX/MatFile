@@ -7,6 +7,8 @@ import { openPreview, isPreviewOpen } from './preview.js';
 const el = {
     roots: document.getElementById('mfx-roots'),
     bookmarks: document.getElementById('mfx-bookmarks'),
+    connections: document.getElementById('mfx-connections'),
+    connectionsGroup: document.getElementById('mfx-connections-group'),
     tabs: document.getElementById('mfx-tabs'),
     breadcrumb: document.getElementById('mfx-breadcrumb'),
     listing: document.getElementById('mfx-listing'),
@@ -319,8 +321,56 @@ function message(text) {
     return div;
 }
 
+/** Ohne eigenes Symbol bekommt eine Verbindung eines passend zum Protokoll. */
+function iconForRoot(root) {
+    if (root.icon) {
+        return rootIcon(root.icon);
+    }
+
+    switch (root.type) {
+        case 'Sftp': return 'lock';
+        case 'Ftp': return 'hard';
+        case 'WebDav': return 'info';
+        case 'Smb':
+        case 'Nfs': return 'hard';
+        default: return 'folder';
+    }
+}
+
+function rootItem(root, withStatus) {
+    const item = document.createElement('li');
+
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'mfx-side-item';
+    link.dataset.rootId = root.id;
+    link.dataset.path = '';
+    link.title = root.name;
+    link.appendChild(icon(iconForRoot(root), 16));
+
+    const label = document.createElement('span');
+    label.textContent = root.name;
+    link.appendChild(label);
+
+    if (withStatus) {
+        const dot = document.createElement('span');
+        dot.className = 'mfx-side-dot';
+        dot.dataset.rootId = root.id;
+        dot.title = root.type;
+        link.appendChild(dot);
+    }
+
+    link.addEventListener('click', () => navigate(activeTab(), root.id, ''));
+    item.appendChild(link);
+    return item;
+}
+
 function renderSidebar() {
     el.roots.replaceChildren();
+    el.connections.replaceChildren();
+
+    const local = state.roots.filter(root => root.type === 'Local');
+    const remote = state.roots.filter(root => root.type !== 'Local');
 
     if (state.roots.length === 0) {
         const empty = document.createElement('li');
@@ -329,26 +379,27 @@ function renderSidebar() {
         el.roots.appendChild(empty);
     }
 
-    state.roots.forEach(root => {
-        const item = document.createElement('li');
-        const link = document.createElement('button');
-        link.type = 'button';
-        link.className = 'mfx-side-item';
-        link.dataset.rootId = root.id;
-        link.dataset.path = '';
-        link.appendChild(icon(rootIcon(root.icon), 16));
+    local.forEach(root => el.roots.appendChild(rootItem(root, false)));
+    remote.forEach(root => el.connections.appendChild(rootItem(root, true)));
 
-        const label = document.createElement('span');
-        label.textContent = root.name;
-        link.appendChild(label);
-
-        link.addEventListener('click', () => navigate(activeTab(), root.id, ''));
-        item.appendChild(link);
-        el.roots.appendChild(item);
-    });
+    el.connectionsGroup.hidden = remote.length === 0;
 
     renderBookmarks();
     highlightSidebar();
+    refreshConnectionStatus(remote);
+}
+
+/** Erreichbarkeit der Freigaben nachladen und als Punkt anzeigen. */
+function refreshConnectionStatus(remote) {
+    remote.forEach(root => {
+        api.status(root.id).then(result => {
+            const dot = el.connections.querySelector(`.mfx-side-dot[data-root-id="${root.id}"]`);
+            if (dot) {
+                dot.classList.add(result.available ? 'is-online' : 'is-offline');
+                dot.title = `${root.type} · ${result.available ? t('Online') : t('Offline')}`;
+            }
+        }).catch(() => { });
+    });
 }
 
 function renderBookmarks() {

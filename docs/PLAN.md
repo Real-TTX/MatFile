@@ -253,8 +253,8 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks, **Download** (aus M5 vorgezogen) | Navigation komplett |
 | **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Komprimieren, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
-| **M7** | Remote-Provider **SFTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung | Externe Freigaben eingebunden |
-| **M7b** | FTP (FluentFTP), SMB (SMBLibrary), NFS über OS-Mount, Mounts nur für die Sitzung, Abschnitt „Verbindungen" in der Seitenleiste | Alle Protokolle |
+| **M7** | Remote-Provider **SFTP, FTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung, Abschnitt „Verbindungen" in der Seitenleiste mit Statuspunkt | Externe Freigaben eingebunden |
+| **M7b** | SMB (SMBLibrary), NFS über OS-Mount, Mounts nur für die Sitzung | Alle Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
 
@@ -272,6 +272,10 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   die Schlüssel im Volume unter `/data/keys`. Ohne das Volume sind sie wertlos.
 - **SFTP** baut derzeit je Operation eine Verbindung auf. Das ist robust, aber bei vielen
   kleinen Dateien langsam — ein Verbindungspool wäre die nächste Optimierung.
+- **FTP** nutzt im passiven Modus **EPSV**: der Server antwortet dabei nur mit einem Port,
+  während PASV eine IP-Adresse meldet, die aus einem Container heraus oft unerreichbar ist.
+- Ein FTP-Server chrootet den Benutzer nicht zwangsläufig. Der **Basispfad** des Roots
+  begrenzt den Zugriff — genau dafür gibt es ihn; der Explorer kommt nicht darüber hinaus.
 - **WebDAV**: Apache leitet Ordner ohne abschließenden Schrägstrich per 301 um, und
   `HttpClient` verwirft beim automatischen Folgen den Authorization-Header. Der Provider
   folgt Umleitungen deshalb selbst; automatisches Folgen ist im Handler abgeschaltet.

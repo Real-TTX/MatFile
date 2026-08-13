@@ -46,6 +46,8 @@ export const api = {
     list: (rootId, path) =>
         request(`/api/fs/list?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
 
+    status: rootId => request(`/api/fs/status?rootId=${encodeURIComponent(rootId)}`),
+
     text: (rootId, path) =>
         request(`/api/fs/text?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
 

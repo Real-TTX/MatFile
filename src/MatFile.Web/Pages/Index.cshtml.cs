@@ -57,7 +57,10 @@ public class IndexModel : PageModel
             "Explorer.Details", "Explorer.Activity", "Explorer.NoActivity", "Explorer.NoSelection",
             "Explorer.ActionLogin", "Explorer.ActionLogout", "Explorer.ActionPasswordChanged",
             "Explorer.ActionCreateFolder", "Explorer.ActionRename", "Explorer.ActionDelete",
-            "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract"
+            "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract",
+
+            // Verbindungen
+            "Explorer.Connections", "Explorer.Online", "Explorer.Offline"
         ];
 
         var bundle = keys.ToDictionary(

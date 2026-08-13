@@ -91,6 +91,26 @@
     font-weight: 600;
 }
 
+.mfx-side-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    margin-left: auto;
+    border-radius: 50%;
+    background: var(--mf-text-muted);
+    opacity: .45;
+}
+
+.mfx-side-dot.is-online {
+    background: var(--mf-success);
+    opacity: 1;
+}
+
+.mfx-side-dot.is-offline {
+    background: var(--mf-danger);
+    opacity: 1;
+}
+
 .mfx-side-remove {
     display: none;
     padding: 4px;
