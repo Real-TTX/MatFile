@@ -7,6 +7,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\_helpers.ps1"
 $results = @()
 
 function Add-Result([string]$name, [bool]$ok, [string]$detail) {
@@ -15,101 +16,65 @@ function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     Write-Host "$mark  $name  $detail"
 }
 
-function Get-Token([string]$html) {
-    if ($html -match 'name="__RequestVerificationToken"[^>]*value="([^"]+)"') { return $Matches[1] }
-    return $null
-}
-
-function Enc([string]$s) { return [System.Uri]::EscapeDataString($s) }
-
-function Post-Form([string]$url, $session, [string]$body) {
-    return Invoke-WebRequest $url -Method Post -WebSession $session -UseBasicParsing `
-        -Body $body -ContentType 'application/x-www-form-urlencoded'
-}
-
-function Get-Api([string]$url, $session) {
-    try {
-        $r = Invoke-WebRequest $url -WebSession $session -UseBasicParsing
-        return @{ Status = [int]$r.StatusCode; Data = ($r.Content | ConvertFrom-Json) }
-    } catch {
-        $status = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
-        return @{ Status = $status; Data = $null }
-    }
-}
+function Get-Api([string]$url, $session) { return Get-MatJson $url $session }
 
 # Testdaten im Container anlegen: Unterordner, Datei und ein Symlink nach draussen
 docker exec $Container sh -c "mkdir -p /storage/internal/sub && echo hallo > /storage/internal/datei.txt && ln -sfn /etc /storage/internal/escape" | Out-Null
 Add-Result "Testdaten im Container" ($LASTEXITCODE -eq 0) ""
 
 # --- Anmeldung ------------------------------------------------------------
-$admin = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=admin&Input.Password=$(Enc $SeedPassword)"
+$admin = New-MatSession
+$r = Connect-Mat $BaseUrl $admin 'admin' $SeedPassword
 Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
-# --- Root-Verwaltung ------------------------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Roots" -WebSession $admin -UseBasicParsing
-Add-Result "Rootliste erreichbar" ($r.Content -match 'No root paths configured') ""
+# --- Speicherorte verwalten ----------------------------------------------
+$empty = Get-MatJson "$BaseUrl/api/roots" $admin
+Add-Result "Speicherortliste erreichbar" ($empty.Status -eq 200 -and $empty.Data.total -eq 0) "n=$($empty.Data.total)"
 
-# Rollen-Ids aus dem Formular lesen
-$r = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleRows = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.Access\[(\d+)\]\.RoleId" value="(\d+)"[^>]*>\s*([^\s<]+)')) {
-    $roleRows[$m.Groups[3].Value.Trim()] = @{ Index = $m.Groups[1].Value; RoleId = $m.Groups[2].Value }
-}
-Add-Result "Rollenmatrix im Formular" ($roleRows.ContainsKey('User') -and $roleRows.ContainsKey('Administrator')) ($roleRows.Keys -join ', ')
-
-$userIdx = $roleRows['User'].Index
-$userRoleId = $roleRows['User'].RoleId
-$adminIdx = $roleRows['Administrator'].Index
-$adminRoleId = $roleRows['Administrator'].RoleId
-
-function Access-Body([string]$idx, [string]$roleId, [bool]$read, [bool]$download) {
-    $b = "Input.Access[$idx].RoleId=$roleId"
-    if ($read) { $b += "&Input.Access[$idx].CanRead=true" }
-    if ($download) { $b += "&Input.Access[$idx].CanDownload=true" }
-    return $b
-}
+$roles = @{}
+foreach ($role in $empty.Data.roles) { $roles[$role.roleName] = $role.roleId }
+Add-Result "Rollenmatrix in der Liste" ($roles.ContainsKey('User') -and $roles.ContainsKey('Administrator')) ($roles.Keys -join ', ')
 
 # Ungueltige Pfade
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Fehler&Input.StorageType=Local&Input.BasePath=$(Enc 'relativ/pfad')&Input.SortOrder=0&Input.IsEnabled=true"
-$r = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Relativer Pfad abgelehnt" ($r.Content -match 'absolute path') ""
+$relative = New-MatRoot $BaseUrl $admin @{ name = 'Fehler'; path = 'relativ/pfad' }
+Add-Result "Relativer Pfad abgelehnt" (
+    $relative.Status -eq 400 -and $relative.Data.error -match 'absolute path') "status=$($relative.Status)"
 
-$t = Get-Token $r.Content
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Fehler&Input.StorageType=Local&Input.BasePath=$(Enc '/gibts/nicht')&Input.SortOrder=0&Input.IsEnabled=true"
-$r = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Fehlender Pfad abgelehnt" ($r.Content -match 'does not exist in the container') ""
+$missing = New-MatRoot $BaseUrl $admin @{ name = 'Fehler'; path = '/gibts/nicht' }
+Add-Result "Fehlender Pfad abgelehnt" (
+    $missing.Status -eq 400 -and $missing.Data.error -match 'does not exist in the container') "status=$($missing.Status)"
 
-$t = Get-Token $r.Content
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Datenordner&Input.StorageType=Local&Input.BasePath=$(Enc '/data')&Input.SortOrder=0&Input.IsEnabled=true"
-$r = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Datenverzeichnis geschuetzt" ($r.Content -match 'data directory cannot be shared') ""
+$dataDir = New-MatRoot $BaseUrl $admin @{ name = 'Datenordner'; path = '/data' }
+Add-Result "Datenverzeichnis geschuetzt" (
+    $dataDir.Status -eq 400 -and $dataDir.Data.error -match 'data directory cannot be shared') "status=$($dataDir.Status)"
 
-# Gueltigen Root anlegen, Rolle User darf lesen und herunterladen
-$t = Get-Token $r.Content
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Sample&Input.StorageType=Local&Input.BasePath=$(Enc '/storage/sample')&Input.DisplayIcon=folder&Input.SortOrder=1&Input.IsEnabled=true"
-$body += "&" + (Access-Body $userIdx $userRoleId $true $true)
-$body += "&" + (Access-Body $adminIdx $adminRoleId $false $false)
-$r = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Root angelegt" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/Admin/Roots' -and $r.Content -match 'Sample') $r.BaseResponse.ResponseUri.AbsolutePath
-Add-Result "Root ist verfuegbar" ($r.Content -match 'Available') ""
+$noName = New-MatRoot $BaseUrl $admin @{ name = ''; path = '/storage/sample' }
+Add-Result "Name ist Pflicht" ($noName.Status -eq 400) "status=$($noName.Status)"
 
-# Doppelter Name
-$r2 = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r2.Content
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Sample&Input.StorageType=Local&Input.BasePath=$(Enc '/storage/sample')&Input.SortOrder=0&Input.IsEnabled=true"
-$r2 = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Doppelter Rootname abgelehnt" ($r2.Content -match 'already exists') ""
+# Gueltiger Speicherort, Rolle User darf lesen und herunterladen
+$sampleCreated = New-MatRoot $BaseUrl $admin @{
+    name = 'Sample'; path = '/storage/sample'; icon = 'folder'; sortOrder = 1
+    access = @((New-MatAccess $roles['User'] $true $true $false $false $false))
+}
+Add-Result "Speicherort angelegt" ($sampleCreated.Status -eq 200 -and $sampleCreated.Data.id -gt 0) "id=$($sampleCreated.Data.id)"
 
-# Zweiter Root nur fuer Administratoren
-$r2 = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r2.Content
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Intern&Input.StorageType=Local&Input.BasePath=$(Enc '/storage/internal')&Input.DisplayIcon=hard-drive&Input.SortOrder=2&Input.IsEnabled=true"
-$r2 = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Zweiter Root angelegt" ($r2.Content -match 'Intern') ""
+$listed = (Get-MatJson "$BaseUrl/api/roots" $admin).Data.items | Where-Object { $_.name -eq 'Sample' }
+Add-Result "Speicherort ist verfuegbar" ($listed.isAvailable -eq $true -and $listed.roleCount -eq 1) "rollen=$($listed.roleCount)"
+
+$duplicate = New-MatRoot $BaseUrl $admin @{ name = 'Sample'; path = '/storage/sample' }
+Add-Result "Doppelter Name abgelehnt" (
+    $duplicate.Status -eq 400 -and $duplicate.Data.error -match 'already exists') "status=$($duplicate.Status)"
+
+# Zweiter Speicherort nur fuer Administratoren
+$internCreated = New-MatRoot $BaseUrl $admin @{
+    name = 'Intern'; path = '/storage/internal'; icon = 'hard-drive'; sortOrder = 2
+}
+Add-Result "Zweiter Speicherort angelegt" ($internCreated.Status -eq 200) "id=$($internCreated.Data.id)"
+
+$access = (Get-MatJson "$BaseUrl/api/roots/$($sampleCreated.Data.id)" $admin).Data.access
+$userAccess = $access | Where-Object { $_.roleName -eq 'User' }
+Add-Result "Rechte je Rolle gespeichert" (
+    $userAccess.canRead -and $userAccess.canDownload -and -not $userAccess.canUpload) ""
 
 # --- API ------------------------------------------------------------------
 $api = Get-Api "$BaseUrl/api/fs/roots" $admin
@@ -143,20 +108,14 @@ $unknown = Get-Api "$BaseUrl/api/fs/list?rootId=999999" $admin
 Add-Result "Unbekannter Root" ($unknown.Status -eq 404) "status=$($unknown.Status)"
 
 # --- Rechte eines normalen Benutzers -------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleIds = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.RoleIds" value="(\d+)".*?<span>([^<]+)</span>')) {
-    $roleIds[$m.Groups[2].Value.Trim()] = $m.Groups[1].Value
+$userRoleId = (Get-MatJson "$BaseUrl/api/users" $admin).Data.roles | Where-Object { $_.name -eq 'User' }
+$created = New-MatUser $BaseUrl $admin @{
+    username = 'tester'; displayName = 'Tester'; newPassword = $TesterPassword; roleIds = @($userRoleId.id)
 }
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.DisplayName=Tester&Input.NewPassword=$(Enc $TesterPassword)&Input.IsActive=true&Input.MustChangePassword=false&Input.RoleIds=$($roleIds['User'])"
-$r = Post-Form "$BaseUrl/Admin/Users/Edit" $admin $body
-Add-Result "Testbenutzer angelegt" ($r.Content -match '>tester<') ""
+Add-Result "Testbenutzer angelegt" ($created.Status -eq 200) "id=$($created.Data.id)"
 
-$tester = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $tester -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $tester "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.Password=$(Enc $TesterPassword)"
+$tester = New-MatSession
+$r = Connect-Mat $BaseUrl $tester 'tester' $TesterPassword
 Add-Result "Testbenutzer angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
 $api = Get-Api "$BaseUrl/api/fs/roots" $tester
@@ -172,10 +131,47 @@ Add-Result "Testbenutzer darf lesen" ($list.Status -eq 200) "status=$($list.Stat
 $denied = Get-Api "$BaseUrl/api/fs/list?rootId=$($intern.id)" $tester
 Add-Result "Gesperrter Root nicht lesbar" ($denied.Status -eq 404) "status=$($denied.Status)"
 
+$noManage = New-MatRoot $BaseUrl $tester @{ name = 'Verboten'; path = '/storage/sample' }
+Add-Result "Ohne Recht kein Speicherort" ($noManage.Status -eq 403) "status=$($noManage.Status)"
+
 # Abgemeldet kein API-Zugriff
-$anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$anon = New-MatSession
 $anonApi = Get-Api "$BaseUrl/api/fs/roots" $anon
 Add-Result "API ohne Anmeldung gesperrt" ($anonApi.Status -eq 401) "status=$($anonApi.Status)"
+
+# Rechte nachtraeglich erweitern
+$widened = Set-MatRootAccess $BaseUrl $admin $sample.id @((New-MatAccess $roles['User'] $true $true $true $true $false))
+$afterWiden = (Get-Api "$BaseUrl/api/fs/roots" $tester).Data | Where-Object { $_.name -eq 'Sample' }
+Add-Result "Rechte nachtraeglich erweitert" (
+    $widened.Status -eq 200 -and $afterWiden.permissions.canUpload -and $afterWiden.permissions.canWrite) ""
+
+# --- Speicherort auf der Containerwurzel ---------------------------------
+# Wurzelpfade haben schon ein Trennzeichen - der Pfadschutz darf daran nicht scheitern.
+$created = New-MatRoot $BaseUrl $admin @{ name = 'Wurzel'; path = '/'; icon = 'hard-drive'; sortOrder = 9 }
+Add-Result "Wurzel als Speicherort erlaubt" ($created.Status -eq 200 -and $created.Data.id -gt 0) "id=$($created.Data.id)"
+$wurzelId = $created.Data.id
+
+$top = Get-Api "$BaseUrl/api/fs/list?rootId=$wurzelId" $admin
+$topNames = $top.Data.entries | ForEach-Object { $_.name }
+Add-Result "Wurzel listet den Container" ($top.Status -eq 200 -and $topNames -contains 'storage' -and $topNames -contains 'etc') "n=$($topNames.Count)"
+Add-Result "Datenverzeichnis unsichtbar" ($topNames -notcontains 'data') ""
+
+$deep = Get-Api "$BaseUrl/api/fs/list?rootId=$wurzelId&path=$(Enc 'storage/sample/Dokumente')" $admin
+$deepNames = $deep.Data.entries | ForEach-Object { $_.name }
+Add-Result "Unterordner unter der Wurzel" ($deep.Status -eq 200 -and $deepNames -contains 'notiz.txt') "status=$($deep.Status) parent='$($deep.Data.parentPath)'"
+
+$firstLevel = Get-Api "$BaseUrl/api/fs/list?rootId=$wurzelId&path=usr" $admin
+Add-Result "Elternpfad direkt unter der Wurzel" ($firstLevel.Status -eq 200 -and $firstLevel.Data.parentPath -eq '') "parent='$($firstLevel.Data.parentPath)'"
+
+$dataDirList = Get-Api "$BaseUrl/api/fs/list?rootId=$wurzelId&path=data" $admin
+Add-Result "Datenverzeichnis nicht betretbar" ($dataDirList.Status -eq 404) "status=$($dataDirList.Status)"
+
+$dbFile = Get-Api "$BaseUrl/api/fs/download?rootId=$wurzelId&path=$(Enc 'data/matfile.db')" $admin
+Add-Result "Datenbank nicht herunterladbar" ($dbFile.Status -eq 404) "status=$($dbFile.Status)"
+
+$removed = Send-MatJson 'Delete' "$BaseUrl/api/roots/$wurzelId" $admin $null
+$afterRemove = (Get-MatJson "$BaseUrl/api/roots" $admin).Data.items | ForEach-Object { $_.name }
+Add-Result "Wurzel wieder entfernt" ($removed.Status -eq 204 -and $afterRemove -notcontains 'Wurzel') ($afterRemove -join ', ')
 
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using MatFile.Web.Controls;
 using MatFile.Web.Data;
 using MatFile.Web.Security;
 using MatFile.Web.Services;
@@ -27,7 +28,18 @@ public static class RootManagementEndpoints
         bool Passive,
         bool IsEnabled,
         string? Icon,
-        int SortOrder);
+        int SortOrder,
+        AccessRequest[]? Access);
+
+    /// <summary>Rechte einer Rolle auf diesem Speicherort.</summary>
+    public record AccessRequest(
+        long RoleId,
+        bool CanRead,
+        bool CanWrite,
+        bool CanDelete,
+        bool CanUpload,
+        bool CanDownload,
+        bool CanShare);
 
     public record RootDetail(
         long Id,
@@ -44,17 +56,68 @@ public static class RootManagementEndpoints
         bool Passive,
         bool IsEnabled,
         string? Icon,
-        int SortOrder);
+        int SortOrder,
+        IReadOnlyList<AccessDetail> Access);
+
+    public record AccessDetail(
+        long RoleId,
+        string RoleName,
+        bool CanRead,
+        bool CanWrite,
+        bool CanDelete,
+        bool CanUpload,
+        bool CanDownload,
+        bool CanShare);
 
     public static IEndpointRouteBuilder MapRootManagementEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/roots").RequireAuthorization(MatFilePolicies.ManageRoots);
 
-        group.MapGet("/{id:long}", async (long id, MatFileDbContext db, SecretProtector protector) =>
+        // Vollständige Liste für den Verwaltungsdialog - inklusive Pfad und Rollenzahl.
+        group.MapGet("/", async (string? search, string? sort, string? dir, int? page, int? pageSize,
+            StorageRootService roots) =>
+        {
+            var query = new ListQuery
+            {
+                Search = search,
+                Sort = sort,
+                Dir = dir,
+                Page = page ?? 1,
+                PageSize = pageSize ?? ListQuery.DefaultPageSize
+            };
+
+            var result = await roots.ListAsync(query);
+            var rolesForMatrix = await roots.GetRoleAccessAsync(null);
+
+            return Results.Ok(new
+            {
+                items = result.Items.Select(r => new
+                {
+                    r.Id,
+                    r.Name,
+                    Type = r.StorageType.ToString(),
+                    Path = r.BasePath,
+                    r.IsEnabled,
+                    r.SortOrder,
+                    r.IsAvailable,
+                    r.RoleCount
+                }),
+                total = result.TotalCount,
+                page = result.Page,
+                pageSize = result.PageSize,
+                pageCount = result.PageCount,
+                roles = rolesForMatrix.Select(r => new { r.RoleId, r.RoleName })
+            });
+        });
+
+        group.MapGet("/{id:long}", async (
+            long id, MatFileDbContext db, SecretProtector protector, StorageRootService roots) =>
         {
             var root = await db.StorageRoot.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
 
-            return root is null ? Results.NotFound() : Results.Ok(ToDetail(root, protector));
+            return root is null
+                ? Results.NotFound()
+                : Results.Ok(ToDetail(root, protector, await roots.GetRoleAccessAsync(id)));
         });
 
         group.MapPost("/", async (RootRequest request, StorageRootService roots, ClaimsPrincipal user) =>
@@ -98,8 +161,8 @@ public static class RootManagementEndpoints
             return Results.Json(new { error = "invalid_type" }, statusCode: StatusCodes.Status400BadRequest);
         }
 
-        // Bestehende Rechte je Rolle bleiben unangetastet.
-        var access = await roots.GetRoleAccessAsync(id);
+        // Ohne Rechteangabe bleibt die bestehende Zuordnung unangetastet.
+        var access = await MergeAccessAsync(id, request.Access, roots);
 
         var result = await roots.SaveAsync(
             id,
@@ -118,6 +181,35 @@ public static class RootManagementEndpoints
             : Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status400BadRequest);
     }
 
+    /// <summary>
+    /// Übernimmt die übergebenen Rechte, lässt aber jede Rolle unverändert,
+    /// über die der Aufrufer nichts gesagt hat.
+    /// </summary>
+    private static async Task<List<StorageRootService.RoleAccess>> MergeAccessAsync(
+        long? id, AccessRequest[]? requested, StorageRootService roots)
+    {
+        var current = await roots.GetRoleAccessAsync(id);
+
+        if (requested is null || requested.Length == 0)
+        {
+            return current;
+        }
+
+        return current.Select(entry =>
+        {
+            var match = requested.FirstOrDefault(a => a.RoleId == entry.RoleId);
+
+            return match is null
+                ? entry
+                : entry with
+                {
+                    Permissions = new RootPermissions(
+                        match.CanRead, match.CanWrite, match.CanDelete,
+                        match.CanUpload, match.CanDownload, match.CanShare)
+                };
+        }).ToList();
+    }
+
     private static ConnectionSettings ToConnection(RootRequest request) => new()
     {
         Host = (request.Host ?? string.Empty).Trim(),
@@ -129,7 +221,8 @@ public static class RootManagementEndpoints
         Passive = request.Passive
     };
 
-    private static RootDetail ToDetail(StorageRoot root, SecretProtector protector)
+    private static RootDetail ToDetail(
+        StorageRoot root, SecretProtector protector, IReadOnlyList<StorageRootService.RoleAccess> access)
     {
         var connection = ConnectionSettings.Parse(root.SettingsJson);
 
@@ -148,6 +241,15 @@ public static class RootManagementEndpoints
             connection.Passive,
             root.IsEnabled,
             root.DisplayIcon,
-            root.SortOrder);
+            root.SortOrder,
+            access.Select(entry => new AccessDetail(
+                entry.RoleId,
+                entry.RoleName,
+                entry.Permissions.CanRead,
+                entry.Permissions.CanWrite,
+                entry.Permissions.CanDelete,
+                entry.Permissions.CanUpload,
+                entry.Permissions.CanDownload,
+                entry.Permissions.CanShare)).ToList());
     }
 }

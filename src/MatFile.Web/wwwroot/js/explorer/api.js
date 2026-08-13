@@ -46,6 +46,15 @@ function send(url, method, body) {
     });
 }
 
+/** Baut eine Abfragezeichenfolge und lässt leere Werte weg. */
+function queryString(values) {
+    const parts = Object.entries(values || {})
+        .filter(([, value]) => value !== null && value !== undefined && value !== '')
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+
+    return parts.length === 0 ? '' : '?' + parts.join('&');
+}
+
 export const api = {
     roots: () => request('/api/fs/roots'),
 
@@ -104,12 +113,35 @@ export const api = {
     uploadFinish: uploadId => request(`/api/fs/upload/finish?uploadId=${encodeURIComponent(uploadId)}`, { method: 'POST' }),
     uploadAbort: uploadId => request(`/api/fs/upload/abort?uploadId=${encodeURIComponent(uploadId)}`, { method: 'POST' }),
 
+    // --- Benutzer und Rollen verwalten ---
+    users: query => request('/api/users' + queryString(query)),
+    user: id => request(`/api/users/${id}`),
+    createUser: data => send('/api/users', 'POST', data),
+    updateUser: (id, data) => send(`/api/users/${id}`, 'PUT', data),
+    deleteUser: id => request(`/api/users/${id}`, { method: 'DELETE' }),
+    unlockUser: id => request(`/api/users/${id}/unlock`, { method: 'POST' }),
+
+    roleList: query => request('/api/roles' + queryString(query)),
+    role: id => request(`/api/roles/${id}`),
+    createRole: data => send('/api/roles', 'POST', data),
+    updateRole: (id, data) => send(`/api/roles/${id}`, 'PUT', data),
+    deleteRole: id => request(`/api/roles/${id}`, { method: 'DELETE' }),
+
     // --- Speicherorte verwalten (nur mit dem Recht Root-Pfade verwalten) ---
+    rootList: query => request('/api/roots' + queryString(query)),
     root: id => request(`/api/roots/${id}`),
     createRoot: data => send('/api/roots', 'POST', data),
     updateRoot: (id, data) => send(`/api/roots/${id}`, 'PUT', data),
     deleteRoot: id => request(`/api/roots/${id}`, { method: 'DELETE' }),
     testRoot: data => send('/api/roots/test', 'POST', data),
+
+    // --- Rekursive Suche ---
+    startSearch: options => send('/api/search', 'POST', options),
+
+    searchStatus: (id, from) =>
+        request(`/api/search/${encodeURIComponent(id)}?from=${from || 0}`),
+
+    cancelSearch: id => request(`/api/search/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
 
     // --- Jobs ---
     jobs: () => request('/api/jobs'),
@@ -194,6 +226,9 @@ const icons = {
     key: "<path d='M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3'/>",
     exchange: "<polyline points='17 1 21 5 17 9'/><path d='M3 11V9a4 4 0 0 1 4-4h14'/><polyline points='7 23 3 19 7 15'/><path d='M21 13v2a4 4 0 0 1-4 4H3'/>",
     lock: "<rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/>",
+    search: "<circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/>",
+    'search-deep': "<circle cx='11' cy='11' r='7'/><line x1='20' y1='20' x2='16' y2='16'/><line x1='11' y1='8' x2='11' y2='14'/><line x1='8' y1='11' x2='14' y2='11'/>",
+    'log-out': "<path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/><polyline points='16 17 21 12 16 7'/><line x1='21' y1='12' x2='9' y2='12'/>",
     users: "<path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/>",
     shield: "<path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/>",
     settings: "<circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/>"

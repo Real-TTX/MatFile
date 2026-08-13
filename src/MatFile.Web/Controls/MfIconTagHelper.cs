@@ -15,6 +15,7 @@ public class MfIconTagHelper : TagHelper
         ["pencil"] = "<path d='M12 20h9'/><path d='M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'/>",
         ["trash"] = "<polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/>",
         ["search"] = "<circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/>",
+        ["search-deep"] = "<circle cx='11' cy='11' r='7'/><line x1='20' y1='20' x2='16' y2='16'/><line x1='11' y1='8' x2='11' y2='14'/><line x1='8' y1='11' x2='14' y2='11'/>",
         ["filter"] = "<polygon points='22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'/>",
         ["x"] = "<line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/>",
         ["check"] = "<polyline points='20 6 9 17 4 12'/>",

@@ -41,14 +41,6 @@
 
                 if (User.Identity?.IsAuthenticated == true)
                 {
-                    if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles)
-                        || User.HasPermission(Permission.ManageRoots))
-                    {
-                        <a class="mf-btn mf-btn-quiet" asp-page="/Admin/Index">
-                            <mf-icon name="settings" />@L["Admin.Title"]
-                        </a>
-                    }
-
                     <span class="mf-user" title="@User.Identity.Name">@User.GetDisplayName()</span>
                     <a class="mf-btn mf-btn-quiet" asp-page="/Account/ChangePassword">@L["Layout.ChangePassword"]</a>
                     <form method="post" asp-page="/Logout" class="mf-inline-form">
@@ -57,7 +49,11 @@
                 }
             }
 
-            <span class="mf-badge" title="@AppInfo.Channel">@AppInfo.Version</span>
+            @* Im Explorer steht die Version unten links in der Seitenleiste. *@
+            @if (!isFullBleed)
+            {
+                <span class="mf-badge" title="@AppInfo.Channel">@AppInfo.Version</span>
+            }
         </header>
 
         <main class="mf-content @(isFullBleed ? "mf-content-full" : string.Empty)">

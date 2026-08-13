@@ -118,8 +118,19 @@ public static class PathGuard
     {
         var normalizedRoot = Path.TrimEndingDirectorySeparator(root);
 
-        return candidate.Equals(normalizedRoot, Comparison)
-               || candidate.StartsWith(normalizedRoot + Path.DirectorySeparatorChar, Comparison);
+        if (candidate.Equals(normalizedRoot, Comparison))
+        {
+            return true;
+        }
+
+        // Bei einem Wurzelpfad wie "/" oder "C:\" bleibt das Trennzeichen stehen -
+        // ein weiteres anzuhängen ergäbe "//" und würde jeden Unterordner ablehnen.
+        var prefix = normalizedRoot.EndsWith(Path.DirectorySeparatorChar)
+                     || normalizedRoot.EndsWith(Path.AltDirectorySeparatorChar)
+            ? normalizedRoot
+            : normalizedRoot + Path.DirectorySeparatorChar;
+
+        return candidate.StartsWith(prefix, Comparison);
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\_helpers.ps1"
 $results = @()
 $WorkDir = "/storage/pvtest"
 
@@ -14,18 +15,6 @@ function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     $script:results += [pscustomobject]@{ Test = $name; OK = $ok; Detail = $detail }
     $mark = if ($ok) { "OK  " } else { "FAIL" }
     Write-Host "$mark  $name  $detail"
-}
-
-function Get-Token([string]$html) {
-    if ($html -match 'name="__RequestVerificationToken"[^>]*value="([^"]+)"') { return $Matches[1] }
-    return $null
-}
-
-function Enc([string]$s) { return [System.Uri]::EscapeDataString($s) }
-
-function Post-Form([string]$url, $session, [string]$body) {
-    return Invoke-WebRequest $url -Method Post -WebSession $session -UseBasicParsing `
-        -Body $body -ContentType 'application/x-www-form-urlencoded'
 }
 
 function Api([string]$method, [string]$url, $session, $body) {
@@ -58,27 +47,17 @@ head -c 600000 /dev/zero | tr '\0' 'a' > $WorkDir/gross.txt
 Add-Result "Testdaten angelegt" ($LASTEXITCODE -eq 0) $WorkDir
 
 # --- Anmeldung und Root ---------------------------------------------------
-$admin = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=admin&Input.Password=$(Enc $SeedPassword)"
+$admin = New-MatSession
+$r = Connect-Mat $BaseUrl $admin 'admin' $SeedPassword
 Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
-$r = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleRows = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.Access\[(\d+)\]\.RoleId" value="(\d+)"[^>]*>\s*([^\s<]+)')) {
-    $roleRows[$m.Groups[3].Value.Trim()] = @{ Index = $m.Groups[1].Value; RoleId = $m.Groups[2].Value }
-}
+$roles = Get-MatRoles $BaseUrl $admin
 
 # Rolle User darf nur lesen, nicht herunterladen - damit ist auch keine Vorschau erlaubt
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Medien&Input.StorageType=Local&Input.BasePath=$(Enc $WorkDir)&Input.SortOrder=1&Input.IsEnabled=true"
-foreach ($role in $roleRows.Keys) {
-    $row = $roleRows[$role]
-    $body += "&Input.Access[$($row.Index)].RoleId=$($row.RoleId)"
-    if ($role -eq 'User') { $body += "&Input.Access[$($row.Index)].CanRead=true" }
-}
-Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body | Out-Null
+New-MatRoot $BaseUrl $admin @{
+    name = 'Medien'; path = $WorkDir; sortOrder = 1
+    access = @((New-MatAccess $roles['User'] $true $false $false $false $false))
+} | Out-Null
 $rootId = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Medien' }).id
 Add-Result "Root angelegt" ($null -ne $rootId) "id=$rootId"
 
@@ -146,19 +125,12 @@ $activity = Api GET "$BaseUrl/api/fs/activity?rootId=$rootId&path=Protokolltest"
 Add-Result "Protokoll zum Eintrag" ($activity.Status -eq 200 -and @($activity.Data).Count -ge 1 -and $activity.Data[0].action -eq 'CreateFolder') "n=$(@($activity.Data).Count)"
 
 # --- Rechte ---------------------------------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleIds = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.RoleIds" value="(\d+)".*?<span>([^<]+)</span>')) {
-    $roleIds[$m.Groups[2].Value.Trim()] = $m.Groups[1].Value
-}
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.DisplayName=Tester&Input.NewPassword=$(Enc $TesterPassword)&Input.IsActive=true&Input.MustChangePassword=false&Input.RoleIds=$($roleIds['User'])"
-Post-Form "$BaseUrl/Admin/Users/Edit" $admin $body | Out-Null
+New-MatUser $BaseUrl $admin @{
+    username = 'tester'; displayName = 'Tester'; newPassword = $TesterPassword; roleIds = @($roles['User'])
+} | Out-Null
 
-$tester = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $tester -UseBasicParsing
-$t = Get-Token $r.Content
-Post-Form "$BaseUrl/Login" $tester "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.Password=$(Enc $TesterPassword)" | Out-Null
+$tester = New-MatSession
+Connect-Mat $BaseUrl $tester 'tester' $TesterPassword | Out-Null
 
 $denied = Api GET "$BaseUrl/api/fs/preview?rootId=$rootId&path=bild.png" $tester
 Add-Result "Vorschau ohne Downloadrecht gesperrt" ($denied.Status -eq 403) "status=$($denied.Status)"

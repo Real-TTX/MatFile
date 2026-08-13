@@ -6,24 +6,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\_helpers.ps1"
 $results = @()
 
 function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     $script:results += [pscustomobject]@{ Test = $name; OK = $ok; Detail = $detail }
     $mark = if ($ok) { "OK  " } else { "FAIL" }
     Write-Host "$mark  $name  $detail"
-}
-
-function Get-Token([string]$html) {
-    if ($html -match 'name="__RequestVerificationToken"[^>]*value="([^"]+)"') { return $Matches[1] }
-    return $null
-}
-
-function Enc([string]$s) { return [System.Uri]::EscapeDataString($s) }
-
-function Post-Form([string]$url, $session, [string]$body) {
-    return Invoke-WebRequest $url -Method Post -WebSession $session -UseBasicParsing `
-        -Body $body -ContentType 'application/x-www-form-urlencoded'
 }
 
 function Api([string]$method, [string]$url, $session, $body) {
@@ -44,30 +33,19 @@ function Api([string]$method, [string]$url, $session, $body) {
 }
 
 # --- Vorbereitung: Anmeldung und ein Root ---------------------------------
-$admin = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=admin&Input.Password=$(Enc $SeedPassword)"
+$admin = New-MatSession
+$r = Connect-Mat $BaseUrl $admin 'admin' $SeedPassword
 Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
-$r = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleRows = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.Access\[(\d+)\]\.RoleId" value="(\d+)"[^>]*>\s*([^\s<]+)')) {
-    $roleRows[$m.Groups[3].Value.Trim()] = @{ Index = $m.Groups[1].Value; RoleId = $m.Groups[2].Value }
-}
-Add-Result "Rollenmatrix im Formular" ($roleRows.ContainsKey('User') -and $roleRows.ContainsKey('Administrator')) ($roleRows.Keys -join ', ')
+$roles = Get-MatRoles $BaseUrl $admin
+Add-Result "Rollenmatrix aus der API" ($roles.ContainsKey('User') -and $roles.ContainsKey('Administrator')) ($roles.Keys -join ', ')
 
 # Rolle User darf nur lesen - bewusst ohne Download.
-# Die Rechtematrix wird wie im Formular vollstaendig gesendet (lueckenlose Indizes).
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Name=Sample&Input.StorageType=Local&Input.BasePath=$(Enc '/storage/sample')&Input.DisplayIcon=folder&Input.SortOrder=1&Input.IsEnabled=true"
-foreach ($role in $roleRows.Keys) {
-    $row = $roleRows[$role]
-    $body += "&Input.Access[$($row.Index)].RoleId=$($row.RoleId)"
-    if ($role -eq 'User') { $body += "&Input.Access[$($row.Index)].CanRead=true" }
+$created = New-MatRoot $BaseUrl $admin @{
+    name = 'Sample'; path = '/storage/sample'; icon = 'folder'; sortOrder = 1
+    access = @((New-MatAccess $roles['User'] $true $false $false $false $false))
 }
-$r = Post-Form "$BaseUrl/Admin/Roots/Edit" $admin $body
-Add-Result "Root angelegt" ($r.Content -match 'Sample') ""
+Add-Result "Root angelegt" ($created.Status -eq 200) "id=$($created.Data.id)"
 
 $roots = (Api GET "$BaseUrl/api/fs/roots" $admin).Data
 $rootId = ($roots | Where-Object { $_.name -eq 'Sample' }).id
@@ -153,19 +131,12 @@ $escape = Api GET "$BaseUrl/api/fs/download?rootId=$rootId&path=$(Enc '../../etc
 Add-Result "Pfadausbruch beim Download blockiert" ($escape.Status -eq 400 -or $escape.Status -eq 404) "status=$($escape.Status)"
 
 # --- Rechte: Benutzer ohne Downloadrecht ---------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleIds = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.RoleIds" value="(\d+)".*?<span>([^<]+)</span>')) {
-    $roleIds[$m.Groups[2].Value.Trim()] = $m.Groups[1].Value
-}
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.DisplayName=Tester&Input.NewPassword=$(Enc $TesterPassword)&Input.IsActive=true&Input.MustChangePassword=false&Input.RoleIds=$($roleIds['User'])"
-$r = Post-Form "$BaseUrl/Admin/Users/Edit" $admin $body
+New-MatUser $BaseUrl $admin @{
+    username = 'tester'; displayName = 'Tester'; newPassword = $TesterPassword; roleIds = @($roles['User'])
+} | Out-Null
 
-$tester = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $tester -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $tester "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.Password=$(Enc $TesterPassword)"
+$tester = New-MatSession
+$r = Connect-Mat $BaseUrl $tester 'tester' $TesterPassword
 Add-Result "Testbenutzer angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
 $list = Api GET "$BaseUrl/api/fs/list?rootId=$rootId" $tester

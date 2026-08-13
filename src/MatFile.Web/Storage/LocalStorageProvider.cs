@@ -9,10 +9,18 @@ namespace MatFile.Web.Storage;
 public sealed class LocalStorageProvider : IStorageProvider
 {
     private readonly string _basePath;
+    private readonly string? _protectedPath;
 
-    public LocalStorageProvider(StorageRoot root)
+    /// <param name="protectedPath">
+    /// Verzeichnis, das nie ausgeliefert wird - MatFiles eigenes /data mit Datenbank und Schlüsseln.
+    /// Liegt der Speicherort darüber (etwa auf "/"), bleibt es unsichtbar statt den Pfad zu verbieten.
+    /// </param>
+    public LocalStorageProvider(StorageRoot root, string? protectedPath = null)
     {
         _basePath = root.BasePath;
+        _protectedPath = string.IsNullOrWhiteSpace(protectedPath)
+            ? null
+            : Path.TrimEndingDirectorySeparator(Path.GetFullPath(protectedPath));
     }
 
     public StorageType StorageType => StorageType.Local;
@@ -28,11 +36,7 @@ public sealed class LocalStorageProvider : IStorageProvider
         }
 
         var normalized = PathGuard.Normalize(relativePath);
-
-        if (!PathGuard.TryResolve(_basePath, normalized, out var fullPath))
-        {
-            throw StorageException.InvalidPath(normalized);
-        }
+        var fullPath = Resolve(normalized);
 
         if (!Directory.Exists(fullPath))
         {
@@ -54,6 +58,11 @@ public sealed class LocalStorageProvider : IStorageProvider
                 continue;
             }
 
+            if (IsProtected(info.FullName))
+            {
+                continue;
+            }
+
             entries.Add(ToEntry(info, childPath));
         }
 
@@ -68,11 +77,7 @@ public sealed class LocalStorageProvider : IStorageProvider
     public Task<StorageEntry?> GetAsync(string relativePath, CancellationToken cancellationToken = default)
     {
         var normalized = PathGuard.Normalize(relativePath);
-
-        if (!PathGuard.TryResolve(_basePath, normalized, out var fullPath))
-        {
-            throw StorageException.InvalidPath(normalized);
-        }
+        var fullPath = Resolve(normalized);
 
         if (Directory.Exists(fullPath))
         {
@@ -90,11 +95,7 @@ public sealed class LocalStorageProvider : IStorageProvider
     public Task<Stream> OpenReadAsync(string relativePath, CancellationToken cancellationToken = default)
     {
         var normalized = PathGuard.Normalize(relativePath);
-
-        if (!PathGuard.TryResolve(_basePath, normalized, out var fullPath))
-        {
-            throw StorageException.InvalidPath(normalized);
-        }
+        var fullPath = Resolve(normalized);
 
         if (!File.Exists(fullPath))
         {
@@ -246,8 +247,17 @@ public sealed class LocalStorageProvider : IStorageProvider
             throw StorageException.InvalidPath(PathGuard.Normalize(relativePath));
         }
 
+        // Das eigene Datenverzeichnis verhält sich, als gäbe es es nicht.
+        if (IsProtected(fullPath))
+        {
+            throw StorageException.NotFound(PathGuard.Normalize(relativePath));
+        }
+
         return fullPath;
     }
+
+    private bool IsProtected(string fullPath)
+        => _protectedPath is not null && PathGuard.IsInside(_protectedPath, fullPath);
 
     private static StorageEntry ToEntry(FileSystemInfo info, string relativePath)
     {

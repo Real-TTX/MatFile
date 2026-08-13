@@ -11,11 +11,13 @@ public sealed class StorageProviderFactory
 {
     private readonly SecretProtector _protector;
     private readonly IHttpClientFactory _httpClients;
+    private readonly MatFilePaths _paths;
 
-    public StorageProviderFactory(SecretProtector protector, IHttpClientFactory httpClients)
+    public StorageProviderFactory(SecretProtector protector, IHttpClientFactory httpClients, MatFilePaths paths)
     {
         _protector = protector;
         _httpClients = httpClients;
+        _paths = paths;
     }
 
     public const string WebDavClient = "webdav";
@@ -26,7 +28,7 @@ public sealed class StorageProviderFactory
     /// <summary>Erzeugt einen Provider mit ausdrücklich übergebenen Verbindungsdaten - für den Verbindungstest.</summary>
     public IStorageProvider Create(StorageRoot root, ConnectionSettings settings, string? password) => root.StorageType switch
     {
-        StorageType.Local => new LocalStorageProvider(root),
+        StorageType.Local => new LocalStorageProvider(root, _paths.DataDirectory),
         StorageType.Sftp => new SftpStorageProvider(root, settings, password),
         StorageType.Ftp => new FtpStorageProvider(root, settings, password),
         StorageType.Smb => new SmbStorageProvider(root, settings, password),

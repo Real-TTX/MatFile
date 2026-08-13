@@ -24,8 +24,9 @@
 
 ```
 Browser
-  │  Razor Pages (Server-Rendering: Admin-CRUD, Login, App-Shell)
-  │  JSON-API  (/api/fs/*)  ← Explorer-Interaktion via Fetch + Alpine
+  │  Razor Pages (Server-Rendering: Login, Kennwortwechsel, App-Shell)
+  │  JSON-API  (/api/fs/*, /api/users, /api/roles, /api/roots, /api/search)
+  │            ← Explorer und Verwaltungsdialoge via Fetch
   │  Streaming (/files/*)   ← Download, Preview, Range-Requests
   ▼
 ASP.NET Core 10  (Kestrel :2222)
@@ -54,7 +55,7 @@ Volume /data
 MatFile/
 ├─ src/MatFile.Web/
 │  ├─ Program.cs
-│  ├─ Pages/                 Login, Explorer, Admin/{Users,Roles,Roots,Mounts,Sessions,Log}
+│  ├─ Pages/                 Login, Explorer (App-Shell), Account/ChangePassword, Error
 │  ├─ Pages/Shared/Controls/ _Table, _Pagination, _FormLayout, _TabBar, _Toolbar, _Confirm
 │  ├─ Api/                   FsEndpoints, UploadEndpoints, StreamEndpoints, JobEndpoints
 │  ├─ Services/              Business-Logik (mehrere Funktionen je Klasse erlaubt)
@@ -120,7 +121,14 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   zuletzt verwendet. Ein-/ausklappbar, per Drag sortierbar, auf Mobile als Off-Canvas.
 - **Tab-Leiste** wie Windows Explorer: `+`, Schließen, Mittelklick, Drag-Reorder,
   Kontextmenü „Tab anheften/persistent machen" → gespeichert in `ExplorerTab`.
+- **Menüleiste über den Tabs** wie im Windows-Explorer: Datei · Bearbeiten · Ansicht ·
+  Speicherorte · Einstellungen, jeweils als Ausklappmenü in der Optik des Rechtsklick-Menüs.
+  Punkte ohne Recht oder ohne passende Auswahl sind ausgegraut.
 - **Toolbar**: Zurück/Vor/Hoch, Breadcrumb-Pfad, Suche, Sortierung, Ansicht (Liste/Kacheln), Upload, Neu.
+- **Suche**: Tippen filtert den aktuellen Ordner, Enter (oder der Knopf im Suchfeld) startet
+  die **rekursive Suche** über alle Unterordner – auf Wunsch inklusive Dateiinhalt. Ergebnisse
+  laufen in ein **eigenes, verschiebbares Fenster** mit Fortschritt (Ordner/Dateien, aktueller
+  Pfad), Abbruch, Fundstelle als hervorgehobene Textzeile und „Im Ordner anzeigen".
 - **Dateiliste**: Mehrfachauswahl (Klick, Ctrl+Klick, Shift+Klick, Rubber-Band, Ctrl+A),
   Spalten sortierbar, Inline-Rename, Drag&Drop (intern verschieben, extern hochladen).
 - **Kontextmenü (Rechtsklick)**: Öffnen · Vorschau · Download · Umbenennen · Kopieren ·
@@ -131,13 +139,22 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   Blättern mit Pfeiltasten.
 - **Transfer-Panel** unten rechts: laufende Uploads/Jobs mit Fortschritt und Abbruch.
 
-### Admin-Bereich (nach den CRUD-Guidelines)
-- Liste + **separate Unterseite** zum Erstellen/Bearbeiten.
-- Über der Tabelle eine **Toolbar**: Suchtext, Filter, Sortierung.
-- Listen-Aktionen **unterhalb**, linksbündig; **Delete mit Abstand** abgesetzt.
+### Verwaltung (nach den CRUD-Guidelines)
+
+Benutzer, Rollen und Speicherorte sind **Dialoge im Explorer**, erreichbar über die
+Menüleiste. Ein eigener Adminbereich als Seitenbaum existiert nicht mehr – die Verwaltung
+soll dort sitzen, wo gearbeitet wird, und die Guidelines gelten im Dialog genauso:
+
+- Liste und Bearbeiten sind **getrennte Ansichten** desselben Dialogs (statt Unterseite).
+- Über der Tabelle eine **Toolbar**: Suchtext, Filter, „hinzufügen".
 - Direkt unter der Tabelle nur die **Pagination**.
+- Aktionen der Liste **unterhalb**, linksbündig; **Löschen mit Abstand** abgesetzt.
 - Button-Reihenfolge positiv → negativ: `Speichern · Zurück · ⟨Spacer⟩ · Löschen`.
 - Icons wo sinnvoll, durchgängig mobil optimiert.
+
+Verbindungsdaten eines Speicherorts bearbeitet weiterhin der eigene, plakative Dialog;
+die **Rechtematrix je Rolle** sitzt im Verwaltungsdialog. Die Dialoge sprechen dieselbe
+JSON-API (`/api/users`, `/api/roles`, `/api/roots`), gegen die auch die Tests laufen.
 
 ### Wiederverwendbare Controls
 
@@ -163,7 +180,9 @@ Sortier- und Seitenparameter lassen sich über `param-prefix` je Control trennen
 - Reihenfolge der Spracherkennung: **Culture-Cookie → Accept-Language → Englisch**.
 - Angemeldete Benutzer bekommen ihre Wahl in `UserSetting` (`Language`) gespeichert;
   beim Anmelden wird daraus das Cookie gesetzt, die Sprache folgt also dem Konto.
-- Umschalter (EN/DE) sitzt in der Topbar und funktioniert auch auf der Anmeldeseite.
+- Die Sprachwahl ist ein **Knopf mit Weltkugel und Kürzel**, der einen Dialog öffnet:
+  im Explorer unten links in der Seitenleiste, sonst in der Kopfzeile. Auf der Anmeldeseite
+  funktioniert er ebenso.
 - Daten in der Datenbank (Rollennamen, Root-Namen) werden **nicht** übersetzt.
 - Datums- und Zahlenformate folgen der gewählten Kultur (ICU im Container aktiv).
 
@@ -248,12 +267,13 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 |---|---|---|
 | **M0** | Repo-Skeleton, Branches `main`/`dev`, .gitignore, Solution, Dockerfile, Compose dev/release, GitHub Action, Versionierung | Container startet auf `:2222`, zeigt Platzhalterseite |
 | **M1** | EF Core + SQLite, alle Tabellen, Audit-Interceptor, Seed-Admin, Login/Logout, DB-gestützte Session (restart-fest), Rollen & Policies, **Mehrsprachigkeit EN/DE** | Anmeldung funktioniert, Session überlebt Neustart |
-| **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), Admin-CRUD für User & Rollen | Admin-Bereich nach Guidelines nutzbar |
+| **M2** | Designsystem-CSS, Layout, Controls (`_Table`, `_Pagination`, `_FormLayout`, `_TabBar`, `_Toolbar`), CRUD für User & Rollen | Verwaltung nach Guidelines nutzbar |
 | **M3** | `IStorageProvider` + `LocalProvider`, `PathGuard`, Root-Verwaltung im UI, `RootAccess`-Rechte, Listing-API (`/api/fs/roots`, `/api/fs/list`) | Mehrere Home-/Root-Paths konfigurierbar und browsebar |
 | **M4** | Explorer-Shell: Sidebar, Breadcrumb, Liste/Kacheln, Mehrfachauswahl, Sortierung, Tabs (inkl. persistent), Bookmarks, **Download** (aus M5 vorgezogen) | Navigation komplett |
 | **M5** | Datei-Operationen: Upload (chunked/resumable), ZIP-Download, Komprimieren, Entpacken, Copy/Cut/Paste, Move, Rename, Delete, Neuer Ordner, Job-Queue mit Fortschritt | Voller Funktionsumfang lokal |
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
 | **M7** | Remote-Provider **SMB, SFTP, FTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung, Abschnitt „Verbindungen" in der Seitenleiste mit Statuspunkt | Externe Freigaben eingebunden |
+| **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **rekursive Suche mit Inhaltssuche** in eigenem Fenster, Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste | Bedienung aus einer Fläche |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
@@ -285,6 +305,15 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 - **Kennwortwechsel beim ersten Start** ist über `RequirePasswordChangeOnFirstLogin`
   in `matfile.json` steuerbar und standardmäßig **aus**, damit `admin`/`admin` beim
   Entwickeln direkt funktioniert. Für den produktiven Betrieb einschalten.
+- Ein Speicherort darf auf die **Containerwurzel `/`** zeigen. MatFiles eigenes `/data`
+  blendet der lokale Provider dabei aus und verweigert den Zugriff darauf — sonst lägen
+  Datenbank und Schlüssel im Explorer offen. `/data` selbst bleibt als Pfad verboten.
+- Die **rekursive Suche** läuft im Hintergrund über `IStorageProvider`, also auch über
+  SFTP/FTP/WebDAV/SMB. Ergebnisse leben nur im Speicher (max. 500 Treffer, 20.000 Ordner,
+  24 Ebenen, Symlinks werden nicht verfolgt) und verfallen 15 Minuten nach dem Ende.
+  Einen echten Prozentwert gibt es nicht — angezeigt wird der Anteil der erledigten an den
+  bekannten Ordnern. Die **Inhaltssuche** verlangt zusätzlich das Downloadrecht, überspringt
+  Dateien über 8 MB und bricht beim ersten Nullbyte als Binärdatei ab.
 - **Thumbnails** in der Kachelansicht fehlen noch: dafür wird eine Bildbibliothek gebraucht
   (ImageSharp oder SkiaSharp). Offen bis M8, die Vorschau selbst funktioniert ohne.
 - **Video-Thumbnails** brauchen `ffmpeg` (+ ~100 MB Image). Standard: aus, per Build-Arg aktivierbar.

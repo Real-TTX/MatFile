@@ -4,6 +4,8 @@ import { askName, askConfirm, showFacts, flash } from './dialogs.js';
 import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
+import { openSearch } from './search.js';
+import { openUsers, openRoles, openLocations } from './manage.js';
 
 const can = window.matfileCan || {};
 
@@ -19,6 +21,7 @@ const el = {
     status: document.getElementById('mfx-status'),
     menu: document.getElementById('mfx-menu'),
     search: document.getElementById('mfx-search'),
+    searchGo: document.getElementById('mfx-search-go'),
     sidebar: document.getElementById('mfx-sidebar'),
     backdrop: document.getElementById('mfx-backdrop'),
     back: document.getElementById('mfx-back'),
@@ -72,6 +75,13 @@ function createTab(rootId, path, pinned) {
 // ---------------------------------------------------------------- Start
 
 async function init() {
+    // Ohne das Recht am Explorer bleibt die Fläche leer - die Menüs zur
+    // Verwaltung stehen trotzdem, falls die Rolle sie erlaubt.
+    if (can.useExplorer === false) {
+        el.listing.replaceChildren(message(t('NoExplorerAccess')));
+        return;
+    }
+
     try {
         const [settings, roots, bookmarks, savedTabs] = await Promise.all([
             api.settings(), api.roots(), api.bookmarks(), api.tabs()
@@ -1069,7 +1079,7 @@ function applySettingsToToolbar() {
 
 // ---------------------------------------------------------------- Auswahl
 
-/** Auswahl hat sich ge�ndert: Markierung, Statuszeile und Detailbereich nachziehen. */
+/** Auswahl hat sich geändert: Markierung, Statuszeile und Detailbereich nachziehen. */
 function selectionChanged() {
     applySelection();
     renderStatus();
@@ -1411,6 +1421,93 @@ async function addBookmark(entry) {
     highlightSidebar();
 }
 
+// ---------------------------------------------------------------- Rekursive Suche
+
+/** Sucht ab dem aktuellen Ordner über alle Unterordner - in einem eigenen Fenster. */
+function startSearch(withContent) {
+    const tab = activeTab();
+    if (!tab) {
+        return;
+    }
+
+    const query = el.search.value.trim();
+
+    if (query.length < 2) {
+        flash(t('SearchQueryTooShort').replace('{0}', 2), true);
+        el.search.focus();
+        return;
+    }
+
+    const rootId = tab.rootId;
+
+    openSearch(
+        {
+            rootId,
+            rootName: tab.rootName,
+            path: tab.path,
+            query,
+            content: withContent,
+            includeHidden: state.settings.showHidden
+        },
+        {
+            open: hit => openHit(rootId, hit),
+            reveal: hit => revealHit(rootId, hit)
+        });
+}
+
+/** Rechte eines Speicherorts, auch wenn gerade ein anderer Tab aktiv ist. */
+function rootRights(rootId) {
+    return (state.roots.find(root => root.id === rootId) || {}).permissions || {};
+}
+
+/** Treffer öffnen: Ordner betreten, Datei anzeigen oder herunterladen. */
+async function openHit(rootId, hit) {
+    if (hit.isDirectory) {
+        await revealTarget(rootId, hit.path, null);
+        return;
+    }
+
+    if (!rootRights(rootId).canDownload) {
+        flash(t('ErrorAccessDenied'), true);
+        return;
+    }
+
+    if (hit.preview && hit.preview !== 'none') {
+        openPreview(rootId, [hit], hit.path, true);
+        return;
+    }
+
+    window.location.href = api.downloadUrl(rootId, hit.path);
+}
+
+/** Zum Ordner des Treffers springen und ihn dort markieren. */
+function revealHit(rootId, hit) {
+    return revealTarget(rootId, hit.parentPath || '', hit.path);
+}
+
+async function revealTarget(rootId, path, selectPath) {
+    const tab = activeTab();
+    if (!tab) {
+        return;
+    }
+
+    await navigate(tab, rootId, path);
+
+    if (!selectPath) {
+        return;
+    }
+
+    tab.selection.clear();
+    tab.selection.add(selectPath);
+    tab.anchor = selectPath;
+    selectionChanged();
+
+    const row = el.listing.querySelector(`.mfx-row[data-path="${CSS.escape(selectPath)}"]`);
+    if (row) {
+        row.scrollIntoView({ block: 'center' });
+    }
+}
+
 function entryMenu(entry) {
     const tab = activeTab();
     const rights = permissions();
@@ -1569,6 +1666,11 @@ document.addEventListener('keydown', event => {
         return;
     }
 
+    // Im Suchfenster gelten seine eigenen Tasten, nicht die der Dateiliste.
+    if (event.target instanceof Element && event.target.closest('.mfx-window')) {
+        return;
+    }
+
     const tab = activeTab();
     if (!tab) {
         return;
@@ -1602,6 +1704,12 @@ document.addEventListener('keydown', event => {
         if (key === 'v') {
             event.preventDefault();
             paste();
+            return;
+        }
+
+        if (key === 'f') {
+            event.preventDefault();
+            focusSearch(false);
             return;
         }
     }
@@ -1729,6 +1837,27 @@ el.search.addEventListener('input', () => {
     renderStatus();
 });
 
+// Enter verlässt den aktuellen Ordner und sucht in allen Unterordnern.
+el.search.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        startSearch(false);
+    }
+});
+
+el.searchGo.addEventListener('click', () => startSearch(false));
+
+/** Steht schon etwas im Feld, geht die Suche gleich los - sonst wartet der Fokus dort. */
+function focusSearch(withContent) {
+    if (el.search.value.trim().length >= 2) {
+        startSearch(withContent);
+        return;
+    }
+
+    el.search.focus();
+    el.search.select();
+}
+
 el.hidden.addEventListener('click', () => {
     state.settings.showHidden = !state.settings.showHidden;
     applySettingsToToolbar();
@@ -1799,7 +1928,10 @@ function menuItems(name) {
             { label: t('Delete'), icon: 'trash', danger: true, disabled: !rights.canDelete || selected.length === 0, action: () => deleteSelected() },
             '-',
             { label: t('SelectAll'), icon: 'list', action: () => selectAll() },
-            { label: t('AddBookmark'), icon: 'star', action: () => addBookmark(single && selected[0].isDirectory ? selected[0] : null) }
+            { label: t('AddBookmark'), icon: 'star', action: () => addBookmark(single && selected[0].isDirectory ? selected[0] : null) },
+            '-',
+            { label: t('SearchRecursive'), icon: 'search-deep', action: () => focusSearch(false) },
+            { label: t('SearchContent'), icon: 'search', action: () => focusSearch(true) }
         ];
     }
 
@@ -1836,7 +1968,7 @@ function menuItems(name) {
                 action: () => editLocation(tab.rootId)
             },
             '-',
-            { label: t('Manage'), icon: 'settings', action: () => { window.location.href = '/Admin/Roots'; } }
+            { label: t('Manage'), icon: 'settings', action: () => openLocations(() => reloadRoots()) }
         ];
     }
 
@@ -1847,7 +1979,7 @@ function menuItems(name) {
         document.cookie = 'matfile.theme=' + value + ';path=/;max-age=31536000;samesite=lax';
     };
 
-    return [
+    const settings = [
         {
             label: t('Language'), icon: 'globe',
             action: () => document.getElementById('mf-language-dialog')?.showModal()
@@ -1863,6 +1995,23 @@ function menuItems(name) {
             action: () => document.querySelector('.mfx-side-foot form[action="/Logout"]')?.submit()
         }
     ];
+
+    // Verwaltung sitzt in denselben Menüs - jeder Punkt nur mit dem passenden Recht.
+    const administration = [];
+
+    if (can.manageUsers) {
+        administration.push({ label: t('Admin.Users'), icon: 'users', action: () => openUsers() });
+    }
+
+    if (can.manageRoles) {
+        administration.push({ label: t('Admin.Roles'), icon: 'shield', action: () => openRoles() });
+    }
+
+    if (can.manageRoots) {
+        administration.push({ label: t('Admin.Roots'), icon: 'hard', action: () => openLocations(() => reloadRoots()) });
+    }
+
+    return administration.length === 0 ? settings : [...administration, '-', ...settings];
 }
 
 document.querySelectorAll('.mfx-menubar-item').forEach(button => {
@@ -1881,7 +2030,7 @@ if (el.more) {
             { label: t('AddFolder'), icon: 'folder', action: () => addLocation(false) },
             { label: t('AddConnection'), icon: 'hard', action: () => addLocation(true) },
             '-',
-            { label: t('Manage'), icon: 'settings', action: () => { window.location.href = '/Admin/Roots'; } }
+            { label: t('Manage'), icon: 'settings', action: () => openLocations(() => reloadRoots()) }
         ]);
 
         event.stopPropagation();

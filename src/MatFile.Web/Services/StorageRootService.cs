@@ -185,6 +185,11 @@ public sealed class StorageRootService
         basePath = (basePath ?? string.Empty).Trim();
         connection ??= new ConnectionSettings();
 
+        if (name.Length == 0)
+        {
+            return new SaveResult(false, _text["Root.Error.NameRequired"]);
+        }
+
         if (await _db.StorageRoot.AnyAsync(r => r.Name == name && r.Id != id))
         {
             return new SaveResult(false, _text["Root.Error.NameTaken"]);
@@ -227,8 +232,9 @@ public sealed class StorageRootService
             }
 
             // Das eigene Datenverzeichnis (Datenbank, Schlüssel) darf nie freigegeben werden.
+            // Ein Pfad darüber - etwa "/" - ist erlaubt, der Provider blendet /data dann aus.
             var dataDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(_paths.DataDirectory));
-            if (PathGuard.IsInside(dataDirectory, fullPath) || PathGuard.IsInside(fullPath, dataDirectory))
+            if (PathGuard.IsInside(dataDirectory, fullPath))
             {
                 return new SaveResult(false, _text["Root.Error.PathIsDataDirectory"]);
             }

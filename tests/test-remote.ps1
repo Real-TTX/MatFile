@@ -10,24 +10,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\_helpers.ps1"
 $results = @()
 
 function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     $script:results += [pscustomobject]@{ Test = $name; OK = $ok; Detail = $detail }
     $mark = if ($ok) { "OK  " } else { "FAIL" }
     Write-Host "$mark  $name  $detail"
-}
-
-function Get-Token([string]$html) {
-    if ($html -match 'name="__RequestVerificationToken"[^>]*value="([^"]+)"') { return $Matches[1] }
-    return $null
-}
-
-function Enc([string]$s) { return [System.Uri]::EscapeDataString($s) }
-
-function Post-Form([string]$url, $session, [string]$body) {
-    return Invoke-WebRequest $url -Method Post -WebSession $session -UseBasicParsing `
-        -Body $body -ContentType 'application/x-www-form-urlencoded'
 }
 
 function Api([string]$method, [string]$url, $session, $body) {
@@ -69,10 +58,21 @@ function Invoke-Docker {
     try { & docker @args 2>&1 } finally { $ErrorActionPreference = $previous }
 }
 
-function Save-Root($session, [string]$body) {
-    $page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $session -UseBasicParsing
-    $token = Get-Token $page.Content
-    return Post-Form "$BaseUrl/Admin/Roots/Edit" $session "__RequestVerificationToken=$(Enc $token)&$body"
+function Save-Root($session, [hashtable]$values) {
+    return New-MatRoot $BaseUrl $session $values
+}
+
+# Verbindungstest ohne zu speichern - liefert @{ ok; error }.
+function Test-Root($session, [hashtable]$values) {
+    $payload = @{
+        name = ''; type = 'Local'; path = ''; host = ''; port = 0; share = $null; url = $null
+        username = $null; password = $null; useTls = $false; passive = $true
+        isEnabled = $true; icon = $null; sortOrder = 0
+    }
+
+    foreach ($key in $values.Keys) { $payload[$key] = $values[$key] }
+
+    return Send-MatJson 'Post' "$BaseUrl/api/roots/test" $session $payload
 }
 
 # --- SFTP-Gegenstelle starten --------------------------------------------
@@ -89,27 +89,25 @@ Add-Result "SFTP-Server laeuft" $ready "running=$ready"
 Invoke-Docker exec matfile-sftp sh -c "mkdir -p /home/matfile/upload && chown matfile /home/matfile/upload && echo 'Hallo von der Gegenstelle' > /home/matfile/upload/remote.txt && chown matfile /home/matfile/upload/remote.txt" | Out-Null
 
 # --- Anmeldung ------------------------------------------------------------
-$admin = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=admin&Input.Password=$(Enc $SeedPassword)"
+$admin = New-MatSession
+$r = Connect-Mat $BaseUrl $admin 'admin' $SeedPassword
 Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
 # --- Verbindungstest ------------------------------------------------------
-$base = "Input.Name=Fernspeicher&Input.StorageType=Sftp&Input.BasePath=$(Enc '/upload')&Input.Host=sftp&Input.Port=22&Input.Username=matfile&Input.SortOrder=1&Input.IsEnabled=true"
+$base = @{
+    name = 'Fernspeicher'; type = 'Sftp'; path = '/upload'; host = 'sftp'; port = 22
+    username = 'matfile'; sortOrder = 1
+}
 
-$page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $page.Content
-$wrong = Post-Form "$BaseUrl/Admin/Roots/Edit?handler=Test" $admin "__RequestVerificationToken=$(Enc $t)&$base&Input.Password=falsch"
-Add-Result "Test mit falschem Kennwort schlaegt fehl" ($wrong.Content -match 'could not be established') ""
+$wrong = Test-Root $admin ($base + @{ password = 'falsch' })
+Add-Result "Test mit falschem Kennwort schlaegt fehl" (
+    $wrong.Status -eq 200 -and $wrong.Data.ok -eq $false -and $wrong.Data.error -match 'could not be established') "ok=$($wrong.Data.ok)"
 
-$page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $page.Content
-$good = Post-Form "$BaseUrl/Admin/Roots/Edit?handler=Test" $admin "__RequestVerificationToken=$(Enc $t)&$base&Input.Password=$(Enc $SftpPassword)"
-Add-Result "Verbindungstest erfolgreich" ($good.Content -match 'Connection established') ""
+$good = Test-Root $admin ($base + @{ password = $SftpPassword })
+Add-Result "Verbindungstest erfolgreich" ($good.Status -eq 200 -and $good.Data.ok -eq $true) "ok=$($good.Data.ok)"
 
 # --- Root speichern -------------------------------------------------------
-Save-Root $admin "$base&Input.Password=$(Enc $SftpPassword)" | Out-Null
+Save-Root $admin ($base + @{ password = $SftpPassword }) | Out-Null
 $roots = (Api GET "$BaseUrl/api/fs/roots" $admin).Data
 $sftpRoot = ($roots | Where-Object { $_.name -eq 'Fernspeicher' })
 Add-Result "SFTP-Root angelegt" ($null -ne $sftpRoot -and $sftpRoot.type -eq 'Sftp') "type=$($sftpRoot.type)"
@@ -140,7 +138,7 @@ Add-Result "Ferne Datei umbenannt" ($ren.Status -eq 200 -and (Names $admin $sftp
 
 # --- Kopieren zwischen Speicherorten -------------------------------------
 Invoke-Docker exec $Container sh -c "rm -rf /storage/lokal && mkdir -p /storage/lokal && echo 'lokale Datei' > /storage/lokal/lokal.txt" | Out-Null
-Save-Root $admin "Input.Name=Lokal&Input.StorageType=Local&Input.BasePath=$(Enc '/storage/lokal')&Input.SortOrder=2&Input.IsEnabled=true" | Out-Null
+Save-Root $admin @{ name = 'Lokal'; type = 'Local'; path = '/storage/lokal'; sortOrder = 2 } | Out-Null
 $localRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Lokal' })
 Add-Result "Lokaler Root angelegt" ($null -ne $localRoot) "id=$($localRoot.id)"
 
@@ -182,14 +180,14 @@ Start-Sleep -Seconds 3
 Invoke-Docker exec matfile-webdav sh -c "rm -rf /var/lib/dav/data/* 2>/dev/null; true" | Out-Null
 Add-Result "WebDAV-Server laeuft" $davReady "running=$davReady"
 
-$davBase = "Input.Name=Cloud&Input.StorageType=WebDav&Input.BasePath=&Input.Url=$(Enc 'http://webdav')&Input.Username=matfile&Input.SortOrder=3&Input.IsEnabled=true"
+$davBase = @{
+    name = 'Cloud'; type = 'WebDav'; path = ''; url = 'http://webdav'; username = 'matfile'; sortOrder = 3
+}
 
-$page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $page.Content
-$davTest = Post-Form "$BaseUrl/Admin/Roots/Edit?handler=Test" $admin "__RequestVerificationToken=$(Enc $t)&$davBase&Input.Password=$(Enc 'Dav-Geheim-2026')"
-Add-Result "WebDAV-Verbindungstest" ($davTest.Content -match 'Connection established') ""
+$davTest = Test-Root $admin ($davBase + @{ password = 'Dav-Geheim-2026' })
+Add-Result "WebDAV-Verbindungstest" ($davTest.Status -eq 200 -and $davTest.Data.ok -eq $true) "ok=$($davTest.Data.ok)"
 
-Save-Root $admin "$davBase&Input.Password=$(Enc 'Dav-Geheim-2026')" | Out-Null
+Save-Root $admin ($davBase + @{ password = 'Dav-Geheim-2026' }) | Out-Null
 $davRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Cloud' })
 Add-Result "WebDAV-Root angelegt" ($null -ne $davRoot) "id=$($davRoot.id)"
 
@@ -226,14 +224,15 @@ Invoke-Docker exec matfile-ftp sh -c "rm -rf /ftp/matfile/* 2>/dev/null; echo 'D
 Add-Result "FTP-Server laeuft" $ftpReady "running=$ftpReady"
 
 # Der Server chrootet den Benutzer nicht, deshalb begrenzt der Basispfad den Zugriff.
-$ftpBase = "Input.Name=Austausch&Input.StorageType=Ftp&Input.BasePath=$(Enc '/ftp/matfile')&Input.Host=ftp&Input.Port=21&Input.Username=matfile&Input.Passive=true&Input.SortOrder=4&Input.IsEnabled=true"
+$ftpBase = @{
+    name = 'Austausch'; type = 'Ftp'; path = '/ftp/matfile'; host = 'ftp'; port = 21
+    username = 'matfile'; passive = $true; sortOrder = 4
+}
 
-$page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $page.Content
-$ftpTest = Post-Form "$BaseUrl/Admin/Roots/Edit?handler=Test" $admin "__RequestVerificationToken=$(Enc $t)&$ftpBase&Input.Password=$(Enc $FtpPassword)"
-Add-Result "FTP-Verbindungstest" ($ftpTest.Content -match 'Connection established') ""
+$ftpTest = Test-Root $admin ($ftpBase + @{ password = $FtpPassword })
+Add-Result "FTP-Verbindungstest" ($ftpTest.Status -eq 200 -and $ftpTest.Data.ok -eq $true) "ok=$($ftpTest.Data.ok)"
 
-Save-Root $admin "$ftpBase&Input.Password=$(Enc $FtpPassword)" | Out-Null
+Save-Root $admin ($ftpBase + @{ password = $FtpPassword }) | Out-Null
 $ftpRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Austausch' })
 Add-Result "FTP-Root angelegt" ($null -ne $ftpRoot -and $ftpRoot.type -eq 'Ftp') "type=$($ftpRoot.type)"
 
@@ -275,14 +274,15 @@ Start-Sleep -Seconds 5
 Invoke-Docker exec matfile-smb sh -c "mkdir -p /share && rm -rf /share/* 2>/dev/null; echo 'Datei per SMB' > /share/smb.txt; chown -R matfile /share" | Out-Null
 Add-Result "SMB-Server laeuft" $smbReady "running=$smbReady"
 
-$smbBase = "Input.Name=Freigabe&Input.StorageType=Smb&Input.BasePath=&Input.Host=smb&Input.Port=445&Input.Share=daten&Input.Username=matfile&Input.SortOrder=5&Input.IsEnabled=true"
+$smbBase = @{
+    name = 'Freigabe'; type = 'Smb'; path = ''; host = 'smb'; port = 445
+    share = 'daten'; username = 'matfile'; sortOrder = 5
+}
 
-$page = Invoke-WebRequest "$BaseUrl/Admin/Roots/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $page.Content
-$smbTest = Post-Form "$BaseUrl/Admin/Roots/Edit?handler=Test" $admin "__RequestVerificationToken=$(Enc $t)&$smbBase&Input.Password=$(Enc $SmbPassword)"
-Add-Result "SMB-Verbindungstest" ($smbTest.Content -match 'Connection established') ""
+$smbTest = Test-Root $admin ($smbBase + @{ password = $SmbPassword })
+Add-Result "SMB-Verbindungstest" ($smbTest.Status -eq 200 -and $smbTest.Data.ok -eq $true) "ok=$($smbTest.Data.ok)"
 
-Save-Root $admin "$smbBase&Input.Password=$(Enc $SmbPassword)" | Out-Null
+Save-Root $admin ($smbBase + @{ password = $SmbPassword }) | Out-Null
 $smbRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Freigabe' })
 Add-Result "SMB-Root angelegt" ($null -ne $smbRoot -and $smbRoot.type -eq 'Smb') "type=$($smbRoot.type)"
 
@@ -319,7 +319,10 @@ Add-Result "Pfadausbruch auf SMB blockiert" ($smbEscape.Status -eq 400) "status=
 $status = Api GET "$BaseUrl/api/fs/status?rootId=$($ftpRoot.id)" $admin
 Add-Result "Statusabfrage erreichbar" ($status.Status -eq 200 -and $status.Data.available -eq $true) "available=$($status.Data.available)"
 
-Save-Root $admin "Input.Name=Kaputt&Input.StorageType=Sftp&Input.BasePath=$(Enc '/upload')&Input.Host=gibtsnicht&Input.Port=22&Input.Username=x&Input.Password=y&Input.SortOrder=9&Input.IsEnabled=true" | Out-Null
+Save-Root $admin @{
+    name = 'Kaputt'; type = 'Sftp'; path = '/upload'; host = 'gibtsnicht'; port = 22
+    username = 'x'; password = 'y'; sortOrder = 9
+} | Out-Null
 $brokenRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Kaputt' })
 $brokenStatus = Api GET "$BaseUrl/api/fs/status?rootId=$($brokenRoot.id)" $admin
 Add-Result "Statusabfrage meldet Ausfall" ($brokenStatus.Status -eq 200 -and $brokenStatus.Data.available -eq $false) "available=$($brokenStatus.Data.available)"

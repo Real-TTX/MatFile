@@ -109,12 +109,38 @@
     padding: 0 var(--mf-space-1);
 }
 
-.mfx-side-tools .mf-lang {
-    border: 1px solid var(--mf-border);
+/* Laufende Version - unauffällig unter den Schaltern. */
+.mfx-side-version {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    margin-top: var(--mf-space-2);
+    padding: 0 var(--mf-space-2);
+    font-size: 11px;
+    color: var(--mf-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-.mfx-side-tools .mf-lang-btn {
-    padding: 3px 7px;
+.mfx-version-name {
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+
+.mfx-version-number {
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfx-version-channel {
+    flex: 0 0 auto;
+    padding: 1px 6px;
+    border: 1px solid var(--mf-border);
+    border-radius: 999px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
 }
 
 .mfx-side-group + .mfx-side-group {
@@ -649,6 +675,27 @@
     outline: none;
 }
 
+/* Knopf für die Suche über alle Unterordner. */
+.mfx-search-go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin-right: -6px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--mf-radius);
+    background: transparent;
+    color: var(--mf-text-muted);
+    cursor: pointer;
+}
+
+.mfx-search-go:hover {
+    background: var(--mf-surface-alt);
+    color: var(--mf-accent);
+}
+
 /* --- Liste --- */
 
 .mfx-listing {
@@ -1118,6 +1165,284 @@
     background: var(--mf-danger);
 }
 
+/* --- Verwaltungsdialoge: Benutzer, Rollen, Speicherorte --- */
+
+.mfx-manage {
+    display: flex;
+    flex-direction: column;
+    width: 940px;
+    max-width: 96vw;
+    max-height: 88vh;
+    padding: 0;
+    overflow: hidden;
+}
+
+.mfx-manage-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: var(--mf-space-4) var(--mf-space-5);
+    overflow-y: auto;
+}
+
+.mfx-manage-foot {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: var(--mf-space-3) var(--mf-space-5);
+    border-top: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+}
+
+.mfx-manage-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    margin-bottom: var(--mf-space-3);
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.mfx-manage-pager {
+    justify-content: flex-start;
+    gap: var(--mf-space-3);
+}
+
+.mfx-manage-empty {
+    margin: 0;
+    padding: var(--mf-space-6) var(--mf-space-3);
+    text-align: center;
+}
+
+.mfx-manage-heading {
+    margin: 0 0 var(--mf-space-1);
+    font-size: 14px;
+}
+
+/* Mehrfachauswahl als Kästchenliste, etwa Rollen oder Rechte. */
+.mfx-check-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--mf-space-1) var(--mf-space-4);
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-bg);
+}
+
+.mf-row-clickable {
+    cursor: pointer;
+}
+
+.mf-cell-narrow {
+    width: 1%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.mf-badge.is-ok {
+    border-color: var(--mf-success);
+    color: var(--mf-success);
+}
+
+.mf-badge.is-warn {
+    border-color: var(--mf-danger);
+    color: var(--mf-danger);
+}
+
+/* --- Eigenes Fenster: Suchergebnisse --- */
+
+.mfx-window {
+    position: fixed;
+    right: var(--mf-space-4);
+    bottom: var(--mf-space-4);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    width: 620px;
+    max-width: calc(100vw - 2 * var(--mf-space-4));
+    max-height: min(70vh, 640px);
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-lg);
+    box-shadow: var(--mf-shadow);
+    overflow: hidden;
+}
+
+.mfx-window[hidden] {
+    display: none;
+}
+
+.mfx-window.is-dragging {
+    user-select: none;
+}
+
+.mfx-window-head {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-bottom: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+    cursor: grab;
+}
+
+.mfx-window.is-dragging .mfx-window-head {
+    cursor: grabbing;
+}
+
+.mfx-window-titles {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mfx-window-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.mfx-window-sub {
+    font-size: 12px;
+    color: var(--mf-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfx-window-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-4);
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-bottom: 1px solid var(--mf-border);
+    font-size: 13px;
+}
+
+.mfx-window-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    cursor: pointer;
+}
+
+.mfx-window-tools .mf-btn {
+    margin-left: auto;
+}
+
+.mfx-search-progress {
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-bottom: 1px solid var(--mf-border);
+}
+
+.mfx-search-stats {
+    margin-top: var(--mf-space-2);
+    font-size: 12px;
+    color: var(--mf-text-muted);
+}
+
+.mfx-search-current {
+    font-size: 11px;
+    color: var(--mf-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+    min-height: 15px;
+}
+
+.mfx-search-hits {
+    flex: 1 1 auto;
+    min-height: 120px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: auto;
+}
+
+.mfx-hit {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-3);
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-bottom: 1px solid var(--mf-border-soft, var(--mf-border));
+    cursor: default;
+}
+
+.mfx-hit:hover,
+.mfx-hit:focus {
+    background: var(--mf-surface-alt);
+    outline: none;
+}
+
+.mfx-hit-icon {
+    flex: 0 0 auto;
+    color: var(--mf-text-muted);
+}
+
+.mfx-hit-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mfx-hit-name {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfx-hit-path {
+    font-size: 11px;
+    color: var(--mf-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfx-hit-snippet {
+    margin-top: 2px;
+    padding: 2px 6px;
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface-alt);
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 11px;
+    color: var(--mf-text-muted);
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfx-hit-snippet mark {
+    background: var(--mf-accent-soft);
+    color: var(--mf-text);
+    border-radius: 2px;
+}
+
+.mfx-hit-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: 0 0 auto;
+    font-size: 11px;
+    color: var(--mf-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.mfx-window-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    padding: var(--mf-space-2) var(--mf-space-3);
+    border-top: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+    font-size: 13px;
+    color: var(--mf-text-muted);
+}
+
 /* --- Rahmenauswahl, Meldungen, Statuszeile --- */
 
 .mfx-band {
@@ -1316,6 +1641,20 @@
     }
 
     .mfx-body:has(.mfx-details:not([hidden])) .mfx-listing {
+        display: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .mfx-window {
+        left: var(--mf-space-2);
+        right: var(--mf-space-2);
+        bottom: var(--mf-space-2);
+        width: auto;
+        max-height: 80vh;
+    }
+
+    .mfx-hit-meta {
         display: none;
     }
 }

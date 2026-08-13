@@ -6,9 +6,13 @@ keinen komfortablen Zugriff auf Dateien bieten.
 - Mehrere frei konfigurierbare **Home-/Root-Pfade** (nur diese sind sichtbar)
 - Zusätzliche Freigaben per **SMB, SFTP, FTP und WebDAV** – ohne Zusatzrechte im Container
   (NFS folgt über einen OS-Mount)
-- Explorer-Bedienung: Sidebar, **Tabs**, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
+- Explorer-Bedienung: Sidebar, **Tabs**, Menüleiste, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
+- **Rekursive Suche** über alle Unterordner, auf Wunsch im Dateiinhalt – mit Fortschritt
+  in einem eigenen Ergebnisfenster
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
+- Verwaltung von Benutzern, Rollen und Speicherorten **als Dialoge im Explorer** – ohne
+  eigenen Adminbereich
 - Oberfläche in **Englisch (Standard)** und **Deutsch**, im UI umschaltbar
 
 Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
@@ -19,12 +23,13 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 |---|---|---|
 | M0 | Grundgerüst, Docker, CI, Versionierung | ✅ |
 | M1 | Datenbank, Anmeldung, Rollen, Sessions, Mehrsprachigkeit | ✅ |
-| M2 | Designsystem, Controls, Admin-CRUD | ✅ |
+| M2 | Designsystem, Controls, Verwaltung (Benutzer, Rollen, Speicherorte) | ✅ |
 | M3 | Storage-Abstraktion, PathGuard, Root-Verwaltung, Listing-API | ✅ |
 | M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
 | M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
 | M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
 | M7 | Remote-Verbindungen: **SMB, SFTP, FTP, WebDAV** inkl. Verbindungstest, Seitenleiste mit Statuspunkt | ✅ |
+| M7c | Rekursive Suche mit Inhaltssuche, Verwaltung in Dialogen, Version in der Seitenleiste | ✅ |
 | M7b | NFS über OS-Mount, Mounts nur für die Sitzung | offen |
 | M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
 
@@ -64,8 +69,12 @@ Für den produktiven Betrieb in `/data/config/matfile.json` setzen:
 ```
 
 Dann verlangt MatFile bei der ersten Anmeldung ein eigenes Kennwort. Die Oberfläche startet
-auf Englisch; über den Schalter `EN | DE` in der Kopfzeile lässt sich Deutsch wählen –
-die Auswahl wird am Benutzerkonto gespeichert.
+auf Englisch; über den Weltkugel-Knopf unten links in der Seitenleiste (oder *Einstellungen →
+Sprache…* in der Menüleiste) lässt sich Deutsch wählen – die Auswahl wird am Benutzerkonto
+gespeichert. Direkt darunter steht die laufende Version.
+
+Benutzer, Rollen und Speicherorte werden über die **Menüleiste über den Tabs** verwaltet
+(*Einstellungen* bzw. *Speicherorte*). Jeder Punkt erscheint nur mit dem passenden Recht.
 
 Das Volume `/data` enthält:
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MatFile.Web.Data;
 using MatFile.Web.Security;
+using MatFile.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
@@ -11,19 +12,23 @@ namespace MatFile.Web.Pages;
 public class IndexModel : PageModel
 {
     private readonly IStringLocalizer<SharedResource> _text;
+    private readonly AppInfo _appInfo;
 
-    public IndexModel(IStringLocalizer<SharedResource> text) => _text = text;
+    public IndexModel(IStringLocalizer<SharedResource> text, AppInfo appInfo)
+    {
+        _text = text;
+        _appInfo = appInfo;
+    }
 
     /// <summary>Übersetzungen für das JavaScript des Explorers.</summary>
     public string TextBundleJson { get; private set; } = "{}";
 
+    public string Version => _appInfo.Version;
+
+    public string Channel => _appInfo.Channel;
+
     public IActionResult OnGet()
     {
-        if (!User.HasPermission(Permission.UseExplorer))
-        {
-            return RedirectToPage("/Admin/Index");
-        }
-
         string[] keys =
         [
             "Explorer.Roots", "Explorer.Bookmarks", "Explorer.NoRoots", "Explorer.NoBookmarks",
@@ -76,14 +81,38 @@ public class IndexModel : PageModel
             "Explorer.SectionType", "Explorer.SectionGeneral", "Explorer.SectionTarget",
             "Explorer.SectionLogin", "Explorer.Icon", "Explorer.Testing",
 
+            // Rekursive Suche
+            "Explorer.SearchRecursive", "Explorer.SearchResults", "Explorer.SearchContent",
+            "Explorer.SearchRunning", "Explorer.SearchDone", "Explorer.SearchCancelled",
+            "Explorer.SearchProgress", "Explorer.SearchHits", "Explorer.SearchNoHits",
+            "Explorer.SearchTruncated", "Explorer.SearchQueryTooShort", "Explorer.ErrorQueryTooShort",
+            "Explorer.ShowInFolder",
+
             // Menüleiste
             "Explorer.MenuBar", "Explorer.MenuFile", "Explorer.MenuEdit", "Explorer.MenuView",
             "Explorer.MenuSettings", "Explorer.Language", "Explorer.ThemeSystem",
-            "Explorer.ThemeLight", "Explorer.ThemeDark", "Explorer.ChangePassword", "Explorer.Logout"
+            "Explorer.ThemeLight", "Explorer.ThemeDark", "Explorer.ChangePassword", "Explorer.Logout",
+            "Explorer.NoExplorerAccess",
+
+            // Verwaltungsdialoge - dieselben Bezeichnungen wie früher im Adminbereich
+            "Admin.Users", "Admin.Roles", "Admin.Roots",
+            "Common.Save", "Common.Back", "Common.Delete", "Common.New", "Common.Edit",
+            "Common.Search", "Common.Never", "Common.Saved", "Pagination.Summary",
+            "User.Username", "User.DisplayName", "User.Email", "User.Roles", "User.Status",
+            "User.Active", "User.Inactive", "User.Locked", "User.Unlock", "User.Unlocked",
+            "User.LastLogin", "User.Password", "User.PasswordKeep", "User.IsActive",
+            "User.MustChangePassword", "User.Empty", "User.New.Title", "User.Edit.Title",
+            "Role.Name", "Role.Description", "Role.Permissions", "Role.UserCount", "Role.System",
+            "Role.SystemHint", "Role.Empty", "Role.New.Title", "Role.Edit.Title",
+            "Root.Name", "Root.Type", "Root.Path", "Root.Status", "Root.Available", "Root.Missing",
+            "Root.Disabled", "Root.Roles", "Root.Access", "Root.AccessHint", "Root.Empty",
+            "Access.CanRead", "Access.CanWrite", "Access.CanDelete",
+            "Access.CanUpload", "Access.CanDownload", "Access.CanShare"
         ];
 
+        // Explorer-Schlüssel behalten ihre kurze Form, alle anderen bleiben wie sie sind.
         var bundle = keys.ToDictionary(
-            key => key["Explorer.".Length..],
+            key => key.StartsWith("Explorer.", StringComparison.Ordinal) ? key["Explorer.".Length..] : key,
             key => _text[key].Value);
 
         TextBundleJson = JsonSerializer.Serialize(bundle);

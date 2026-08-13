@@ -6,6 +6,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\_helpers.ps1"
 $results = @()
 
 function Add-Result([string]$name, [bool]$ok, [string]$detail) {
@@ -14,125 +15,145 @@ function Add-Result([string]$name, [bool]$ok, [string]$detail) {
     Write-Host "$mark  $name  $detail"
 }
 
-function Get-Token([string]$html) {
-    if ($html -match 'name="__RequestVerificationToken"[^>]*value="([^"]+)"') { return $Matches[1] }
-    return $null
-}
-
-function Enc([string]$s) { return [System.Uri]::EscapeDataString($s) }
-
-function Post-Form([string]$url, $session, [string]$body) {
-    return Invoke-WebRequest $url -Method Post -WebSession $session -UseBasicParsing `
-        -Body $body -ContentType 'application/x-www-form-urlencoded'
-}
-
-# --- Anmeldung als Administrator, Startkennwort wechseln -------------------
-$admin = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=admin&Input.Password=$(Enc $SeedPassword)"
+# --- Anmeldung als Administrator -----------------------------------------
+$admin = New-MatSession
+$r = Connect-Mat $BaseUrl $admin 'admin' $SeedPassword
 Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
 
-# --- Adminbereich ---------------------------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin" -WebSession $admin -UseBasicParsing
-Add-Result "Adminbereich leitet auf Benutzer" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/Admin/Users') $r.BaseResponse.ResponseUri.AbsolutePath
-Add-Result "Liste zeigt Toolbar, Tabelle, Pagination" (
-    $r.Content -match 'mf-toolbar' -and $r.Content -match 'mf-table' -and
-    $r.Content -match 'mf-pagination' -and $r.Content -match 'Page 1 of 1') ""
-Add-Result "Adminbenutzer in der Liste" ($r.Content -match '>admin<') ""
+# Der Explorer traegt die Verwaltung jetzt selbst - kein Adminbereich mehr
+$page = Invoke-WebRequest "$BaseUrl/" -WebSession $admin -UseBasicParsing
+Add-Result "Menueleiste mit Verwaltung" (
+    $page.Content -match 'mfx-menubar' -and $page.Content -match 'data-menu="settings"') ""
+Add-Result "Rechte im Seitenkopf" (
+    $page.Content -match 'manageUsers: true' -and $page.Content -match 'manageRoles: true') ""
+$gone = Get-MatJson "$BaseUrl/Admin/Users" $admin
+Add-Result "Alte Adminseite entfernt" ($gone.Status -eq 404) "status=$($gone.Status)"
 
-# Sortierung
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users?sort=username&dir=desc" -WebSession $admin -UseBasicParsing
-Add-Result "Sortierung aktiv" ($r.Content -match 'mf-th-sort is-active') ""
+# --- Benutzerliste --------------------------------------------------------
+$list = Get-MatJson "$BaseUrl/api/users" $admin
+$names = $list.Data.items | ForEach-Object { $_.username }
+Add-Result "Benutzerliste erreichbar" ($list.Status -eq 200 -and $names -contains 'admin') ($names -join ', ')
+Add-Result "Seiteninformationen vorhanden" (
+    $list.Data.page -eq 1 -and $list.Data.pageCount -ge 1 -and $list.Data.total -ge 1) "total=$($list.Data.total)"
+
+$roles = @{}
+foreach ($role in $list.Data.roles) { $roles[$role.name] = $role.id }
+Add-Result "Rollen zur Auswahl" ($roles.ContainsKey('Administrator') -and $roles.ContainsKey('User')) ($roles.Keys -join ', ')
 
 # --- Neuen Benutzer anlegen ----------------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$roleIds = @{}
-foreach ($m in [regex]::Matches($r.Content, '(?s)name="Input\.RoleIds" value="(\d+)".*?<span>([^<]+)</span>')) {
-    $roleIds[$m.Groups[2].Value.Trim()] = $m.Groups[1].Value
+$created = New-MatUser $BaseUrl $admin @{
+    username = 'tester'; displayName = 'Test Benutzer'; email = 'tester@example.com'
+    newPassword = $TesterPassword; roleIds = @($roles['User'])
 }
-Add-Result "Rollen im Formular" ($roleIds.ContainsKey('Administrator') -and $roleIds.ContainsKey('User')) ($roleIds.Keys -join ', ')
+Add-Result "Benutzer angelegt" ($created.Status -eq 200 -and $created.Data.id -gt 0) "id=$($created.Data.id)"
+$testerId = $created.Data.id
 
-$body = "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.DisplayName=$(Enc 'Test Benutzer')&Input.Email=$(Enc 'tester@example.com')&Input.NewPassword=$(Enc $TesterPassword)&Input.IsActive=true&Input.MustChangePassword=false&Input.RoleIds=$($roleIds['User'])"
-$r = Post-Form "$BaseUrl/Admin/Users/Edit" $admin $body
-Add-Result "Benutzer angelegt" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/Admin/Users' -and $r.Content -match '>tester<') $r.BaseResponse.ResponseUri.AbsolutePath
+$detail = (Get-MatJson "$BaseUrl/api/users/$testerId" $admin).Data
+Add-Result "Benutzer abrufbar" (
+    $detail.username -eq 'tester' -and $detail.displayName -eq 'Test Benutzer' -and
+    $detail.roleIds -contains $roles['User']) "$($detail.username)"
 
-# Suche
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users?search=tester" -WebSession $admin -UseBasicParsing
-Add-Result "Suche filtert" ($r.Content -match '>tester<' -and $r.Content -notmatch '>admin<') ""
+$found = Get-MatJson "$BaseUrl/api/users?search=tester" $admin
+$foundNames = $found.Data.items | ForEach-Object { $_.username }
+Add-Result "Suche filtert" ($foundNames -contains 'tester' -and $foundNames -notcontains 'admin') ($foundNames -join ', ')
 
-# Doppelter Benutzername
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Admin/Users/Edit" $admin "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.NewPassword=$(Enc $TesterPassword)&Input.IsActive=true"
-Add-Result "Doppelter Benutzername abgelehnt" ($r.Content -match 'already taken') ""
+$sorted = Get-MatJson "$BaseUrl/api/users?sort=username&dir=desc" $admin
+Add-Result "Sortierung absteigend" ($sorted.Data.items[0].username -eq 'tester') "erster=$($sorted.Data.items[0].username)"
 
-# --- Rechte pruefen: tester darf nicht in die Verwaltung ------------------
-$tester = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$r = Invoke-WebRequest "$BaseUrl/Login" -WebSession $tester -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Login" $tester "__RequestVerificationToken=$(Enc $t)&Input.Username=tester&Input.Password=$(Enc $TesterPassword)"
+$again = New-MatUser $BaseUrl $admin @{ username = 'tester'; newPassword = $TesterPassword }
+Add-Result "Doppelter Benutzername abgelehnt" (
+    $again.Status -eq 400 -and $again.Data.error -match 'already taken') "status=$($again.Status)"
+
+$noPassword = New-MatUser $BaseUrl $admin @{ username = 'ohnekennwort' }
+Add-Result "Neuer Benutzer braucht Kennwort" ($noPassword.Status -eq 400) "status=$($noPassword.Status)"
+
+# --- Rechte pruefen -------------------------------------------------------
+$tester = New-MatSession
+$r = Connect-Mat $BaseUrl $tester 'tester' $TesterPassword
 Add-Result "Testbenutzer angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/') $r.BaseResponse.ResponseUri.AbsolutePath
-Add-Result "Kein Adminlink fuer Testbenutzer" ($r.Content -notmatch 'href="/Admin"') ""
+Add-Result "Keine Verwaltungsrechte in der Oberflaeche" (
+    $r.Content -match 'manageUsers: false' -and $r.Content -match 'manageRoles: false') ""
+Add-Result "Kein Speicherortmenue" ($r.Content -notmatch 'data-menu="locations"') ""
 
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users" -WebSession $tester -UseBasicParsing
-Add-Result "Adminbereich gesperrt" ($r.Content -match 'Access denied') $r.BaseResponse.ResponseUri.AbsolutePath
+$denied = Get-MatJson "$BaseUrl/api/users" $tester
+Add-Result "Benutzerverwaltung gesperrt" ($denied.Status -eq 403) "status=$($denied.Status)"
+
+$deniedRoles = Get-MatJson "$BaseUrl/api/roles" $tester
+Add-Result "Rollenverwaltung gesperrt" ($deniedRoles.Status -eq 403) "status=$($deniedRoles.Status)"
+
+$anon = New-MatSession
+$unauth = Get-MatJson "$BaseUrl/api/users" $anon
+Add-Result "Ohne Anmeldung gesperrt" ($unauth.Status -eq 401) "status=$($unauth.Status)"
 
 # --- Rollen ---------------------------------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Roles" -WebSession $admin -UseBasicParsing
-Add-Result "Rollenliste" ($r.Content -match 'Administrator' -and $r.Content -match 'Manage users') ""
+$roleList = Get-MatJson "$BaseUrl/api/roles" $admin
+$roleNames = $roleList.Data.items | ForEach-Object { $_.name }
+Add-Result "Rollenliste" ($roleList.Status -eq 200 -and $roleNames -contains 'Administrator') ($roleNames -join ', ')
+$catalog = $roleList.Data.catalog | ForEach-Object { $_.name }
+Add-Result "Rechtekatalog vollstaendig" (
+    $catalog -contains 'UseExplorer' -and $catalog -contains 'ManageRoots' -and $catalog.Count -eq 7) "n=$($catalog.Count)"
 
-$r = Invoke-WebRequest "$BaseUrl/Admin/Roles/Edit" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Admin/Roles/Edit" $admin "__RequestVerificationToken=$(Enc $t)&Input.Name=$(Enc 'Testrolle')&Input.Description=$(Enc 'Nur zum Testen')&Input.Permissions=UseExplorer&Input.Permissions=ManageRoots"
-Add-Result "Rolle angelegt" ($r.Content -match 'Testrolle' -and $r.Content -match 'Manage root paths') ""
+$adminRole = $roleList.Data.items | Where-Object { $_.name -eq 'Administrator' }
+Add-Result "Systemrolle erkennbar" ($adminRole.isSystem -eq $true -and $adminRole.permissions.Count -eq 7) "rechte=$($adminRole.permissions.Count)"
 
-$testRoleId = $null
-if ($r.Content -match 'Edit\?id=(\d+)&amp;returnUrl=[^"]*">Testrolle') { $testRoleId = $Matches[1] }
-elseif ($r.Content -match 'id=(\d+)[^"]*">Testrolle') { $testRoleId = $Matches[1] }
-Add-Result "Rollen-Id gefunden" ($null -ne $testRoleId) "id=$testRoleId"
+$newRole = Send-MatJson 'Post' "$BaseUrl/api/roles" $admin @{
+    name = 'Testrolle'; description = 'Nur zum Testen'; permissions = @('UseExplorer', 'ManageRoots')
+}
+Add-Result "Rolle angelegt" ($newRole.Status -eq 200 -and $newRole.Data.id -gt 0) "id=$($newRole.Data.id)"
+$testRoleId = $newRole.Data.id
 
-# Systemrolle darf nicht geloescht werden
-$adminRoleId = $roleIds['Administrator']
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Admin/Roles?handler=Delete" $admin "__RequestVerificationToken=$(Enc $t)&SelectedIds=$adminRoleId"
-Add-Result "Systemrolle geschuetzt" ($r.Content -match 'System roles cannot be deleted') ""
+$roleDetail = (Get-MatJson "$BaseUrl/api/roles/$testRoleId" $admin).Data
+Add-Result "Rechte gespeichert" (
+    $roleDetail.permissions -contains 'UseExplorer' -and $roleDetail.permissions -contains 'ManageRoots' -and
+    $roleDetail.permissions.Count -eq 2) ($roleDetail.permissions -join ', ')
 
-# Testrolle loeschen
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Admin/Roles?handler=Delete" $admin "__RequestVerificationToken=$(Enc $t)&SelectedIds=$testRoleId"
-Add-Result "Rolle geloescht" ($r.Content -match 'role\(s\) deleted' -and $r.Content -notmatch '>Testrolle<') ""
+$renamed = Send-MatJson 'Put' "$BaseUrl/api/roles/$testRoleId" $admin @{
+    name = 'Testrolle neu'; description = 'Geaendert'; permissions = @('UseExplorer')
+}
+$afterRename = (Get-MatJson "$BaseUrl/api/roles/$testRoleId" $admin).Data
+Add-Result "Rolle geaendert" (
+    $renamed.Status -eq 200 -and $afterRename.name -eq 'Testrolle neu' -and
+    $afterRename.permissions.Count -eq 1) "$($afterRename.name)"
+
+$systemProtected = Send-MatJson 'Delete' "$BaseUrl/api/roles/$($roles['Administrator'])" $admin $null
+Add-Result "Systemrolle geschuetzt" (
+    $systemProtected.Status -eq 400 -and $systemProtected.Data.error -match 'System roles') "status=$($systemProtected.Status)"
+
+$roleInUse = Send-MatJson 'Delete' "$BaseUrl/api/roles/$($roles['User'])" $admin $null
+Add-Result "Rolle in Benutzung nicht loeschbar" ($roleInUse.Status -eq 400) "status=$($roleInUse.Status)"
+
+$removedRole = Send-MatJson 'Delete' "$BaseUrl/api/roles/$testRoleId" $admin $null
+$afterDelete = Get-MatJson "$BaseUrl/api/roles" $admin
+$afterNames = $afterDelete.Data.items | ForEach-Object { $_.name }
+Add-Result "Rolle geloescht" ($removedRole.Status -eq 200 -and $afterNames -notcontains 'Testrolle neu') ($afterNames -join ', ')
 
 # --- Schutzregeln fuer Benutzer ------------------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users" -WebSession $admin -UseBasicParsing
-$adminUserId = $null
-if ($r.Content -match 'Edit\?id=(\d+)[^"]*">admin<') { $adminUserId = $Matches[1] }
-$testerUserId = $null
-if ($r.Content -match 'Edit\?id=(\d+)[^"]*">tester<') { $testerUserId = $Matches[1] }
-Add-Result "Benutzer-Ids gefunden" ($null -ne $adminUserId -and $null -ne $testerUserId) "admin=$adminUserId tester=$testerUserId"
+$adminId = ($list.Data.items | Where-Object { $_.username -eq 'admin' }).id
+$self = Send-MatJson 'Delete' "$BaseUrl/api/users/$adminId" $admin $null
+Add-Result "Eigenes Konto geschuetzt" (
+    $self.Status -eq 400 -and $self.Data.error -match 'own account') "status=$($self.Status)"
 
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Admin/Users?handler=Delete" $admin "__RequestVerificationToken=$(Enc $t)&SelectedIds=$adminUserId"
-Add-Result "Eigenes Konto geschuetzt" ($r.Content -match 'cannot delete your own account') ""
+$deactivate = Send-MatJson 'Put' "$BaseUrl/api/users/$adminId" $admin @{
+    username = 'admin'; displayName = 'Administrator'; isActive = $false; roleIds = @($roles['Administrator'])
+}
+Add-Result "Eigenes Konto nicht abschaltbar" ($deactivate.Status -eq 400) "status=$($deactivate.Status)"
 
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/Admin/Users?handler=Delete" $admin "__RequestVerificationToken=$(Enc $t)&SelectedIds=$testerUserId"
-Add-Result "Benutzer geloescht" ($r.Content -match 'user\(s\) deleted' -and $r.Content -notmatch '>tester<') ""
+$removed = Send-MatJson 'Delete' "$BaseUrl/api/users/$testerId" $admin $null
+$afterUsers = (Get-MatJson "$BaseUrl/api/users" $admin).Data.items | ForEach-Object { $_.username }
+Add-Result "Benutzer geloescht" ($removed.Status -eq 200 -and $afterUsers -notcontains 'tester') ($afterUsers -join ', ')
 
-# Sitzung des geloeschten Benutzers ist beendet
 $r = Invoke-WebRequest "$BaseUrl/" -WebSession $tester -UseBasicParsing
 Add-Result "Sitzung des geloeschten Benutzers beendet" ($r.BaseResponse.ResponseUri.AbsolutePath -eq '/Login') $r.BaseResponse.ResponseUri.AbsolutePath
 
-# --- Deutsche Oberflaeche im Adminbereich --------------------------------
-$r = Invoke-WebRequest "$BaseUrl/Admin/Users" -WebSession $admin -UseBasicParsing
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/SetLanguage" $admin "__RequestVerificationToken=$(Enc $t)&culture=de&returnUrl=$(Enc '/Admin/Users')"
-Add-Result "Adminbereich auf Deutsch" ($r.Content -match 'Benutzername' -and $r.Content -match 'Seite 1 von 1') ""
+# --- Sprache --------------------------------------------------------------
+$page = Invoke-WebRequest "$BaseUrl/" -WebSession $admin -UseBasicParsing
+$t = Get-MatToken $page.Content
+$r = Post-Form "$BaseUrl/SetLanguage" $admin "__RequestVerificationToken=$(Enc $t)&culture=de&returnUrl=$(Enc '/')"
+Add-Result "Oberflaeche auf Deutsch" ($r.Content -match '>Bearbeiten<' -and $r.Content -match 'Einstellungen') ""
 
-$t = Get-Token $r.Content
-$r = Post-Form "$BaseUrl/SetLanguage" $admin "__RequestVerificationToken=$(Enc $t)&culture=en&returnUrl=$(Enc '/Admin/Users')"
-Add-Result "Zurueck auf Englisch" ($r.Content -match 'Username') ""
+$t = Get-MatToken $r.Content
+$r = Post-Form "$BaseUrl/SetLanguage" $admin "__RequestVerificationToken=$(Enc $t)&culture=en&returnUrl=$(Enc '/')"
+Add-Result "Zurueck auf Englisch" ($r.Content -match '>Edit<' -and $r.Content -match '>View<') ""
 
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })

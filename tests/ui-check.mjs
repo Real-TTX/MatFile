@@ -148,9 +148,14 @@ const afterOpen = await evaluate(`(() => ({
     status: document.querySelector('#mfx-status')?.textContent?.trim()
 }))()`);
 
+// Zurueck nach oben, damit fuer das Kontextmenue Zeilen da sind
+await evaluate(`document.querySelector('#mfx-up').click(); true;`);
+await sleep(900);
+
 // Auswahl und Kontextmenue
 await evaluate(`(() => {
     const row = document.querySelector('.mfx-row');
+    if (!row) return false;
     row.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 320, clientY: 260 }));
     return true;

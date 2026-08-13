@@ -41,6 +41,7 @@ builder.Services.AddScoped<FileOperationService>();
 builder.Services.AddScoped<UploadService>();
 builder.Services.AddSingleton<JobService>();
 builder.Services.AddHostedService<JobRunner>();
+builder.Services.AddSingleton<SearchService>();
 builder.Services.AddSingleton<StorageProviderFactory>();
 builder.Services.AddSingleton<SecretProtector>();
 
@@ -126,9 +127,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Login");
     options.Conventions.AllowAnonymousToPage("/Error");
     options.Conventions.AllowAnonymousToPage("/SetLanguage");
-    options.Conventions.AuthorizeFolder("/Admin/Users", MatFilePolicies.ManageUsers);
-    options.Conventions.AuthorizeFolder("/Admin/Roles", MatFilePolicies.ManageRoles);
-    options.Conventions.AuthorizeFolder("/Admin/Roots", MatFilePolicies.ManageRoots);
+    // Die Verwaltung läuft über /api - dort hängt die Autorisierung an den Endpunkten.
 })
 .AddViewLocalization()
 .AddDataAnnotationsLocalization(options =>
@@ -196,6 +195,8 @@ app.MapFileOperationEndpoints();
 app.MapPreviewEndpoints();
 app.MapExplorerEndpoints();
 app.MapRootManagementEndpoints();
+app.MapSearchEndpoints();
+app.MapAdminEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {

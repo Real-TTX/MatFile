@@ -128,6 +128,7 @@
 
   <data name="Common.New"><value>Neu</value></data>
   <data name="Common.Edit"><value>Bearbeiten</value></data>
+  <data name="Common.Saved"><value>Gespeichert.</value></data>
   <data name="Common.Search"><value>Suchen</value></data>
   <data name="Common.Reset"><value>Zurücksetzen</value></data>
   <data name="Common.All"><value>Alle</value></data>
@@ -339,6 +340,22 @@
   <data name="Explorer.ErrorNotFound"><value>Diesen Ordner gibt es nicht mehr.</value></data>
   <data name="Explorer.ErrorAccess"><value>Für diesen Ordner fehlt die Berechtigung.</value></data>
   <data name="Explorer.ErrorUnavailable"><value>Der Speicherort ist derzeit nicht erreichbar.</value></data>
+
+  <data name="Explorer.SearchPlaceholder"><value>Filtern · Enter durchsucht Unterordner</value></data>
+  <data name="Explorer.SearchRecursive"><value>In allen Unterordnern suchen</value></data>
+  <data name="Explorer.SearchResults"><value>Suchergebnisse</value></data>
+  <data name="Explorer.SearchContent"><value>Dateiinhalte durchsuchen</value></data>
+  <data name="Explorer.SearchRunning"><value>Suche läuft</value></data>
+  <data name="Explorer.SearchDone"><value>Suche abgeschlossen</value></data>
+  <data name="Explorer.SearchCancelled"><value>Suche abgebrochen</value></data>
+  <data name="Explorer.SearchProgress"><value>{0} Ordner · {1} Dateien</value></data>
+  <data name="Explorer.SearchHits"><value>{0} Treffer</value></data>
+  <data name="Explorer.SearchNoHits"><value>Keine Treffer</value></data>
+  <data name="Explorer.SearchTruncated"><value>Obergrenze erreicht</value></data>
+  <data name="Explorer.SearchQueryTooShort"><value>Bitte mindestens {0} Zeichen eingeben.</value></data>
+  <data name="Explorer.ErrorQueryTooShort"><value>Bitte mindestens zwei Zeichen eingeben.</value></data>
+  <data name="Explorer.ShowInFolder"><value>Im Ordner anzeigen</value></data>
+  <data name="Explorer.NoExplorerAccess"><value>Die Rolle erlaubt keinen Zugriff auf den Dateiexplorer.</value></data>
 
   <data name="Explorer.Upload"><value>Hochladen</value></data>
   <data name="Explorer.NewFolder"><value>Neuer Ordner</value></data>
