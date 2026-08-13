@@ -23,6 +23,23 @@
         }
     });
 
+    // Erscheinungsbild umschalten: System -> hell -> dunkel -> System.
+    var THEMES = ['auto', 'light', 'dark'];
+
+    document.addEventListener('click', function (event) {
+        var toggle = event.target.closest('[data-theme-toggle]');
+        if (!toggle) {
+            return;
+        }
+
+        var root = document.documentElement;
+        var current = root.getAttribute('data-theme') || 'auto';
+        var next = THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
+
+        root.setAttribute('data-theme', next);
+        document.cookie = 'matfile.theme=' + next + ';path=/;max-age=31536000;samesite=lax';
+    });
+
     // Felder mit data-visible-for erscheinen nur bei passendem Wert der Quelle.
     function applyVisibility() {
         var source = document.querySelector('[data-visibility-source]');

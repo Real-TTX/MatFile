@@ -1,8 +1,17 @@
 @page
 @model IndexModel
+@using System.Globalization
 @{
     ViewData["Title"] = "Explorer";
     ViewData["Layout"] = "full";
+
+    var displayName = User.GetDisplayName();
+    var initials = new string(displayName
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2)
+        .Select(part => part[0])
+        .ToArray()).ToUpperInvariant();
+    var currentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 }
 
 @section Head {
@@ -11,6 +20,7 @@
 
 <div class="mfx" id="mfx">
     <aside class="mfx-sidebar" id="mfx-sidebar" aria-label="@L["Explorer.Sidebar"]">
+        <div class="mfx-side-scroll">
         <section class="mfx-side-group" id="mfx-roots-group">
             <h2>@L["Explorer.Roots"]</h2>
             <ul class="mfx-side-list" id="mfx-roots"></ul>
@@ -25,6 +35,50 @@
             <h2>@L["Explorer.Bookmarks"]</h2>
             <ul class="mfx-side-list" id="mfx-bookmarks"></ul>
         </section>
+        </div>
+
+        @* Konto, Erscheinungsbild, Sprache und Abmelden - unten links. *@
+        <footer class="mfx-side-foot">
+            <a class="mfx-account" asp-page="/Account/ChangePassword" title="@L["Layout.ChangePassword"]">
+                <span class="mfx-avatar">@initials</span>
+                <span class="mfx-account-text">
+                    <span class="mfx-account-name">@displayName</span>
+                    <span class="mfx-account-login">@User.Identity!.Name</span>
+                </span>
+            </a>
+
+            <div class="mfx-side-tools">
+                @if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles)
+                     || User.HasPermission(Permission.ManageRoots))
+                {
+                    <a class="mfx-btn" asp-page="/Admin/Index" title="@L["Admin.Title"]"
+                       aria-label="@L["Admin.Title"]">
+                        <mf-icon name="settings" />
+                    </a>
+                }
+
+                <partial name="_ThemeToggle" />
+
+                <form method="post" asp-page="/SetLanguage" class="mf-lang" title="@L["Common.Language"]">
+                    <input type="hidden" name="returnUrl" value="/" />
+                    @foreach (var (code, label) in MatFileCultures.Supported)
+                    {
+                        <button type="submit" name="culture" value="@code"
+                                class="mf-lang-btn @(code == currentCulture ? "is-active" : "")"
+                                aria-current="@(code == currentCulture ? "true" : "false")">@label</button>
+                    }
+                </form>
+
+                <span class="mf-spacer"></span>
+
+                <form method="post" asp-page="/Logout" class="mf-inline-form">
+                    <button type="submit" class="mfx-btn" title="@L["Layout.Logout"]"
+                            aria-label="@L["Layout.Logout"]">
+                        <mf-icon name="log-out" />
+                    </button>
+                </form>
+            </div>
+        </footer>
     </aside>
 
     <div class="mfx-backdrop" id="mfx-backdrop" hidden></div>

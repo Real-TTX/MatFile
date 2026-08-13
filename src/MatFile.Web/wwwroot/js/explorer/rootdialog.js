@@ -12,7 +12,12 @@ const TYPES = [
 ];
 
 /** Symbole für die Seitenleiste. */
-const ICONS = ['folder', 'hard', 'server', 'cloud', 'lock', 'users', 'shield'];
+const ICONS = ['folder', 'hard', 'server', 'cloud', 'key', 'exchange', 'lock', 'users', 'shield'];
+
+/** Vorschlag passend zum Typ, solange nichts eigenes gewählt wurde. */
+function defaultIcon(type) {
+    return (TYPES.find(entry => entry.value === type) || TYPES[0]).icon;
+}
 
 /** Welche Felder gehören zu welchem Typ? */
 const FIELDS = {
@@ -88,7 +93,8 @@ export function openRootDialog(root, preferRemote) {
         dialog.className = 'mfx-dialog mfx-root-dialog';
 
         let selectedType = root?.type || (preferRemote ? 'Smb' : 'Local');
-        let selectedIcon = root?.icon || 'folder';
+        let selectedIcon = root?.icon || defaultIcon(selectedType);
+        let iconChosen = !!root?.icon;
 
         // ---------------------------------------------------------------- Kopf
         const head = document.createElement('div');
@@ -128,6 +134,12 @@ export function openRootDialog(root, preferRemote) {
 
             tile.addEventListener('click', () => {
                 selectedType = entry.value;
+
+                // Ohne eigene Wahl folgt das Symbol dem Typ.
+                if (!iconChosen) {
+                    selectedIcon = defaultIcon(entry.value);
+                }
+
                 apply();
             });
 
@@ -155,6 +167,7 @@ export function openRootDialog(root, preferRemote) {
             button.appendChild(icon(value, 16));
             button.addEventListener('click', () => {
                 selectedIcon = value;
+                iconChosen = true;
                 apply();
             });
             picker.appendChild(button);

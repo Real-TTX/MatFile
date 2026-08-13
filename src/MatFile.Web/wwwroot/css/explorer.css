@@ -25,12 +25,96 @@
 /* --- Seitenleiste --- */
 
 .mfx-sidebar {
+    display: flex;
+    flex-direction: column;
     flex: 0 0 var(--mf-sidebar-width);
     width: var(--mf-sidebar-width);
-    padding: var(--mf-space-3) var(--mf-space-2);
     border-right: 1px solid var(--mf-border);
     background: var(--mf-surface);
+    min-height: 0;
+}
+
+.mfx-side-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: var(--mf-space-3) var(--mf-space-2);
     overflow-y: auto;
+}
+
+/* --- Konto, Erscheinungsbild und Abmelden unten links --- */
+
+.mfx-side-foot {
+    flex: 0 0 auto;
+    padding: var(--mf-space-2);
+    border-top: 1px solid var(--mf-border);
+}
+
+.mfx-account {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-3);
+    padding: var(--mf-space-2);
+    border-radius: var(--mf-radius);
+    color: var(--mf-text);
+    min-width: 0;
+}
+
+.mfx-account:hover {
+    background: var(--mf-surface-alt);
+    text-decoration: none;
+}
+
+.mfx-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--mf-accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mfx-account-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.mfx-account-name {
+    font-size: 14px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mfx-account-login {
+    color: var(--mf-text-muted);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mfx-side-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-1);
+    margin-top: var(--mf-space-1);
+    padding: 0 var(--mf-space-1);
+}
+
+.mfx-side-tools .mf-lang {
+    border: 1px solid var(--mf-border);
+}
+
+.mfx-side-tools .mf-lang-btn {
+    padding: 3px 7px;
 }
 
 .mfx-side-group + .mfx-side-group {

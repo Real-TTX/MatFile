@@ -64,6 +64,7 @@
   <data name="Common.Delete"><value>Löschen</value></data>
   <data name="Common.Cancel"><value>Abbrechen</value></data>
   <data name="Common.Language"><value>Sprache</value></data>
+  <data name="Theme"><value>Erscheinungsbild: System, hell, dunkel</value></data>
   <data name="Common.Yes"><value>Ja</value></data>
   <data name="Common.No"><value>Nein</value></data>
 

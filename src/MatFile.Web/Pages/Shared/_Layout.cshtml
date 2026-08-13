@@ -4,9 +4,16 @@
     var currentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var returnUrl = Context.Request.Path + Context.Request.QueryString;
     var isFullBleed = (ViewData["Layout"] as string) == "full";
+
+    // Erscheinungsbild aus dem Cookie, damit die Seite ohne Aufblitzen richtig startet.
+    var theme = Context.Request.Cookies["matfile.theme"];
+    if (theme is not ("light" or "dark"))
+    {
+        theme = "auto";
+    }
 }
 <!DOCTYPE html>
-<html lang="@currentCulture">
+<html lang="@currentCulture" data-theme="@theme">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -26,31 +33,37 @@
             </a>
             <span class="mf-spacer"></span>
 
-            <form method="post" asp-page="/SetLanguage" class="mf-lang" title="@L["Common.Language"]">
-                <input type="hidden" name="returnUrl" value="@returnUrl" />
-                @foreach (var (code, label) in MatFileCultures.Supported)
-                {
-                    <button type="submit" name="culture" value="@code"
-                            class="mf-lang-btn @(code == currentCulture ? "is-active" : "")"
-                            aria-current="@(code == currentCulture ? "true" : "false")">@label</button>
-                }
-            </form>
-
-            @if (User.Identity?.IsAuthenticated == true)
+            @* Im Explorer sitzen Sprache, Erscheinungsbild und Konto unten links in der Seitenleiste. *@
+            @if (!isFullBleed)
             {
-                if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles)
-                    || User.HasPermission(Permission.ManageRoots))
-                {
-                    <a class="mf-btn mf-btn-quiet" asp-page="/Admin/Index">
-                        <mf-icon name="settings" />@L["Admin.Title"]
-                    </a>
-                }
-
-                <span class="mf-user" title="@User.Identity.Name">@User.GetDisplayName()</span>
-                <a class="mf-btn mf-btn-quiet" asp-page="/Account/ChangePassword">@L["Layout.ChangePassword"]</a>
-                <form method="post" asp-page="/Logout" class="mf-inline-form">
-                    <button type="submit" class="mf-btn mf-btn-quiet">@L["Layout.Logout"]</button>
+                <form method="post" asp-page="/SetLanguage" class="mf-lang" title="@L["Common.Language"]">
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    @foreach (var (code, label) in MatFileCultures.Supported)
+                    {
+                        <button type="submit" name="culture" value="@code"
+                                class="mf-lang-btn @(code == currentCulture ? "is-active" : "")"
+                                aria-current="@(code == currentCulture ? "true" : "false")">@label</button>
+                    }
                 </form>
+
+                <partial name="_ThemeToggle" />
+
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles)
+                        || User.HasPermission(Permission.ManageRoots))
+                    {
+                        <a class="mf-btn mf-btn-quiet" asp-page="/Admin/Index">
+                            <mf-icon name="settings" />@L["Admin.Title"]
+                        </a>
+                    }
+
+                    <span class="mf-user" title="@User.Identity.Name">@User.GetDisplayName()</span>
+                    <a class="mf-btn mf-btn-quiet" asp-page="/Account/ChangePassword">@L["Layout.ChangePassword"]</a>
+                    <form method="post" asp-page="/Logout" class="mf-inline-form">
+                        <button type="submit" class="mf-btn mf-btn-quiet">@L["Layout.Logout"]</button>
+                    </form>
+                }
             }
 
             <span class="mf-badge" title="@AppInfo.Channel">@AppInfo.Version</span>

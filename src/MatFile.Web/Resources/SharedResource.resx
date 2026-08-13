@@ -64,6 +64,7 @@
   <data name="Common.Delete"><value>Delete</value></data>
   <data name="Common.Cancel"><value>Cancel</value></data>
   <data name="Common.Language"><value>Language</value></data>
+  <data name="Theme"><value>Appearance: system, light, dark</value></data>
   <data name="Common.Yes"><value>Yes</value></data>
   <data name="Common.No"><value>No</value></data>
 
