@@ -65,9 +65,10 @@ function gap() {
     return spacer;
 }
 
-function field(labelText, input, hint) {
+/** Formularfeld im gemeinsamen Raster. Breite Felder nehmen die ganze Zeile ein. */
+function field(labelText, input, hint, wide) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'mf-field';
+    wrapper.className = 'mf-field' + (wide ? ' mf-field-wide' : '');
 
     const label = document.createElement('label');
     label.textContent = labelText;
@@ -76,12 +77,36 @@ function field(labelText, input, hint) {
 
     if (hint) {
         const note = document.createElement('p');
-        note.className = 'mf-muted mf-small';
+        note.className = 'mf-field-hint';
         note.textContent = hint;
         wrapper.appendChild(note);
     }
 
     return wrapper;
+}
+
+/** Zweispaltiges Raster für die Formularansicht. */
+function formGrid(...fields) {
+    const grid = document.createElement('div');
+    grid.className = 'mf-form-grid';
+    fields.filter(Boolean).forEach(item => grid.appendChild(item));
+    return grid;
+}
+
+/** Mehrfachauswahl als umrandeter Kasten mit mehreren Spalten. */
+function checkBox(entries) {
+    const box = document.createElement('div');
+    box.className = 'mfx-manage-box mf-checklist-grid';
+    entries.forEach(entry => box.appendChild(entry.row));
+    return box;
+}
+
+/** Untereinander stehende Häkchen ohne Rahmen. */
+function checkColumn(entries) {
+    const column = document.createElement('div');
+    column.className = 'mf-checklist';
+    entries.forEach(entry => column.appendChild(entry.row));
+    return column;
 }
 
 function textBox(value, type) {
@@ -332,18 +357,13 @@ export function openUsers() {
             return { role, ...entry };
         });
 
-        const roleList = document.createElement('div');
-        roleList.className = 'mfx-check-list';
-        roleBoxes.forEach(entry => roleList.appendChild(entry.row));
-
-        view.body.replaceChildren(
+        view.body.replaceChildren(formGrid(
             field(t('User.Username'), username),
             field(t('User.DisplayName'), displayName),
             field(t('User.Email'), email),
             field(t('User.Password'), password, id ? t('User.PasswordKeep') : null),
-            field(t('User.Roles'), roleList),
-            active.row,
-            mustChange.row);
+            field(t('User.Roles'), checkBox(roleBoxes), null, true),
+            field(t('User.Status'), checkColumn([active, mustChange]), null, true)));
 
         const save = async () => {
             const payload = {
@@ -480,19 +500,16 @@ export function openRoles() {
             return { permission, ...entry };
         });
 
-        const rights = document.createElement('div');
-        rights.className = 'mfx-check-list';
-        boxes.forEach(entry => rights.appendChild(entry.row));
-
-        const parts = [
+        const grid = formGrid(
             field(t('Role.Name'), name),
             field(t('Role.Description'), description),
-            field(t('Role.Permissions'), rights)
-        ];
+            field(t('Role.Permissions'), checkBox(boxes), null, true));
+
+        const parts = [grid];
 
         if (role.isSystem) {
             const hint = document.createElement('p');
-            hint.className = 'mf-muted mf-small';
+            hint.className = 'mfx-manage-note';
             hint.textContent = t('Role.SystemHint');
             parts.unshift(hint);
         }
@@ -652,7 +669,7 @@ export function openLocations(onChanged) {
         view.title.textContent = detail.name;
 
         const hint = document.createElement('p');
-        hint.className = 'mf-muted mf-small';
+        hint.className = 'mfx-manage-note';
         hint.textContent = t('Root.AccessHint');
 
         const heading = document.createElement('h3');

@@ -190,16 +190,21 @@ export function openRootDialog(root, preferRemote) {
         const path = input('text', root?.path, '/storage/tank');
         path.className = 'mf-mono';
 
+        const pathHint = document.createElement('span');
+        pathHint.className = 'mf-field-hint';
+
         const blocks = {
             host: field(t('Server'), host),
             port: field(t('Port'), port, t('PortHint')),
             url: field(t('Address'), url),
             share: field(t('Share'), share),
-            path: field(t('Path'), path, t('PathHint'))
+            path: field(t('Path'), path)
         };
 
+        blocks.path.appendChild(pathHint);
+
+        // Nur die WebDAV-Adresse braucht die ganze Zeile, alles andere passt zweispaltig.
         blocks.url.classList.add('mf-field-wide');
-        blocks.path.classList.add('mf-field-wide');
 
         Object.values(blocks).forEach(block => target.body.appendChild(block));
         content.appendChild(target.box);
@@ -221,7 +226,7 @@ export function openRootDialog(root, preferRemote) {
         passive.checked = root ? !!root.passive : true;
 
         const options = document.createElement('div');
-        options.className = 'mf-field mf-field-wide';
+        options.className = 'mf-field mf-field-wide mfx-option-row';
 
         const tlsLabel = document.createElement('label');
         tlsLabel.className = 'mf-check';
@@ -236,6 +241,13 @@ export function openRootDialog(root, preferRemote) {
         options.appendChild(tlsLabel);
         options.appendChild(passiveLabel);
         login.body.appendChild(options);
+
+        // Der Hinweis zur Verschlüsselung gehört zu den Zugangsdaten - dort steht er auch.
+        const note = document.createElement('p');
+        note.className = 'mf-field-hint mf-field-wide';
+        note.textContent = t('LocationHint');
+        login.body.appendChild(note);
+
         content.appendChild(login.box);
 
         // ---------------------------------------------------------------- Fuss
@@ -243,11 +255,6 @@ export function openRootDialog(root, preferRemote) {
         status.className = 'mfx-dialog-status';
         status.hidden = true;
         content.appendChild(status);
-
-        const note = document.createElement('p');
-        note.className = 'mf-muted mf-small';
-        note.textContent = t('LocationHint');
-        content.appendChild(note);
 
         const actions = document.createElement('div');
         actions.className = 'mf-actions';
@@ -302,7 +309,9 @@ export function openRootDialog(root, preferRemote) {
             login.box.hidden = usernameField.hidden && passwordField.hidden && options.hidden;
             test.hidden = selectedType === 'Local';
 
+            // Beim lokalen Ordner ist der Pfad die Hauptsache, bei einer Verbindung nur ein Unterordner.
             path.placeholder = selectedType === 'Local' ? '/storage/tank' : '/';
+            pathHint.textContent = selectedType === 'Local' ? t('PathHint') : t('PathHintRemote');
         }
 
         const payload = () => ({

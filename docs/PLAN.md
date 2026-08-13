@@ -119,6 +119,8 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 ### Explorer (Hauptanwendung)
 - **Sidebar** (Finder/Explorer-Stil): Home-/Root-Paths, aktive Mounts, Favoriten/Bookmarks,
   zuletzt verwendet. Ein-/ausklappbar, per Drag sortierbar, auf Mobile als Off-Canvas.
+  **Ein Abschnitt ohne Einträge verschwindet ganz** – keine Überschrift ohne Inhalt. Solange
+  es keinen Speicherort gibt, steht dort nur ein Knopf „Speicherort hinzufügen".
 - **Tab-Leiste** wie Windows Explorer: `+`, Schließen, Mittelklick, Drag-Reorder,
   Kontextmenü „Tab anheften/persistent machen" → gespeichert in `ExplorerTab`.
 - **Menüleiste über den Tabs** wie im Windows-Explorer: Datei · Bearbeiten · Ansicht ·
@@ -158,6 +160,16 @@ soll dort sitzen, wo gearbeitet wird, und die Guidelines gelten im Dialog genaus
 Verbindungsdaten eines Speicherorts bearbeitet weiterhin der eigene, plakative Dialog;
 die **Rechtematrix je Rolle** sitzt im Verwaltungsdialog. Die Dialoge sprechen dieselbe
 JSON-API (`/api/users`, `/api/roles`, `/api/roots`), gegen die auch die Tests laufen.
+
+Gestaltung der Dialoge:
+
+- **Feste Größe** je Dialog (Verwaltung 860×620, Speicherort 720×760). Ohne das springt
+  der Rahmen beim Wechsel zwischen Liste und Formular oder beim Umschalten des Speichertyps.
+- Formulare laufen über das gemeinsame **zweispaltige Raster** (`.mf-form-grid`); nur was
+  lang wird (WebDAV-Adresse, Rollen- und Rechteauswahl) nimmt die ganze Zeile.
+- Beschriftungen klein und gesperrt, Eingaben durchgehend 34 px hoch, Mehrfachauswahl in
+  einem umrandeten Kasten mit mehreren Spalten.
+- Der Verbindungsdialog kommt für **jeden Speichertyp ohne Blättern** aus.
 
 ### Wiederverwendbare Controls
 

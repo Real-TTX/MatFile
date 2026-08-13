@@ -67,15 +67,27 @@ await evaluate(`document.querySelector('#Input_Username').value='admin';
 await sleep(1500);
 await go(`${BASE}/`);
 
+// Ohne Eintraege gibt es keinen Block - nur den Knopf fuer den ersten Speicherort.
+const visibleBlocks = () => evaluate(`(() => {
+    const shown = sel => { const el = document.querySelector(sel); return !!el && !el.hidden && el.getBoundingClientRect().height > 0; };
+    return {
+        headings: [...document.querySelectorAll('.mfx-side-group')].filter(g => !g.hidden).map(g => g.querySelector('h2').textContent),
+        folders: shown('#mfx-roots-group'),
+        connections: shown('#mfx-connections-group'),
+        favorites: shown('#mfx-bookmarks-group'),
+        firstButton: shown('#mfx-side-first')
+    };
+})()`);
+
 const before = await evaluate(`(() => ({
     message: document.querySelector('.mfx-message')?.textContent?.trim() || null,
-    plusOnFolders: !!document.querySelector('#mfx-roots-group .mfx-side-add'),
-    plusOnConnections: !!document.querySelector('#mfx-connections-group .mfx-side-add'),
     moreButton: !!document.querySelector('#mfx-more')
 }))()`);
 
-// Ueber das Pluszeichen bei "Ordner" einen lokalen Speicherort anlegen
-await evaluate(`document.querySelector('#mfx-roots-group .mfx-side-add').click(); true;`);
+const blocksEmpty = await visibleBlocks();
+
+// Ueber den Knopf in der Seitenleiste den ersten Speicherort anlegen
+await evaluate(`document.querySelector('#mfx-side-first').click(); true;`);
 await sleep(500);
 
 const dialog = await evaluate(`(() => {
@@ -120,8 +132,11 @@ await sleep(1800);
 const afterCreate = await evaluate(`(() => ({
     sidebar: [...document.querySelectorAll('#mfx-roots .mfx-side-item span')].map(e => e.textContent),
     rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
-    flash: document.querySelector('.mfx-flash')?.textContent || null
+    flash: document.querySelector('.mfx-flash')?.textContent || null,
+    plusOnFolders: !!document.querySelector('#mfx-roots-group .mfx-side-add')
 }))()`);
+
+const blocksWithFolder = await visibleBlocks();
 
 const shot = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(OUT, Buffer.from(shot.data, 'base64'));
@@ -172,7 +187,12 @@ const afterDelete = await evaluate(`(() => ({
     message: document.querySelector('.mfx-message')?.textContent?.trim() || null
 }))()`);
 
-console.log(JSON.stringify({ before, dialog, smbFields, afterCreate, sidebarMenu, afterEdit, afterDelete, consoleErrors }, null, 2));
+const blocksAfterDelete = await visibleBlocks();
+
+console.log(JSON.stringify({
+    before, blocksEmpty, dialog, smbFields, afterCreate, blocksWithFolder,
+    sidebarMenu, afterEdit, afterDelete, blocksAfterDelete, consoleErrors
+}, null, 2));
 
 socket.close();
 edge.kill();

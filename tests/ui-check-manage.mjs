@@ -105,8 +105,8 @@ const formView = await evaluate(`(() => {
     return {
         title: box.querySelector('h2')?.textContent,
         fields: [...box.querySelectorAll('.mf-field label')].map(e => e.textContent),
-        roleChecks: [...box.querySelectorAll('.mfx-check-list .mf-check span')].map(e => e.textContent),
-        checks: [...box.querySelectorAll('.mfx-manage-body > .mf-check span')].map(e => e.textContent),
+        roleChecks: [...box.querySelectorAll('.mfx-manage-box .mf-check span')].map(e => e.textContent),
+        checks: [...box.querySelectorAll('.mf-checklist .mf-check span')].map(e => e.textContent),
         footButtons: [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].map(b => b.textContent.trim())
     };
 })()`);
@@ -117,7 +117,7 @@ await evaluate(`(() => {
     inputs[0].value = 'dialogtester';
     inputs[1].value = 'Dialog Tester';
     inputs[3].value = 'Test-2026-abc';
-    [...box.querySelectorAll('.mfx-check-list .mf-check')].find(c => c.textContent.includes('User'))
+    [...box.querySelectorAll('.mfx-manage-box .mf-check')].find(c => c.textContent.includes('User'))
         .querySelector('input').checked = true;
     box.querySelector('.mfx-manage-foot .mf-btn-primary').click();
     return true;
@@ -189,10 +189,10 @@ const systemRole = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     return {
         title: box.querySelector('h2')?.textContent,
-        hint: box.querySelector('.mf-muted.mf-small')?.textContent,
+        hint: box.querySelector('.mfx-manage-note')?.textContent,
         nameDisabled: box.querySelector('.mf-field input')?.disabled,
-        rightsDisabled: [...box.querySelectorAll('.mfx-check-list input')].every(i => i.disabled),
-        checkedRights: [...box.querySelectorAll('.mfx-check-list .mf-check')].filter(c => c.querySelector('input').checked).length,
+        rightsDisabled: [...box.querySelectorAll('.mfx-manage-box input')].every(i => i.disabled),
+        checkedRights: [...box.querySelectorAll('.mfx-manage-box .mf-check')].filter(c => c.querySelector('input').checked).length,
         footButtons: [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].map(b => b.textContent.trim())
     };
 })()`);

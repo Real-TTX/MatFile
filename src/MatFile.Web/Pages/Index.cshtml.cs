@@ -31,7 +31,7 @@ public class IndexModel : PageModel
     {
         string[] keys =
         [
-            "Explorer.Roots", "Explorer.Bookmarks", "Explorer.NoRoots", "Explorer.NoBookmarks",
+            "Explorer.Roots", "Explorer.Bookmarks", "Explorer.NoRoots",
             "Explorer.EmptyFolder", "Explorer.Loading", "Explorer.Name", "Explorer.Size",
             "Explorer.Modified", "Explorer.Type", "Explorer.Folder", "Explorer.File",
             "Explorer.Items", "Explorer.Selected", "Explorer.NewTab", "Explorer.CloseTab",
@@ -74,8 +74,9 @@ public class IndexModel : PageModel
             "Explorer.TypeLocal", "Explorer.Server", "Explorer.Port", "Explorer.PortHint",
             "Explorer.Address", "Explorer.Share", "Explorer.User", "Explorer.Password",
             "Explorer.PasswordStored", "Explorer.UseTls", "Explorer.Passive",
-            "Explorer.TestConnection", "Explorer.TestOk", "Explorer.NameRequired", "Explorer.PathHint",
-            "Explorer.NoRootsAdmin", "Explorer.NoLocationsYet",
+            "Explorer.TestConnection", "Explorer.TestOk", "Explorer.NameRequired",
+            "Explorer.PathHint", "Explorer.PathHintRemote",
+            "Explorer.NoRootsAdmin", "Explorer.AddLocation",
             "Explorer.TypeLocalSub", "Explorer.TypeSmbSub", "Explorer.TypeSftpSub",
             "Explorer.TypeFtpSub", "Explorer.TypeWebDavSub",
             "Explorer.SectionType", "Explorer.SectionGeneral", "Explorer.SectionTarget",

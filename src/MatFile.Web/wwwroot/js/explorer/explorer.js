@@ -12,6 +12,8 @@ const can = window.matfileCan || {};
 const el = {
     roots: document.getElementById('mfx-roots'),
     bookmarks: document.getElementById('mfx-bookmarks'),
+    bookmarksGroup: document.getElementById('mfx-bookmarks-group'),
+    sideFirst: document.getElementById('mfx-side-first'),
     rootsGroup: document.getElementById('mfx-roots-group'),
     connections: document.getElementById('mfx-connections'),
     connectionsGroup: document.getElementById('mfx-connections-group'),
@@ -536,18 +538,16 @@ function renderSidebar() {
     const local = state.roots.filter(root => root.type === 'Local');
     const remote = state.roots.filter(root => root.type !== 'Local');
 
-    if (state.roots.length === 0) {
-        const empty = document.createElement('li');
-        empty.className = 'mfx-side-empty';
-        empty.textContent = can.manageRoots ? t('NoLocationsYet') : t('NoRoots');
-        el.roots.appendChild(empty);
-    }
-
     local.forEach(root => el.roots.appendChild(rootItem(root, false)));
     remote.forEach(root => el.connections.appendChild(rootItem(root, true)));
 
-    // Verbindungen bleiben sichtbar, wenn man sie anlegen darf - sonst gibt es kein Pluszeichen.
-    el.connectionsGroup.hidden = remote.length === 0 && !can.manageRoots;
+    // Ein Abschnitt ohne Einträge verschwindet ganz - samt Überschrift.
+    el.rootsGroup.hidden = local.length === 0;
+    el.connectionsGroup.hidden = remote.length === 0;
+
+    if (el.sideFirst) {
+        el.sideFirst.hidden = state.roots.length > 0;
+    }
 
     sectionAdd(el.rootsGroup, t('AddFolder'), false);
     sectionAdd(el.connectionsGroup, t('AddConnection'), true);
@@ -573,11 +573,10 @@ function refreshConnectionStatus(remote) {
 function renderBookmarks() {
     el.bookmarks.replaceChildren();
 
+    // Keine Favoriten, kein Favoritenblock.
+    el.bookmarksGroup.hidden = state.bookmarks.length === 0;
+
     if (state.bookmarks.length === 0) {
-        const empty = document.createElement('li');
-        empty.className = 'mfx-side-empty';
-        empty.textContent = t('NoBookmarks');
-        el.bookmarks.appendChild(empty);
         return;
     }
 
@@ -2356,6 +2355,10 @@ el.sidebarToggle.addEventListener('click', () => {
     const open = el.sidebar.classList.toggle('is-open');
     el.backdrop.hidden = !open;
 });
+
+if (el.sideFirst) {
+    el.sideFirst.addEventListener('click', () => addLocation(false));
+}
 
 el.backdrop.addEventListener('click', () => {
     el.sidebar.classList.remove('is-open');
