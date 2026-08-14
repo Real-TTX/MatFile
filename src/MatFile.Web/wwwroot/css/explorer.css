@@ -2034,3 +2034,10 @@
 .mfx-side-item.is-active .mfx-side-icon {
     color: inherit;
 }
+
+/* Beschriftung eines Häkchens mit Symbol davor. */
+.mfx-option-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}

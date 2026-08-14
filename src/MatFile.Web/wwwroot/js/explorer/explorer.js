@@ -1788,8 +1788,8 @@ function renderSearchView(tab) {
 
     const options = document.createElement('div');
     options.className = 'mfx-search-options';
-    options.appendChild(searchOption(t('SearchContent'), search.content, value => { search.content = value; }));
-    options.appendChild(searchOption(t('ShowHidden'), search.hidden, value => { search.hidden = value; }));
+    options.appendChild(searchOption(t('SearchContent'), search.content, value => { search.content = value; }, 'search'));
+    options.appendChild(searchOption(t('ShowHidden'), search.hidden, value => { search.hidden = value; }, 'eye'));
     form.appendChild(options);
 
     const actions = document.createElement('div');
@@ -1858,7 +1858,7 @@ function labelled(text, input) {
     return field;
 }
 
-function searchOption(text, checked, onChange) {
+function searchOption(text, checked, onChange, iconName) {
     const wrapper = document.createElement('label');
     wrapper.className = 'mf-check';
 
@@ -1868,7 +1868,13 @@ function searchOption(text, checked, onChange) {
     box.addEventListener('change', () => onChange(box.checked));
 
     const caption = document.createElement('span');
-    caption.textContent = text;
+    caption.className = 'mfx-option-text';
+
+    if (iconName) {
+        caption.appendChild(icon(iconName, 14));
+    }
+
+    caption.appendChild(document.createTextNode(text));
 
     wrapper.append(box, caption);
     return wrapper;
