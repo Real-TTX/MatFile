@@ -213,6 +213,31 @@ Add-Result "Upload ohne Recht gesperrt" ($noUpload.Status -eq 403) "status=$($no
 $noDelete = Api POST "$BaseUrl/api/fs/delete" $tester @{ rootId = $rootId; paths = @('Projekte') }
 Add-Result "Loeschen ohne Recht gesperrt" ($noDelete.Status -eq 403) "status=$($noDelete.Status)"
 
+# --- Zugriffsrechte auf einem lokalen Ordner -----------------------------
+$perm = Api GET "$BaseUrl/api/fs/permissions?rootId=$rootId&path=$(Enc 'Dokumente')" $admin
+Add-Result "Lokale Rechte gelesen" (
+    $perm.Status -eq 200 -and $perm.Data.supported -and $perm.Data.canChange -and
+    $perm.Data.modeText -match '^\d{3}$') "mode=$($perm.Data.modeText)"
+
+$setPerm = Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $rootId; path = 'Dokumente'; mode = 493 }
+$onDisk = (docker exec $Container sh -c "ls -ld $WorkDir/Dokumente" | Out-String).Trim()
+Add-Result "Lokale Rechte gesetzt" (
+    $setPerm.Status -eq 200 -and $setPerm.Data.modeText -eq '755' -and $onDisk -match '^drwxr-xr-x') "$onDisk"
+
+$readBack = Api GET "$BaseUrl/api/fs/permissions?rootId=$rootId&path=$(Enc 'Dokumente')" $admin
+Add-Result "Lokale Rechte wieder gelesen" ($readBack.Data.modeText -eq '755') "mode=$($readBack.Data.modeText)"
+
+$permTester = Api GET "$BaseUrl/api/fs/permissions?rootId=$rootId&path=$(Enc 'Dokumente')" $tester
+Add-Result "Rechte ohne Schreibrecht nur lesbar" (
+    $permTester.Status -eq 200 -and $permTester.Data.supported -and
+    $permTester.Data.canChange -eq $false) "canChange=$($permTester.Data.canChange)"
+
+$permDenied = Api PUT "$BaseUrl/api/fs/permissions" $tester @{ rootId = $rootId; path = 'Dokumente'; mode = 511 }
+Add-Result "Rechte ohne Schreibrecht nicht setzbar" ($permDenied.Status -eq 403) "status=$($permDenied.Status)"
+
+$permAnon = Api GET "$BaseUrl/api/fs/permissions?rootId=$rootId&path=$(Enc 'Dokumente')" (New-MatSession)
+Add-Result "Rechte ohne Anmeldung gesperrt" ($permAnon.Status -eq 401) "status=$($permAnon.Status)"
+
 # --- Job eines fremden Benutzers ----------------------------------------
 $foreign = Api POST "$BaseUrl/api/jobs/$($del.Data.token)/cancel" $tester
 Add-Result "Fremder Job nicht abbrechbar" ($foreign.Status -eq 404) "status=$($foreign.Status)"

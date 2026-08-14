@@ -309,6 +309,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
 | **M7** | Remote-Provider **SMB, SFTP, FTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung, Abschnitt „Verbindungen" in der Seitenleiste mit Statuspunkt | Externe Freigaben eingebunden |
 | **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **erweiterte Suche als eigener Tab** (rekursiv, mit Inhaltssuche), Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste, starre Hülle gegen Layoutsprünge | Bedienung aus einer Fläche |
+| **M7d** | Systemeinstellungen als Dialog (`ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
@@ -342,6 +343,12 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   Entwickeln direkt funktioniert. Für den produktiven Betrieb einschalten.
   Der Schalter gilt nur für das mitgelieferte Konto beim Anlegen der Datenbank; für
   bestehende Benutzer steht dasselbe im Benutzerdialog je Konto.
+- **Zugriffsrechte** stehen im Eigenschaftenblatt, sobald der Provider `IPermissionStorage`
+  anbietet: lokal über `File.GetUnixFileMode`/`SetUnixFileMode` (unter Windows gibt es sie
+  nicht), SFTP über `ChangePermissions`, FTP über `SITE CHMOD` - und auch nur, wenn der
+  Server die Rechte im Listing mitschickt. SMB und WebDAV kennen kein solches Modell;
+  dort meldet die API `supported: false` und der Dialog zeigt den Abschnitt gar nicht erst.
+  Ändern setzt `CanWrite` am Speicherort voraus und landet im Protokoll.
 - **Systemeinstellungen** (`ManageSettings`, Dialog unter *Einstellungen*) schreiben
   `matfile.json` zur Laufzeit: Mindestlänge für Kennwörter, Sitzungsdauer, Fehlversuche
   und Sperrdauer, HTTPS-Cookie, Kennwortwechsel beim ersten Start. Werte werden serverseitig

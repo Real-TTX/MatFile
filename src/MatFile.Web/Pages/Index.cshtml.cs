@@ -41,6 +41,12 @@ public class IndexModel : PageModel
             "Explorer.ShowHidden", "Explorer.AddBookmark", "Explorer.RemoveBookmark",
             "Explorer.Download", "Explorer.Open", "Explorer.CopyPath", "Explorer.Copied",
             "Explorer.Properties", "Explorer.SelectAll", "Explorer.Path", "Explorer.Sidebar",
+
+            // Zugriffsrechte im Eigenschaftenblatt
+            "Explorer.PermTitle", "Explorer.PermOwner", "Explorer.PermGroup", "Explorer.PermOthers",
+            "Explorer.PermRead", "Explorer.PermWrite", "Explorer.PermExecute", "Explorer.PermMode",
+            "Explorer.ErrorPermissionsUnsupported", "Explorer.ErrorInvalidMode",
+
             "Explorer.Close", "Explorer.Error", "Explorer.ErrorNotFound", "Explorer.ErrorAccess",
             "Explorer.ErrorUnavailable",
 
@@ -65,7 +71,7 @@ public class IndexModel : PageModel
             "Explorer.ActionLogin", "Explorer.ActionLogout", "Explorer.ActionPasswordChanged",
             "Explorer.ActionCreateFolder", "Explorer.ActionRename", "Explorer.ActionDelete",
             "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract",
-            "Explorer.ActionEdit",
+            "Explorer.ActionEdit", "Explorer.ActionPermissions",
 
             // Texteditor
             "Explorer.Edit", "Explorer.Revert", "Explorer.UnsavedTitle", "Explorer.UnsavedQuestion",

@@ -125,6 +125,9 @@ export const api = {
     deleteUser: id => request(`/api/users/${id}`, { method: 'DELETE' }),
     unlockUser: id => request(`/api/users/${id}/unlock`, { method: 'POST' }),
 
+    permissions: (rootId, path) => request('/api/fs/permissions' + queryString({ rootId, path })),
+    savePermissions: (rootId, path, mode) => send('/api/fs/permissions', 'PUT', { rootId, path, mode }),
+
     system: () => request('/api/system'),
     saveSystem: data => send('/api/system', 'PUT', data),
 

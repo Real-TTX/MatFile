@@ -27,6 +27,8 @@ public static class FileOperationEndpoints
 
     public record UploadBeginRequest(long RootId, string? Path, string Name, long Size, bool Overwrite);
 
+    public record PermissionRequest(long RootId, string? Path, int Mode);
+
     public static IEndpointRouteBuilder MapFileOperationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/fs").RequireAuthorization(MatFilePolicies.UseExplorer);
@@ -41,6 +43,70 @@ public static class FileOperationEndpoints
 
         group.MapPost("/rename", (RenameRequest request, FileOperationService operations, ClaimsPrincipal user)
             => Run(user, id => operations.RenameAsync(id, request.RootId, request.Path, request.NewName)));
+
+        // ---------------------------------------------------------------- Rechte (nur wo das Protokoll sie kennt)
+
+        group.MapGet("/permissions", async (
+            long rootId,
+            string? path,
+            FileOperationService operations,
+            ClaimsPrincipal user) =>
+        {
+            if (user.GetUserId() is not { } userId)
+            {
+                return Results.Unauthorized();
+            }
+
+            try
+            {
+                var (permissions, canChange) = await operations.GetPermissionsAsync(userId, rootId, path ?? string.Empty);
+
+                if (permissions is null)
+                {
+                    return Results.Ok(new { supported = false });
+                }
+
+                return Results.Ok(new
+                {
+                    supported = true,
+                    canChange,
+                    mode = permissions.Mode,
+                    modeText = PermissionMode.ToText(permissions.Mode),
+                    permissions.Owner,
+                    permissions.Group
+                });
+            }
+            catch (StorageException exception)
+            {
+                return Problem(exception);
+            }
+        });
+
+        group.MapPut("/permissions", async (
+            PermissionRequest request,
+            FileOperationService operations,
+            ClaimsPrincipal user) =>
+        {
+            if (user.GetUserId() is not { } userId)
+            {
+                return Results.Unauthorized();
+            }
+
+            try
+            {
+                await operations.SetPermissionsAsync(userId, request.RootId, request.Path ?? string.Empty, request.Mode);
+
+                return Results.Ok(new
+                {
+                    mode = request.Mode,
+                    modeText = PermissionMode.ToText(request.Mode)
+                });
+            }
+            catch (StorageException exception)
+            {
+                return Problem(exception);
+            }
+        });
 
         // ---------------------------------------------------------------- Jobs
 
@@ -307,6 +373,7 @@ public static class FileOperationEndpoints
             "not_found" or "root_not_found" or "upload_not_found" => StatusCodes.Status404NotFound,
             "access_denied" => StatusCodes.Status403Forbidden,
             "conflict" => StatusCodes.Status409Conflict,
+            "permissions_unsupported" => StatusCodes.Status501NotImplemented,
             "root_unavailable" => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status400BadRequest
         };

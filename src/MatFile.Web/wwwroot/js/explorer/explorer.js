@@ -1390,11 +1390,12 @@ async function copyPath(entry) {
     }
 }
 
-function showProperties(entry) {
+async function showProperties(entry) {
     const tab = activeTab();
+    const path = entry ? entry.path : tab.path;
     const facts = [
         [t('Type'), entry && !entry.isDirectory ? (fileType(entry.name) || t('File')) : t('Folder')],
-        [t('Path'), `${tab.rootName}/${entry ? entry.path : tab.path}`.replace(/\/+$/, '')]
+        [t('Path'), `${tab.rootName}/${path}`.replace(/\/+$/, '')]
     ];
 
     if (entry && !entry.isDirectory) {
@@ -1405,7 +1406,115 @@ function showProperties(entry) {
         facts.push([t('Modified'), formatDate(entry.modified)]);
     }
 
-    showFacts(entry ? entry.name : tabTitle(tab), facts);
+    // Rechte kennen nur manche Protokolle - lokal, SFTP und FTP mit SITE CHMOD.
+    let rights = null;
+
+    try {
+        rights = await api.permissions(tab.rootId, path);
+    } catch (ignored) {
+        // Ohne Rechteangabe bleibt es beim reinen Eigenschaftenblatt.
+    }
+
+    if (!rights || !rights.supported) {
+        showFacts(entry ? entry.name : tabTitle(tab), facts);
+        return;
+    }
+
+    if (rights.owner) {
+        facts.push([t('PermOwner'), rights.group ? `${rights.owner} · ${rights.group}` : rights.owner]);
+    }
+
+    const grid = permissionGrid(rights);
+
+    const action = rights.canChange ? {
+        label: t('Save'),
+        onClick: async dialog => {
+            try {
+                await api.savePermissions(tab.rootId, path, grid.mode());
+                flash(t('Common.Saved'));
+                dialog.close();
+            } catch (error) {
+                handleError(error);
+            }
+        }
+    } : null;
+
+    showFacts(entry ? entry.name : tabTitle(tab), facts, { extra: grid.element, action });
+}
+
+/** Neun Kästchen wie bei chmod, dazu die Oktalzahl zum Mitlesen. */
+function permissionGrid(rights) {
+    const ROWS = [['owner', t('PermOwner')], ['group', t('PermGroup')], ['others', t('PermOthers')]];
+    const COLUMNS = [['read', t('PermRead')], ['write', t('PermWrite')], ['execute', t('PermExecute')]];
+
+    const section = document.createElement('section');
+    section.className = 'mfx-perm';
+
+    const heading = document.createElement('h3');
+    heading.textContent = t('PermTitle');
+    section.appendChild(heading);
+
+    const table = document.createElement('table');
+    table.className = 'mf-table mfx-perm-table';
+
+    const head = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headRow.appendChild(document.createElement('th'));
+
+    COLUMNS.forEach(([, label]) => {
+        const cell = document.createElement('th');
+        cell.textContent = label;
+        headRow.appendChild(cell);
+    });
+
+    head.appendChild(headRow);
+    table.appendChild(head);
+
+    const body = document.createElement('tbody');
+    const boxes = {};
+
+    ROWS.forEach(([row, label], rowIndex) => {
+        const line = document.createElement('tr');
+        const caption = document.createElement('th');
+        caption.scope = 'row';
+        caption.textContent = label;
+        line.appendChild(caption);
+
+        COLUMNS.forEach(([column], columnIndex) => {
+            const cell = document.createElement('td');
+            const box = document.createElement('input');
+            box.type = 'checkbox';
+            // Bit 8 ist Lesen für den Besitzer, Bit 0 Ausführen für Andere.
+            box.dataset.bit = String(8 - (rowIndex * 3 + columnIndex));
+            box.checked = (rights.mode & (1 << Number(box.dataset.bit))) !== 0;
+            box.disabled = !rights.canChange;
+            box.setAttribute('aria-label', `${label} · ${COLUMNS[columnIndex][1]}`);
+            boxes[`${row}-${column}`] = box;
+            cell.appendChild(box);
+            line.appendChild(cell);
+        });
+
+        body.appendChild(line);
+    });
+
+    table.appendChild(body);
+    section.appendChild(table);
+
+    const value = document.createElement('p');
+    value.className = 'mfx-perm-mode mf-mono';
+    section.appendChild(value);
+
+    const mode = () => Object.values(boxes).reduce(
+        (total, box) => box.checked ? total | (1 << Number(box.dataset.bit)) : total, 0);
+
+    const show = () => {
+        value.textContent = `${t('PermMode')} ${mode().toString(8).padStart(3, '0')}`;
+    };
+
+    Object.values(boxes).forEach(box => box.addEventListener('change', show));
+    show();
+
+    return { element: section, mode };
 }
 
 // ---------------------------------------------------------------- Dateioperationen

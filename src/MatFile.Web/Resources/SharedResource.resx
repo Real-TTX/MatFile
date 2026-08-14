@@ -353,6 +353,17 @@
   <data name="Explorer.CopyPath"><value>Copy path</value></data>
   <data name="Explorer.Copied"><value>Path copied</value></data>
   <data name="Explorer.Properties"><value>Properties</value></data>
+  <data name="Explorer.PermTitle"><value>Access rights</value></data>
+  <data name="Explorer.ActionPermissions"><value>Access rights changed</value></data>
+  <data name="Explorer.PermOwner"><value>Owner</value></data>
+  <data name="Explorer.PermGroup"><value>Group</value></data>
+  <data name="Explorer.PermOthers"><value>Others</value></data>
+  <data name="Explorer.PermRead"><value>Read</value></data>
+  <data name="Explorer.PermWrite"><value>Write</value></data>
+  <data name="Explorer.PermExecute"><value>Execute</value></data>
+  <data name="Explorer.PermMode"><value>Mode</value></data>
+  <data name="Explorer.ErrorPermissionsUnsupported"><value>This storage type has no access rights of this kind.</value></data>
+  <data name="Explorer.ErrorInvalidMode"><value>Access rights must be between 000 and 777.</value></data>
   <data name="Explorer.SelectAll"><value>Select all</value></data>
   <data name="Explorer.Path"><value>Path</value></data>
   <data name="Explorer.Sidebar"><value>Sidebar</value></data>

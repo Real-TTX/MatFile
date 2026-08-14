@@ -8,7 +8,7 @@ namespace MatFile.Web.Storage;
 /// Zugriff auf eine FTP- oder FTPS-Gegenstelle über FluentFTP.
 /// Wie bei SFTP wird je Operation verbunden - unkompliziert und robust.
 /// </summary>
-public sealed class FtpStorageProvider : IStorageProvider
+public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
 {
     private readonly ConnectionSettings _settings;
     private readonly string _basePath;
@@ -277,6 +277,64 @@ public sealed class FtpStorageProvider : IStorageProvider
 
         await client.DeleteFile(remote, cancellationToken);
     }
+
+    // ---------------------------------------------------------------- Rechte
+
+    /// <summary>
+    /// FTP kennt Rechte nur, wenn der Server sie im Listing mitschickt (Unix-Format).
+    /// Fehlt das, meldet der Provider null und der Dialog blendet den Abschnitt aus.
+    /// </summary>
+    public async Task<StoragePermissions?> GetPermissionsAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var remote = Resolve(normalized);
+
+        await using var client = await ConnectAsync(cancellationToken);
+
+        var item = await client.GetObjectInfo(remote, true, cancellationToken);
+
+        if (item is null)
+        {
+            throw StorageException.NotFound(normalized);
+        }
+
+        if (item.Chmod <= 0)
+        {
+            return null;
+        }
+
+        var owner = string.IsNullOrWhiteSpace(item.RawOwner) ? null : item.RawOwner;
+        var group = string.IsNullOrWhiteSpace(item.RawGroup) ? null : item.RawGroup;
+
+        return new StoragePermissions(ToMode(item.Chmod), owner, group);
+    }
+
+    public async Task SetPermissionsAsync(string relativePath, int mode, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var remote = Resolve(normalized);
+
+        await using var client = await ConnectAsync(cancellationToken);
+
+        if (!await client.FileExists(remote, cancellationToken)
+            && !await client.DirectoryExists(remote, cancellationToken))
+        {
+            throw StorageException.NotFound(normalized);
+        }
+
+        try
+        {
+            // SITE CHMOD erwartet die Oktalschreibweise als Zahl, also 755 statt 493.
+            await client.Chmod(remote, int.Parse(PermissionMode.ToText(mode)), cancellationToken);
+        }
+        catch (FtpCommandException exception)
+        {
+            throw new StorageException("permissions_unsupported", exception.Message);
+        }
+    }
+
+    /// <summary>FluentFTP liefert 755 - gemeint sind die Bits dahinter.</summary>
+    private static int ToMode(int chmod) => Convert.ToInt32(chmod.ToString(), 8) & PermissionMode.Mask;
 
     // ---------------------------------------------------------------- Hilfen
 

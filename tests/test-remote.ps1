@@ -162,6 +162,29 @@ Add-Result "Kopie SFTP nach lokal" ($job.status -eq 'Completed' -and (Names $adm
 $backContent = Invoke-Docker exec $Container sh -c "cat /storage/lokal/remote.txt"
 Add-Result "Inhalt korrekt uebertragen" ($backContent -match 'Hallo von der Gegenstelle') ""
 
+# --- Zugriffsrechte ueber SFTP -------------------------------------------
+$perm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($sftpRoot.id)&path=$(Enc 'Ordner')" $admin
+Add-Result "SFTP-Rechte gelesen" (
+    $perm.Status -eq 200 -and $perm.Data.supported -and $perm.Data.canChange -and
+    $perm.Data.modeText -match '^\d{3}$') "mode=$($perm.Data.modeText) owner=$($perm.Data.owner)"
+
+$setPerm = Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $sftpRoot.id; path = 'Ordner'; mode = 448 }
+$onDisk = (Invoke-Docker exec "$RemotePrefix-sftp" sh -c "ls -ld /home/matfile/upload/Ordner" | Out-String).Trim()
+Add-Result "SFTP-Rechte gesetzt" (
+    $setPerm.Status -eq 200 -and $setPerm.Data.modeText -eq '700' -and $onDisk -match '^drwx------') "$onDisk"
+
+$readBack = Api GET "$BaseUrl/api/fs/permissions?rootId=$($sftpRoot.id)&path=$(Enc 'Ordner')" $admin
+Add-Result "SFTP-Rechte wieder gelesen" ($readBack.Data.modeText -eq '700') "mode=$($readBack.Data.modeText)"
+
+Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $sftpRoot.id; path = 'Ordner'; mode = 493 } | Out-Null
+
+$badMode = Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $sftpRoot.id; path = 'Ordner'; mode = 4096 }
+Add-Result "Ungueltiger Rechtewert abgelehnt" (
+    $badMode.Status -eq 400 -and $badMode.Data.error -eq 'invalid_mode') "status=$($badMode.Status)"
+
+$missingPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($sftpRoot.id)&path=$(Enc 'gibtsnicht')" $admin
+Add-Result "Rechte eines fehlenden Eintrags" ($missingPerm.Status -eq 404) "status=$($missingPerm.Status)"
+
 # --- Pfadausbruch ---------------------------------------------------------
 $escape = Api GET "$BaseUrl/api/fs/list?rootId=$($sftpRoot.id)&path=$(Enc '../..')" $admin
 Add-Result "Pfadausbruch auf der Gegenstelle blockiert" ($escape.Status -eq 400) "status=$($escape.Status)"
@@ -210,6 +233,15 @@ Add-Result "WebDAV Datei gelesen" ($davDownload.Content -match 'lokale Datei') "
 $davRen = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $davRoot.id; path = 'Ablage/lokal.txt'; newName = 'umbenannt.txt' }
 Add-Result "WebDAV Datei umbenannt" ($davRen.Status -eq 200 -and (Names $admin $davRoot.id 'Ablage') -contains 'umbenannt.txt') "status=$($davRen.Status)"
 
+# WebDAV kennt keine POSIX-Rechte - der Dialog blendet den Abschnitt dann aus
+$davPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($davRoot.id)&path=$(Enc 'Ablage')" $admin
+Add-Result "WebDAV ohne Rechteverwaltung" (
+    $davPerm.Status -eq 200 -and $davPerm.Data.supported -eq $false) "supported=$($davPerm.Data.supported)"
+
+$davSet = Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $davRoot.id; path = 'Ablage'; mode = 493 }
+Add-Result "WebDAV-Rechte nicht setzbar" (
+    $davSet.Status -eq 501 -and $davSet.Data.error -eq 'permissions_unsupported') "status=$($davSet.Status)"
+
 $davDel = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $davRoot.id; paths = @('Ablage') }
 $job = Wait-Job $admin $davDel.Data.token
 Add-Result "WebDAV Ordner geloescht" ($job.status -eq 'Completed' -and (Names $admin $davRoot.id '') -notcontains 'Ablage') "status=$($job.status)"
@@ -257,6 +289,17 @@ Add-Result "Kopie lokal nach FTP" ($job.status -eq 'Completed' -and (Names $admi
 
 $ftpRen = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $ftpRoot.id; path = 'Eingang/lokal.txt'; newName = 'neu.txt' }
 Add-Result "FTP-Datei umbenannt" ($ftpRen.Status -eq 200 -and (Names $admin $ftpRoot.id 'Eingang') -contains 'neu.txt') "status=$($ftpRen.Status)"
+
+# Rechte ueber SITE CHMOD - der Server muss sie auch im Listing mitschicken
+$ftpPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($ftpRoot.id)&path=$(Enc 'Eingang')" $admin
+Add-Result "FTP-Rechte gelesen" (
+    $ftpPerm.Status -eq 200 -and $ftpPerm.Data.supported -and
+    $ftpPerm.Data.modeText -match '^\d{3}$') "mode=$($ftpPerm.Data.modeText) owner=$($ftpPerm.Data.owner)"
+
+$ftpSet = Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $ftpRoot.id; path = 'Eingang'; mode = 493 }
+$ftpOnDisk = (Invoke-Docker exec "$RemotePrefix-ftp" sh -c "ls -ld /ftp/matfile/Eingang" | Out-String).Trim()
+Add-Result "FTP-Rechte gesetzt" (
+    $ftpSet.Status -eq 200 -and $ftpSet.Data.modeText -eq '755' -and $ftpOnDisk -match '^drwxr-xr-x') "$ftpOnDisk"
 
 $ftpDel = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $ftpRoot.id; paths = @('Eingang') }
 $job = Wait-Job $admin $ftpDel.Data.token
@@ -323,6 +366,10 @@ Add-Result "Inhalt auf SMB korrekt" ($smbBack.Content -match 'lokale Datei') ""
 
 $smbRen = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $smbRoot.id; path = 'Ablage/lokal.txt'; newName = 'neu.txt' }
 Add-Result "SMB-Datei umbenannt" ($smbRen.Status -eq 200 -and (Names $admin $smbRoot.id 'Ablage') -contains 'neu.txt') "status=$($smbRen.Status)"
+
+$smbPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($smbRoot.id)&path=$(Enc 'Ablage')" $admin
+Add-Result "SMB ohne Rechteverwaltung" (
+    $smbPerm.Status -eq 200 -and $smbPerm.Data.supported -eq $false) "supported=$($smbPerm.Data.supported)"
 
 $smbDel = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $smbRoot.id; paths = @('Ablage') }
 $job = Wait-Job $admin $smbDel.Data.token

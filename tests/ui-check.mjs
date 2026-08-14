@@ -268,9 +268,99 @@ await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Esca
 await sleep(300);
 const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
 
+// Eigenschaften eines Ordners: Angaben und Zugriffsrechte
+await evaluate(`(() => {
+    const row = [...document.querySelectorAll('.mfx-row')]
+        .find(r => r.querySelector('.mfx-cell-type')?.textContent.match(/Ordner|Folder/))
+        || document.querySelector('.mfx-row');
+    row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 200, clientY: 200 }));
+    return true;
+})()`);
+await sleep(400);
+await evaluate(`(() => {
+    [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => /Eigenschaften|Properties/.test(b.textContent)).click();
+    return true;
+})()`);
+await sleep(1200);
+
+const properties = await evaluate(`(() => {
+    const box = [...document.querySelectorAll('dialog[open]')].pop();
+    const perm = box.querySelector('.mfx-perm');
+    return {
+        title: box.querySelector('h2')?.textContent || null,
+        facts: [...box.querySelectorAll('.mf-facts dt')].map(e => e.textContent),
+        rights: perm ? {
+            heading: perm.querySelector('h3')?.textContent,
+            columns: [...perm.querySelectorAll('thead th')].map(e => e.textContent).filter(Boolean),
+            rows: [...perm.querySelectorAll('tbody th')].map(e => e.textContent),
+            boxes: perm.querySelectorAll('tbody input').length,
+            mode: perm.querySelector('.mfx-perm-mode')?.textContent
+        } : null,
+        buttons: [...box.querySelectorAll('.mf-actions .mf-btn')].map(b => b.textContent.trim())
+    };
+})()`);
+
+const shotProps = await send('Page.captureScreenshot', { format: 'png' });
+writeFileSync(OUT.replace(/\.png$/, '-properties.png'), Buffer.from(shotProps.data, 'base64'));
+
+// Ein Kaestchen umlegen: der Wert muss mitwandern, danach speichern
+const modeChange = await evaluate(`(() => {
+    const box = [...document.querySelectorAll('dialog[open]')].pop();
+    const perm = box.querySelector('.mfx-perm');
+    if (!perm) return null;
+    const before = perm.querySelector('.mfx-perm-mode').textContent;
+    const last = [...perm.querySelectorAll('tbody input')].pop();
+    last.checked = !last.checked;
+    last.dispatchEvent(new Event('change', { bubbles: true }));
+    return { before, after: perm.querySelector('.mfx-perm-mode').textContent };
+})()`);
+
+await evaluate(`(() => {
+    const box = [...document.querySelectorAll('dialog[open]')].pop();
+    box.querySelector('.mf-actions .mf-btn-primary').click();
+    return true;
+})()`);
+await sleep(1200);
+
+const afterSave = await evaluate(`({
+    flash: document.querySelector('.mfx-flash')?.textContent || null,
+    dialogOpen: !!document.querySelector('dialog[open]')
+})`);
+
+// Noch einmal oeffnen: steht der neue Wert wirklich am Ordner? Danach zuruecksetzen,
+// damit der Check den Zustand nicht bei jedem Lauf weiterdreht.
+await evaluate(`(() => {
+    const row = [...document.querySelectorAll('.mfx-row')]
+        .find(r => r.querySelector('.mfx-cell-type')?.textContent.match(/Ordner|Folder/))
+        || document.querySelector('.mfx-row');
+    row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 200, clientY: 200 }));
+    return true;
+})()`);
+await sleep(400);
+await evaluate(`(() => {
+    [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => /Eigenschaften|Properties/.test(b.textContent)).click();
+    return true;
+})()`);
+await sleep(1200);
+
+const reopened = await evaluate(`(() => {
+    const box = [...document.querySelectorAll('dialog[open]')].pop();
+    const perm = box.querySelector('.mfx-perm');
+    const mode = perm.querySelector('.mfx-perm-mode').textContent;
+    const last = [...perm.querySelectorAll('tbody input')].pop();
+    last.checked = !last.checked;
+    last.dispatchEvent(new Event('change', { bubbles: true }));
+    box.querySelector('.mf-actions .mf-btn-primary').click();
+    return mode;
+})()`);
+await sleep(1000);
+
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
+    properties, modeChange, afterSave, reopened,
     consoleErrors, failedRequests
 }, null, 2));
 

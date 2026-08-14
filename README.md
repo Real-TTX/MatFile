@@ -12,9 +12,11 @@ keinen komfortablen Zugriff auf Dateien bieten.
   ansehen und direkt bearbeiten
 - **Erweiterte Suche als eigener Tab** (über das `+` in der Tab-Leiste): rekursiv über alle
   Unterordner, auf Wunsch im Dateiinhalt, mit Fortschritt und Sprung in den Trefferordner
+- **Zugriffsrechte** (rwx für Besitzer, Gruppe, Andere) über *Eigenschaften* setzen –
+  bei lokalen Pfaden, SFTP und FTP; SMB und WebDAV kennen sie nicht
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
-- Verwaltung von Benutzern, Rollen und Speicherorten **als Dialoge im Explorer** – ohne
-  eigenen Adminbereich
+- Verwaltung von Benutzern, Rollen, Speicherorten und **Systemeinstellungen**
+  **als Dialoge im Explorer** – ohne eigenen Adminbereich
 - Oberfläche in **Englisch (Standard)** und **Deutsch**, im UI umschaltbar
 
 Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
@@ -32,6 +34,7 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
 | M7 | Remote-Verbindungen: **SMB, SFTP, FTP, WebDAV** inkl. Verbindungstest, Seitenleiste mit Statuspunkt | ✅ |
 | M7c | Rekursive Suche mit Inhaltssuche, Verwaltung in Dialogen, Version in der Seitenleiste | ✅ |
+| M7d | Systemeinstellungen als Dialog, Zugriffsrechte über *Eigenschaften*, eigener Teststack | ✅ |
 | M7b | NFS über OS-Mount, Mounts nur für die Sitzung | offen |
 | M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
 

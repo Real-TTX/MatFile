@@ -353,6 +353,17 @@
   <data name="Explorer.CopyPath"><value>Pfad kopieren</value></data>
   <data name="Explorer.Copied"><value>Pfad kopiert</value></data>
   <data name="Explorer.Properties"><value>Eigenschaften</value></data>
+  <data name="Explorer.PermTitle"><value>Zugriffsrechte</value></data>
+  <data name="Explorer.ActionPermissions"><value>Zugriffsrechte geändert</value></data>
+  <data name="Explorer.PermOwner"><value>Besitzer</value></data>
+  <data name="Explorer.PermGroup"><value>Gruppe</value></data>
+  <data name="Explorer.PermOthers"><value>Andere</value></data>
+  <data name="Explorer.PermRead"><value>Lesen</value></data>
+  <data name="Explorer.PermWrite"><value>Schreiben</value></data>
+  <data name="Explorer.PermExecute"><value>Ausführen</value></data>
+  <data name="Explorer.PermMode"><value>Wert</value></data>
+  <data name="Explorer.ErrorPermissionsUnsupported"><value>Dieser Speicherort kennt keine solchen Zugriffsrechte.</value></data>
+  <data name="Explorer.ErrorInvalidMode"><value>Zugriffsrechte müssen zwischen 000 und 777 liegen.</value></data>
   <data name="Explorer.SelectAll"><value>Alles auswählen</value></data>
   <data name="Explorer.Path"><value>Pfad</value></data>
   <data name="Explorer.Sidebar"><value>Seitenleiste</value></data>

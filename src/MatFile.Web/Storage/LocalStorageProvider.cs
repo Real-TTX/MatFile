@@ -6,7 +6,7 @@ namespace MatFile.Web.Storage;
 /// Zugriff auf einen lokalen Pfad im Container - der Normalfall für ein per
 /// Bind-Mount eingehängtes NAS-Volume.
 /// </summary>
-public sealed class LocalStorageProvider : IStorageProvider
+public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage
 {
     private readonly string _basePath;
     private readonly string? _protectedPath;
@@ -238,6 +238,58 @@ public sealed class LocalStorageProvider : IStorageProvider
         }
 
         throw StorageException.NotFound(normalized);
+    }
+
+    // ---------------------------------------------------------------- Rechte
+
+    /// <summary>
+    /// Unter Linux stehen die rwx-Bits direkt am Eintrag. Unter Windows gibt es sie nicht -
+    /// dann meldet der Provider "keine Rechte" und der Dialog blendet den Abschnitt aus.
+    /// </summary>
+    public Task<StoragePermissions?> GetPermissionsAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var fullPath = Resolve(normalized);
+
+        if (!Directory.Exists(fullPath) && !File.Exists(fullPath))
+        {
+            throw StorageException.NotFound(normalized);
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            return Task.FromResult<StoragePermissions?>(null);
+        }
+
+        var mode = (int)File.GetUnixFileMode(fullPath) & PermissionMode.Mask;
+        return Task.FromResult<StoragePermissions?>(new StoragePermissions(mode));
+    }
+
+    public Task SetPermissionsAsync(string relativePath, int mode, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var fullPath = Resolve(normalized);
+
+        if (!Directory.Exists(fullPath) && !File.Exists(fullPath))
+        {
+            throw StorageException.NotFound(normalized);
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            throw new StorageException("permissions_unsupported", "This storage type has no POSIX permissions.");
+        }
+
+        try
+        {
+            File.SetUnixFileMode(fullPath, (UnixFileMode)(mode & PermissionMode.Mask));
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw StorageException.AccessDenied();
+        }
+
+        return Task.CompletedTask;
     }
 
     private string Resolve(string? relativePath)

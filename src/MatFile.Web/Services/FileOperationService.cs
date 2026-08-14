@@ -94,6 +94,43 @@ public sealed class FileOperationService
         return entry;
     }
 
+    /// <summary>
+    /// Rechte eines Eintrags. Kann das Protokoll keine (SMB, WebDAV, Windows), kommt null -
+    /// der Dialog zeigt den Abschnitt dann gar nicht erst an.
+    /// </summary>
+    public async Task<(StoragePermissions? Permissions, bool CanChange)> GetPermissionsAsync(
+        long userId, long rootId, string path)
+    {
+        var access = await RequireAsync(userId, rootId, p => p.CanRead);
+
+        if (access.Provider is not IPermissionStorage storage)
+        {
+            return (null, false);
+        }
+
+        var permissions = await storage.GetPermissionsAsync(path);
+        return (permissions, permissions is not null && access.Permissions.CanWrite);
+    }
+
+    public async Task SetPermissionsAsync(long userId, long rootId, string path, int mode)
+    {
+        var access = await RequireAsync(userId, rootId, p => p.CanWrite);
+
+        if (access.Provider is not IPermissionStorage storage)
+        {
+            throw new StorageException("permissions_unsupported", "This storage type has no POSIX permissions.");
+        }
+
+        if (!PermissionMode.IsValid(mode))
+        {
+            throw new StorageException("invalid_mode", "Permissions must be between 000 and 777.");
+        }
+
+        await storage.SetPermissionsAsync(path, mode);
+        await LogAsync(userId, "Permissions", rootId, PathGuard.Normalize(path),
+            new { mode = PermissionMode.ToText(mode) });
+    }
+
     public async Task<StorageEntry> RenameAsync(long userId, long rootId, string path, string newName)
     {
         var access = await RequireAsync(userId, rootId, p => p.CanWrite);
@@ -461,7 +498,10 @@ public sealed class FileOperationService
     /// <summary>Protokolliert das Bearbeiten einer Textdatei im Editor.</summary>
     public Task LogEditAsync(long userId, long rootId, string path) => LogAsync(userId, "Edit", rootId, path);
 
-    private async Task LogAsync(long userId, string action, long rootId, string path, string? source = null)
+    private Task LogAsync(long userId, string action, long rootId, string path, string? source = null)
+        => LogAsync(userId, action, rootId, path, source is null ? null : new { source });
+
+    private async Task LogAsync(long userId, string action, long rootId, string path, object? details)
     {
         _db.ActivityLog.Add(new ActivityLog
         {
@@ -469,7 +509,7 @@ public sealed class FileOperationService
             ActionType = action,
             StorageRootId = rootId,
             TargetPath = path,
-            DetailsJson = source is null ? null : JsonSerializer.Serialize(new { source }),
+            DetailsJson = details is null ? null : JsonSerializer.Serialize(details),
             CreateUserId = userId,
             UpdateUserId = userId
         });

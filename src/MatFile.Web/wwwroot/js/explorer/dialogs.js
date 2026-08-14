@@ -206,8 +206,13 @@ export function askConfirm(title, message, confirmLabel, danger) {
 }
 
 /** Zeigt eine Liste aus Bezeichnung und Wert. */
-export function showFacts(title, facts) {
+/**
+ * Zeigt Angaben als Liste. Über `options.extra` kommt ein weiterer Abschnitt darunter,
+ * über `options.action` ein zusätzlicher Knopf neben dem Schließen.
+ */
+export function showFacts(title, facts, options) {
     const dialog = build(title);
+    const settings = options || {};
 
     const list = document.createElement('dl');
     list.className = 'mf-facts';
@@ -223,12 +228,25 @@ export function showFacts(title, facts) {
 
     dialog.appendChild(list);
 
+    if (settings.extra) {
+        dialog.appendChild(settings.extra);
+    }
+
     const row = document.createElement('div');
     row.className = 'mf-actions';
 
+    if (settings.action) {
+        const primary = document.createElement('button');
+        primary.type = 'button';
+        primary.className = 'mf-btn mf-btn-primary';
+        primary.textContent = settings.action.label;
+        primary.addEventListener('click', () => settings.action.onClick(dialog));
+        row.appendChild(primary);
+    }
+
     const close = document.createElement('button');
     close.type = 'button';
-    close.className = 'mf-btn mf-btn-primary';
+    close.className = settings.action ? 'mf-btn' : 'mf-btn mf-btn-primary';
     close.textContent = t('Close');
     close.addEventListener('click', () => dialog.close());
     row.appendChild(close);
@@ -237,6 +255,8 @@ export function showFacts(title, facts) {
     dialog.addEventListener('close', () => dialog.remove());
     document.body.appendChild(dialog);
     dialog.showModal();
+
+    return dialog;
 }
 
 /** Kurze Rückmeldung unten rechts. */

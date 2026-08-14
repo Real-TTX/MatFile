@@ -10,7 +10,7 @@ namespace MatFile.Web.Storage;
 /// aufgebaut und wieder geschlossen - das ist unkompliziert und robust; ein
 /// Verbindungspool wäre die nächste Optimierung.
 /// </summary>
-public sealed class SftpStorageProvider : IStorageProvider
+public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
 {
     private readonly ConnectionSettings _settings;
     private readonly string _basePath;
@@ -251,6 +251,57 @@ public sealed class SftpStorageProvider : IStorageProvider
         }
 
         Remove(client, remote);
+        return Task.CompletedTask;
+    }
+
+    // ---------------------------------------------------------------- Rechte
+
+    public Task<StoragePermissions?> GetPermissionsAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var remote = Resolve(normalized);
+
+        using var client = Connect();
+
+        if (!client.Exists(remote))
+        {
+            throw StorageException.NotFound(normalized);
+        }
+
+        var file = client.Get(remote);
+
+        var mode = PermissionMode.FromParts(
+            file.OwnerCanRead, file.OwnerCanWrite, file.OwnerCanExecute,
+            file.GroupCanRead, file.GroupCanWrite, file.GroupCanExecute,
+            file.OthersCanRead, file.OthersCanWrite, file.OthersCanExecute);
+
+        // Namen liefert SFTP nicht mit, nur die Kennungen - die sind besser als nichts.
+        return Task.FromResult<StoragePermissions?>(
+            new StoragePermissions(mode, file.UserId.ToString(), file.GroupId.ToString()));
+    }
+
+    public Task SetPermissionsAsync(string relativePath, int mode, CancellationToken cancellationToken = default)
+    {
+        var normalized = PathGuard.Normalize(relativePath);
+        var remote = Resolve(normalized);
+
+        using var client = Connect();
+
+        if (!client.Exists(remote))
+        {
+            throw StorageException.NotFound(normalized);
+        }
+
+        try
+        {
+            // SSH.NET erwartet die Oktalschreibweise als Zahl, also 700 statt 448.
+            client.ChangePermissions(remote, short.Parse(PermissionMode.ToText(mode)));
+        }
+        catch (SftpPermissionDeniedException)
+        {
+            throw StorageException.AccessDenied();
+        }
+
         return Task.CompletedTask;
     }
 
