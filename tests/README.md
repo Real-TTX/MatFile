@@ -1,8 +1,10 @@
 # Integrationstests
 
 Die Skripte laufen gegen den **laufenden Container** und prüfen die Anwendung von außen
-(HTTP, Cookies, Antiforgery). Beide erwarten eine **frische Datenbank**, weil sie mit dem
-Standardkonto `admin` / `admin` beginnen und dessen Kennwort im Verlauf ändern.
+(HTTP, Cookies, Antiforgery). Sie beginnen mit dem Standardkonto `admin` / `admin`.
+`test-auth.ps1` ändert dessen Kennwort und setzt es am Ende wieder zurück – dafür senkt es
+kurz die Mindestlänge über `/api/system`, weil `admin` sonst zu kurz wäre. Am saubersten
+bleibt trotzdem eine **frische Datenbank** je Suite.
 
 ```powershell
 # Stack frisch aufsetzen
@@ -76,7 +78,7 @@ node .\tests\ui-check-locations.mjs http://localhost:2222 admin .\rootflow.png
 # Erweiterte Suche als Tab: Pluszeichen, Fortschritt, Inhaltssuche, Sprung in den Ordner
 node .\tests\ui-check-search.mjs http://localhost:2222 admin Suche .\search.png
 
-# Verwaltungsdialoge: Benutzer, Rollen, Rechtematrix eines Speicherorts
+# Verwaltungsdialoge: Benutzer, Rollen, Rechtematrix eines Speicherorts, Systemeinstellungen
 node .\tests\ui-check-manage.mjs http://localhost:2222 admin .\manage.png
 
 # Texteditor: Syntaxhervorhebung, Breite, Bearbeiten und Speichern
@@ -91,7 +93,7 @@ mit `-SeedPassword <kennwort>` übergeben.
 | Skript | Prüft |
 |---|---|
 | `test-auth.ps1` | Zugriffsschutz, Anmeldung, Kontosperre, erzwungener Kennwortwechsel, Sitzung übersteht Container-Neustart, Abmeldung, Sprachumschaltung und gespeicherte Sprachwahl, `/healthz` |
-| `test-admin.ps1` | Verwaltung über die API: Benutzerliste mit Suche/Sortierung/Seiten, Benutzer anlegen/ändern/löschen, doppelter Benutzername, Kennwortpflicht, Rollen anlegen/ändern/löschen samt Rechtekatalog, Schutz von Systemrollen, benutzten Rollen und des eigenen Kontos, Rechteprüfung für Nicht-Administratoren, entfernte Adminseiten, Oberfläche auf Deutsch |
+| `test-admin.ps1` | Verwaltung über die API: Benutzerliste mit Suche/Sortierung/Seiten, Benutzer anlegen/ändern/löschen, doppelter Benutzername, Kennwortpflicht, Rollen anlegen/ändern/löschen samt Rechtekatalog, Schutz von Systemrollen, benutzten Rollen und des eigenen Kontos, Rechteprüfung für Nicht-Administratoren, entfernte Adminseiten, **Kennwortwechsel je Benutzer** (Anmeldung führt zum Wechsel, Kennzeichen fällt danach weg), **Systemeinstellungen** lesen/speichern inkl. Begrenzung der Werte, sofort wirkender Mindestlänge und Sperre ohne `ManageSettings`, Oberfläche auf Deutsch |
 | `test-storage.ps1` | Speicherorte anlegen inkl. Pfadprüfungen (relativ, fehlend, Datenverzeichnis, fehlender Name, doppelter Name), Rechtematrix je Rolle inkl. nachträglicher Erweiterung, Listing-API, Sortierung Ordner vor Dateien, ausgeblendete Symlinks nach außen, blockierte Pfadausbrüche, Sichtbarkeit je Rolle, API ohne Anmeldung gesperrt, **Speicherort auf der Containerwurzel `/`** mit unsichtbarem Datenverzeichnis |
 | `test-search.ps1` | Suche nach Namen über mehrere Ebenen, Ordner als Treffer, Schreibweise egal, Suche ab einem Unterordner, Inhaltssuche mit Fundstelle als Textzeile, übersprungene Binärdateien, versteckte Dateien nur auf Wunsch, Fortschrittszählung, Abbruch, stückweises Nachladen der Treffer, zu kurze Eingabe, Inhaltssuche ohne Downloadrecht gesperrt, fremde Suche nicht lesbar |
 

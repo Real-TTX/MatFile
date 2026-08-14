@@ -197,6 +197,23 @@
 
   <data name="Admin.Roots"><value>Storage locations</value></data>
 
+  <data name="System.Title"><value>System settings</value></data>
+  <data name="System.Hint"><value>These settings apply to everyone and are stored in matfile.json in the data directory.</value></data>
+  <data name="System.MinPasswordLength"><value>Minimum password length</value></data>
+  <data name="System.MinPasswordLengthHint"><value>Applies immediately to new and changed passwords.</value></data>
+  <data name="System.SessionLifetime"><value>Session lifetime in days</value></data>
+  <data name="System.SessionLifetimeHint"><value>Applies to new sessions; the cookie window follows after a restart.</value></data>
+  <data name="System.MaxFailedAttempts"><value>Failed attempts until lockout</value></data>
+  <data name="System.MaxFailedAttemptsHint"><value>After that the account is locked temporarily.</value></data>
+  <data name="System.LockoutMinutes"><value>Lockout duration in minutes</value></data>
+  <data name="System.LockoutMinutesHint"><value>After this time sign-in is possible again.</value></data>
+  <data name="System.Security"><value>Security</value></data>
+  <data name="System.SecureCookie"><value>Send the session cookie over HTTPS only</value></data>
+  <data name="System.FirstLogin"><value>Require a password change for the seeded account on first start</value></data>
+  <data name="System.RestartHint"><value>Both take effect after a container restart; the first-start option only applies to an empty database.</value></data>
+  <data name="System.ConfigFile"><value>Configuration file</value></data>
+  <data name="System.Version"><value>Version</value></data>
+
   <data name="Root.Name"><value>Name</value></data>
   <data name="Root.Type"><value>Type</value></data>
   <data name="Root.Path"><value>Path</value></data>

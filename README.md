@@ -64,11 +64,9 @@ Anschließend erreichbar unter **http://localhost:2222** (Health-Check: `/health
 Beim ersten Start wird das Konto **`admin` / `admin`** angelegt. Ein anderes Startkennwort
 lässt sich über `MATFILE_ADMIN_PASSWORD` vorgeben.
 
-Für den produktiven Betrieb in `/data/config/matfile.json` setzen:
-
-```json
-{ "RequirePasswordChangeOnFirstLogin": true }
-```
+Für den produktiven Betrieb *Einstellungen → Systemeinstellungen* öffnen und
+**Kennwortwechsel beim ersten Start** einschalten (schreibt
+`"RequirePasswordChangeOnFirstLogin": true` nach `/data/config/matfile.json`).
 
 Dann verlangt MatFile bei der ersten Anmeldung ein eigenes Kennwort. Die Oberfläche startet
 auf Englisch; über den Weltkugel-Knopf unten links in der Seitenleiste (oder *Einstellungen →
@@ -77,6 +75,12 @@ gespeichert. Direkt darunter steht die laufende Version.
 
 Benutzer, Rollen und Speicherorte werden über die **Menüleiste über den Tabs** verwaltet
 (*Einstellungen* bzw. *Speicherorte*). Jeder Punkt erscheint nur mit dem passenden Recht.
+
+Unter *Einstellungen → Systemeinstellungen* (Recht `ManageSettings`) stehen die Werte, die für
+alle gelten: Mindestlänge für Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer,
+HTTPS-Cookie und der Kennwortwechsel beim ersten Start. Sie landen in
+`/data/config/matfile.json`; Mindestlänge und Sperre wirken sofort, Cookie und Sitzungsdauer
+nach einem Neustart des Containers.
 
 Das Volume `/data` enthält:
 

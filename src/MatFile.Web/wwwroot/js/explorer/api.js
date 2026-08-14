@@ -125,6 +125,9 @@ export const api = {
     deleteUser: id => request(`/api/users/${id}`, { method: 'DELETE' }),
     unlockUser: id => request(`/api/users/${id}/unlock`, { method: 'POST' }),
 
+    system: () => request('/api/system'),
+    saveSystem: data => send('/api/system', 'PUT', data),
+
     roleList: query => request('/api/roles' + queryString(query)),
     role: id => request(`/api/roles/${id}`),
     createRole: data => send('/api/roles', 'POST', data),

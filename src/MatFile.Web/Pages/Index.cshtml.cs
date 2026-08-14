@@ -108,6 +108,12 @@ public class IndexModel : PageModel
 
             // Verwaltungsdialoge - dieselben Bezeichnungen wie früher im Adminbereich
             "Admin.Users", "Admin.Roles", "Admin.Roots",
+            "System.Title", "System.Hint", "System.MinPasswordLength", "System.MinPasswordLengthHint",
+            "System.SessionLifetime", "System.SessionLifetimeHint", "System.MaxFailedAttempts",
+            "System.MaxFailedAttemptsHint", "System.LockoutMinutes", "System.LockoutMinutesHint",
+            "System.Security",
+            "System.SecureCookie", "System.FirstLogin", "System.RestartHint",
+            "System.ConfigFile", "System.Version",
             "Common.Save", "Common.Back", "Common.Delete", "Common.New", "Common.Edit",
             "Common.Search", "Common.Never", "Common.Saved", "Pagination.Summary",
             "User.Username", "User.DisplayName", "User.Email", "User.Roles", "User.Status",

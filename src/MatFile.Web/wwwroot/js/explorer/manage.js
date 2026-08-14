@@ -568,6 +568,98 @@ export function openRoles() {
     list();
 }
 
+// ---------------------------------------------------------------- Systemeinstellungen
+
+/** Zahlenfeld mit Grenzen. */
+function numberBox(value, min, max) {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = value ?? 0;
+    input.min = min;
+    input.max = max;
+    return input;
+}
+
+/**
+ * Einstellungen aus matfile.json. Manche greifen sofort, andere erst nach
+ * einem Neustart des Containers - das steht am jeweiligen Feld.
+ */
+export function openSystem() {
+    const view = shell(t('System.Title'), 'settings');
+    // Hier gibt es keinen Wechsel zwischen Liste und Formular - der Dialog darf mitwachsen.
+    view.dialog.classList.add('mfx-manage-compact');
+
+    async function form() {
+        let data;
+
+        try {
+            data = await api.system();
+        } catch (error) {
+            showError(error);
+            return;
+        }
+
+        const minLength = numberBox(data.minPasswordLength, 4, 128);
+        const attempts = numberBox(data.loginMaxFailedAttempts, 1, 50);
+        const lockout = numberBox(data.loginLockoutMinutes, 1, 1440);
+        const lifetime = numberBox(data.sessionLifetimeDays, 1, 365);
+
+        const secure = check(t('System.SecureCookie'), data.requireSecureCookie);
+        const firstLogin = check(t('System.FirstLogin'), data.requirePasswordChangeOnFirstLogin);
+
+        const note = document.createElement('p');
+        note.className = 'mfx-manage-note';
+        note.textContent = t('System.Hint');
+
+        const facts = document.createElement('dl');
+        facts.className = 'mf-facts';
+
+        [[t('System.ConfigFile'), data.configFile],
+         [t('System.Version'), `${data.version} · ${data.channel}`]].forEach(([label, value]) => {
+            const term = document.createElement('dt');
+            term.textContent = label;
+            const detail = document.createElement('dd');
+            detail.className = 'mf-mono';
+            detail.textContent = value;
+            facts.append(term, detail);
+        });
+
+        view.body.replaceChildren(
+            note,
+            formGrid(
+                field(t('System.MinPasswordLength'), minLength, t('System.MinPasswordLengthHint')),
+                field(t('System.SessionLifetime'), lifetime, t('System.SessionLifetimeHint')),
+                field(t('System.MaxFailedAttempts'), attempts, t('System.MaxFailedAttemptsHint')),
+                field(t('System.LockoutMinutes'), lockout, t('System.LockoutMinutesHint')),
+                field(t('System.Security'), checkColumn([secure, firstLogin]), t('System.RestartHint'), true)),
+            facts);
+
+        const save = async () => {
+            try {
+                await api.saveSystem({
+                    sessionLifetimeDays: Number(lifetime.value) || 14,
+                    loginMaxFailedAttempts: Number(attempts.value) || 5,
+                    loginLockoutMinutes: Number(lockout.value) || 15,
+                    minPasswordLength: Number(minLength.value) || 8,
+                    requireSecureCookie: secure.input.checked,
+                    requirePasswordChangeOnFirstLogin: firstLogin.input.checked
+                });
+
+                flash(t('Common.Saved'));
+                await form();
+            } catch (error) {
+                showError(error);
+            }
+        };
+
+        view.foot.replaceChildren(
+            button(t('Common.Save'), 'mf-btn mf-btn-primary', save, 'save'),
+            button(t('Close'), 'mf-btn', () => view.dialog.close()));
+    }
+
+    form();
+}
+
 // ---------------------------------------------------------------- Speicherorte
 
 const RIGHTS = [

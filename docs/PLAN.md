@@ -340,6 +340,13 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 - **Kennwortwechsel beim ersten Start** ist über `RequirePasswordChangeOnFirstLogin`
   in `matfile.json` steuerbar und standardmäßig **aus**, damit `admin`/`admin` beim
   Entwickeln direkt funktioniert. Für den produktiven Betrieb einschalten.
+  Der Schalter gilt nur für das mitgelieferte Konto beim Anlegen der Datenbank; für
+  bestehende Benutzer steht dasselbe im Benutzerdialog je Konto.
+- **Systemeinstellungen** (`ManageSettings`, Dialog unter *Einstellungen*) schreiben
+  `matfile.json` zur Laufzeit: Mindestlänge für Kennwörter, Sitzungsdauer, Fehlversuche
+  und Sperrdauer, HTTPS-Cookie, Kennwortwechsel beim ersten Start. Werte werden serverseitig
+  auf gültige Bereiche begrenzt. Was aus der Datenbank kommt (Kennwortprüfung, Sperre),
+  wirkt sofort; was beim Start verdrahtet wird (Cookie-Optionen), erst nach einem Neustart.
 - Ein Speicherort darf auf die **Containerwurzel `/`** zeigen. MatFiles eigenes `/data`
   blendet der lokale Provider dabei aus und verweigert den Zugriff darauf — sonst lägen
   Datenbank und Schlüssel im Explorer offen. `/data` selbst bleibt als Pfad verboten.

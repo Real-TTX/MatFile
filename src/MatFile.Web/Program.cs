@@ -197,6 +197,7 @@ app.MapExplorerEndpoints();
 app.MapRootManagementEndpoints();
 app.MapSearchEndpoints();
 app.MapAdminEndpoints();
+app.MapSystemEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {

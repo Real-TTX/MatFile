@@ -1387,6 +1387,14 @@
     overflow: hidden;
 }
 
+/* Dialoge ohne Listenansicht brauchen keine feste Höhe.
+   "auto" reicht nicht: ein modaler Dialog spannt sich zwischen oben und unten auf. */
+.mfx-manage.mfx-manage-compact {
+    width: min(620px, 96vw);
+    height: fit-content;
+    max-height: 88vh;
+}
+
 .mfx-manage-body {
     flex: 1 1 auto;
     min-height: 0;

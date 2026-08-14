@@ -197,6 +197,23 @@
 
   <data name="Admin.Roots"><value>Speicherorte</value></data>
 
+  <data name="System.Title"><value>Systemeinstellungen</value></data>
+  <data name="System.Hint"><value>Diese Einstellungen gelten für alle und liegen in der matfile.json im Datenverzeichnis.</value></data>
+  <data name="System.MinPasswordLength"><value>Mindestlänge für Kennwörter</value></data>
+  <data name="System.MinPasswordLengthHint"><value>Gilt sofort für neue und geänderte Kennwörter.</value></data>
+  <data name="System.SessionLifetime"><value>Sitzungsdauer in Tagen</value></data>
+  <data name="System.SessionLifetimeHint"><value>Gilt für neue Sitzungen; das Cookie-Fenster folgt nach einem Neustart.</value></data>
+  <data name="System.MaxFailedAttempts"><value>Fehlversuche bis zur Sperre</value></data>
+  <data name="System.MaxFailedAttemptsHint"><value>Danach ist das Konto vorübergehend gesperrt.</value></data>
+  <data name="System.LockoutMinutes"><value>Sperrdauer in Minuten</value></data>
+  <data name="System.LockoutMinutesHint"><value>Danach ist die Anmeldung wieder möglich.</value></data>
+  <data name="System.Security"><value>Sicherheit</value></data>
+  <data name="System.SecureCookie"><value>Sitzungscookie nur über HTTPS senden</value></data>
+  <data name="System.FirstLogin"><value>Kennwortwechsel für das mitgelieferte Konto beim ersten Start verlangen</value></data>
+  <data name="System.RestartHint"><value>Beides wirkt nach einem Neustart des Containers; die Vorgabe für den ersten Start betrifft nur eine leere Datenbank.</value></data>
+  <data name="System.ConfigFile"><value>Konfigurationsdatei</value></data>
+  <data name="System.Version"><value>Version</value></data>
+
   <data name="Root.Name"><value>Name</value></data>
   <data name="Root.Type"><value>Typ</value></data>
   <data name="Root.Path"><value>Pfad</value></data>

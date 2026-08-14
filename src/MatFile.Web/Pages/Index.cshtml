@@ -175,7 +175,8 @@
             useExplorer: @(User.HasPermission(Permission.UseExplorer) ? "true" : "false"),
             manageRoots: @(User.HasPermission(Permission.ManageRoots) ? "true" : "false"),
             manageUsers: @(User.HasPermission(Permission.ManageUsers) ? "true" : "false"),
-            manageRoles: @(User.HasPermission(Permission.ManageRoles) ? "true" : "false")
+            manageRoles: @(User.HasPermission(Permission.ManageRoles) ? "true" : "false"),
+            manageSettings: @(User.HasPermission(Permission.ManageSettings) ? "true" : "false")
         };
     </script>
     <script type="module" src="~/js/explorer/explorer.js" asp-append-version="true"></script>

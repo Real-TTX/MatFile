@@ -122,7 +122,37 @@ $f3 = Invoke-WebRequest "$BaseUrl/SetLanguage" -Method Post -WebSession $fresh -
 }
 Add-Result "Sprachwechsel zurueck auf Englisch" ($f3.Content -match '>Storage locations') ""
 
-# 12. Health ohne Anmeldung
+# 12. Startkennwort wiederherstellen - sonst scheitern die folgenden Suiten an der Anmeldung.
+# Das kurze Startkennwort unterschreitet die Mindestlaenge, deshalb kurz absenken.
+$system = Invoke-RestMethod "$BaseUrl/api/system" -WebSession $fresh
+$body = @{
+    sessionLifetimeDays = $system.sessionLifetimeDays
+    loginMaxFailedAttempts = $system.loginMaxFailedAttempts
+    loginLockoutMinutes = $system.loginLockoutMinutes
+    minPasswordLength = 4
+    requireSecureCookie = $system.requireSecureCookie
+    requirePasswordChangeOnFirstLogin = $system.requirePasswordChangeOnFirstLogin
+}
+Invoke-RestMethod "$BaseUrl/api/system" -Method Put -WebSession $fresh -ContentType 'application/json' `
+    -Body ($body | ConvertTo-Json) | Out-Null
+
+$c1 = Invoke-WebRequest "$BaseUrl/Account/ChangePassword" -WebSession $fresh -UseBasicParsing
+$token = Get-Token $c1.Content
+$c2 = Invoke-WebRequest "$BaseUrl/Account/ChangePassword" -Method Post -WebSession $fresh -UseBasicParsing -Body @{
+    __RequestVerificationToken = $token
+    'Input.CurrentPassword'    = $NewPassword
+    'Input.NewPassword'        = $SeedPassword
+    'Input.ConfirmPassword'    = $SeedPassword
+}
+Add-Result "Startkennwort wiederhergestellt" ($c2.Content -match 'The password was changed') ""
+
+$body.minPasswordLength = $system.minPasswordLength
+$restored = Invoke-RestMethod "$BaseUrl/api/system" -Method Put -WebSession $fresh -ContentType 'application/json' `
+    -Body ($body | ConvertTo-Json)
+Add-Result "Mindestlaenge wieder wie zuvor" (
+    $restored.minPasswordLength -eq $system.minPasswordLength) "min=$($restored.minPasswordLength)"
+
+# 13. Health ohne Anmeldung
 $anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $h2 = Invoke-RestMethod "$BaseUrl/healthz" -WebSession $anon
 Add-Result "healthz anonym" ($h2.status -eq 'healthy' -and $h2.databaseReady -eq $true) "status=$($h2.status)"

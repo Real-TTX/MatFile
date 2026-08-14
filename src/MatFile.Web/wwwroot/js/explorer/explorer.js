@@ -5,7 +5,7 @@ import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
 import { newSearch, startSearch, cancelSearch, disposeSearch, isRunning } from './search.js';
-import { openUsers, openRoles, openLocations } from './manage.js';
+import { openUsers, openRoles, openLocations, openSystem } from './manage.js';
 
 const can = window.matfileCan || {};
 
@@ -2685,6 +2685,10 @@ function menuItems(name) {
 
     if (can.manageRoots) {
         administration.push({ label: t('Admin.Roots'), icon: 'hard', action: () => openLocations(() => reloadRoots()) });
+    }
+
+    if (can.manageSettings) {
+        administration.push({ label: t('System.Title'), icon: 'settings', action: () => openSystem() });
     }
 
     return administration.length === 0 ? settings : [...administration, '-', ...settings];

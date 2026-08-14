@@ -208,7 +208,9 @@ await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].pop().click();
     document.querySelector('.mfx-menubar-item[data-menu="locations"]').click();
-    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')].pop();
+    // Unter den vorhandenen Speicherorten steht die Verwaltung - nach Beschriftung suchen.
+    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => /administration|Verwaltung/i.test(b.textContent));
     item.click();
     return true;
 })()`);
@@ -266,7 +268,74 @@ const afterAccess = await evaluate(`(() => {
     };
 })()`);
 
-console.log(JSON.stringify({ menu, users, formView, afterCreate, afterDelete, roles, systemRole, locations, access, afterAccess, consoleErrors }, null, 2));
+// Systemeinstellungen: lesen, aendern, speichern, erneut oeffnen
+await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-manage');
+    [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].pop().click();
+    document.querySelector('.mfx-menubar-item[data-menu="settings"]').click();
+    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => b.textContent.trim().startsWith('System'));
+    item.click();
+    return true;
+})()`);
+await sleep(1200);
+
+const systemDialog = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-manage');
+    if (!box) return null;
+    const rect = box.getBoundingClientRect();
+    return {
+        title: box.querySelector('h2')?.textContent,
+        note: box.querySelector('.mfx-manage-note')?.textContent,
+        fields: [...box.querySelectorAll('.mf-field > label')].map(e => e.textContent),
+        values: [...box.querySelectorAll('.mf-field input[type=number]')].map(i => i.value),
+        checks: [...box.querySelectorAll('.mf-checklist .mf-check span')].map(e => e.textContent),
+        facts: [...box.querySelectorAll('.mf-facts dd')].map(e => e.textContent),
+        footButtons: [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].map(b => b.textContent.trim()),
+        fitsScreen: rect.width <= innerWidth && rect.height <= innerHeight
+    };
+})()`);
+
+const shot4 = await send('Page.captureScreenshot', { format: 'png' });
+writeFileSync(OUT.replace(/\.png$/, '-system.png'), Buffer.from(shot4.data, 'base64'));
+
+await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-manage');
+    const days = box.querySelectorAll('.mf-field input[type=number]')[1];
+    days.value = '21';
+    days.dispatchEvent(new Event('input', { bubbles: true }));
+    box.querySelector('.mfx-manage-foot .mf-btn-primary').click();
+    return true;
+})()`);
+await sleep(1500);
+
+const systemFlash = await evaluate(`document.querySelector('.mfx-flash')?.textContent || null`);
+
+await evaluate(`(() => {
+    document.querySelector('.mfx-menubar-item[data-menu="settings"]').click();
+    [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => b.textContent.trim().startsWith('System')).click();
+    return true;
+})()`);
+await sleep(1200);
+
+const systemAgain = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-manage');
+    return [...box.querySelectorAll('.mf-field input[type=number]')].map(i => i.value);
+})()`);
+
+// Ausgangswert wiederherstellen, damit die Suite nichts hinterlaesst
+await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-manage');
+    const days = box.querySelectorAll('.mf-field input[type=number]')[1];
+    days.value = ${JSON.stringify(String(systemDialog?.values?.[1] ?? '14'))};
+    days.dispatchEvent(new Event('input', { bubbles: true }));
+    box.querySelector('.mfx-manage-foot .mf-btn-primary').click();
+    return true;
+})()`);
+await sleep(1200);
+
+console.log(JSON.stringify({ menu, users, formView, afterCreate, afterDelete, roles, systemRole, locations, access, afterAccess, systemDialog, systemFlash, systemAgain, consoleErrors }, null, 2));
 
 socket.close();
 edge.kill();
