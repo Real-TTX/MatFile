@@ -1,7 +1,8 @@
 param(
     [string]$BaseUrl = "http://localhost:2222",
     [string]$SeedPassword = "admin",
-    [string]$NewPassword = "MatFile-Test-2026"
+    [string]$NewPassword = "MatFile-Test-2026",
+    [string]$Compose = "$PSScriptRoot\..\docker-compose.dev.yml"
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,7 +75,11 @@ $r7 = Invoke-WebRequest "$BaseUrl/SetLanguage" -Method Post -WebSession $session
 Add-Result "Sprachwechsel auf Deutsch" ($r7.Content -match '>Speicherorte') $r7.BaseResponse.ResponseUri.AbsolutePath
 
 # 8. Neustart des Containers -> Session muss bestehen bleiben
-docker compose -f C:\Users\Matthias\Desktop\Development\MatFile\docker-compose.dev.yml restart matfile | Out-Null
+# Docker schreibt den Fortschritt auf stderr - das darf den Test nicht abbrechen.
+$previous = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try { docker compose -f $Compose restart matfile 2>&1 | Out-Null }
+finally { $ErrorActionPreference = $previous }
 
 $ready = $false
 for ($i = 0; $i -lt 30; $i++) {

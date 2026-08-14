@@ -114,6 +114,15 @@ Lokal ohne Docker:
 dotnet run --project src/MatFile.Web
 ```
 
+Die Integrationstests laufen auf einem **eigenen Stack** (Port 2223, eigenes Volume), damit
+der Entwicklungsstack mit seinen Speicherorten stehen bleibt:
+
+```powershell
+.\tests\run-all.ps1
+```
+
+Einzelheiten dazu in [`tests/README.md`](tests/README.md).
+
 ## Branches & Versionierung
 
 | Branch | Zweck | Version |

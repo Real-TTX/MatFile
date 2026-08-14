@@ -1,0 +1,74 @@
+name: matfile-test
+
+# Eigener Stack nur fuer die Testsuiten. Die Suiten erwarten eine frische
+# Datenbank; ein "down -v" auf dem Entwicklungsstack wuerde dagegen die eigenen
+# Speicherorte mitnehmen. Deshalb hier eigener Port, eigenes Volume, eigener Name.
+#
+#   docker compose -f docker-compose.test.yml down -v
+#   docker compose -f docker-compose.test.yml up -d --build
+#   .\tests\test-admin.ps1 -BaseUrl http://localhost:2223
+
+services:
+  matfile:
+    image: matfile:dev
+    container_name: matfile-test
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        MATFILE_VERSION: ${MATFILE_VERSION:-}
+        INSTALL_MOUNT_TOOLS: "true"
+        INSTALL_FFMPEG: "false"
+    restart: unless-stopped
+    ports:
+      - "2223:2222"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "2222"
+      MATFILE_DATA: /data
+      TZ: Europe/Berlin
+      Logging__LogLevel__Default: Debug
+    volumes:
+      - matfile-test-data:/data
+      # Testdaten für den Explorer:
+      - ./sample-data:/storage/sample
+
+  # Test-Gegenstellen fuer die Remote-Provider, wie im Entwicklungsstack.
+  sftp:
+    image: atmoz/sftp:alpine
+    container_name: matfile-test-sftp
+    profiles: ["testing"]
+    command: matfile:Sftp-Geheim-2026:1001:::upload
+    restart: unless-stopped
+
+  ftp:
+    image: delfer/alpine-ftp-server
+    container_name: matfile-test-ftp
+    profiles: ["testing"]
+    environment:
+      USERS: "matfile|Ftp-Geheim-2026|/ftp/matfile"
+      ADDRESS: ftp
+    restart: unless-stopped
+
+  smb:
+    image: dperson/samba
+    container_name: matfile-test-smb
+    profiles: ["testing"]
+    command: >
+      -u "matfile;Smb-Geheim-2026"
+      -s "daten;/share;yes;no;no;matfile;matfile;matfile"
+      -p
+    restart: unless-stopped
+
+  webdav:
+    image: bytemark/webdav
+    container_name: matfile-test-webdav
+    profiles: ["testing"]
+    environment:
+      AUTH_TYPE: Basic
+      USERNAME: matfile
+      PASSWORD: Dav-Geheim-2026
+    restart: unless-stopped
+
+volumes:
+  matfile-test-data:

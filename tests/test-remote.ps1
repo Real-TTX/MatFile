@@ -6,7 +6,9 @@ param(
     [string]$FtpPassword = "Ftp-Geheim-2026",
     [string]$SmbPassword = "Smb-Geheim-2026",
     [string]$Container = "matfile-dev",
-    [string]$Compose = "$PSScriptRoot\..\docker-compose.dev.yml"
+    [string]$Compose = "$PSScriptRoot\..\docker-compose.dev.yml",
+    # Namen der Gegenstellen-Container; im Teststack lauten sie matfile-test-*
+    [string]$RemotePrefix = "matfile"
 )
 
 $ErrorActionPreference = "Stop"
@@ -67,14 +69,14 @@ function Test-Root($session, [hashtable]$values) {
 Invoke-Docker compose -f $Compose --profile testing up -d sftp | Out-Null
 $ready = $false
 for ($i = 0; $i -lt 60; $i++) {
-    $state = (docker inspect -f '{{.State.Running}}' matfile-sftp | Out-String).Trim()
+    $state = (docker inspect -f '{{.State.Running}}' "$RemotePrefix-sftp" | Out-String).Trim()
     if ($state -eq 'true') { $ready = $true; break }
     Start-Sleep -Milliseconds 500
 }
 Start-Sleep -Seconds 2
 Add-Result "SFTP-Server laeuft" $ready "running=$ready"
 
-Invoke-Docker exec matfile-sftp sh -c "mkdir -p /home/matfile/upload && chown matfile /home/matfile/upload && echo 'Hallo von der Gegenstelle' > /home/matfile/upload/remote.txt && chown matfile /home/matfile/upload/remote.txt" | Out-Null
+Invoke-Docker exec "$RemotePrefix-sftp" sh -c "mkdir -p /home/matfile/upload && chown matfile /home/matfile/upload && echo 'Hallo von der Gegenstelle' > /home/matfile/upload/remote.txt && chown matfile /home/matfile/upload/remote.txt" | Out-Null
 
 # --- Anmeldung ------------------------------------------------------------
 $admin = New-MatSession
@@ -173,12 +175,12 @@ Add-Result "Ferner Ordner geloescht" ($job.status -eq 'Completed' -and (Names $a
 Invoke-Docker compose -f $Compose --profile testing up -d webdav | Out-Null
 $davReady = $false
 for ($i = 0; $i -lt 60; $i++) {
-    $state = (docker inspect -f '{{.State.Running}}' matfile-webdav | Out-String).Trim()
+    $state = (docker inspect -f '{{.State.Running}}' "$RemotePrefix-webdav" | Out-String).Trim()
     if ($state -eq 'true') { $davReady = $true; break }
     Start-Sleep -Milliseconds 500
 }
 Start-Sleep -Seconds 3
-Invoke-Docker exec matfile-webdav sh -c "rm -rf /var/lib/dav/data/* 2>/dev/null; true" | Out-Null
+Invoke-Docker exec "$RemotePrefix-webdav" sh -c "rm -rf /var/lib/dav/data/* 2>/dev/null; true" | Out-Null
 Add-Result "WebDAV-Server laeuft" $davReady "running=$davReady"
 
 $davBase = @{
@@ -216,12 +218,12 @@ Add-Result "WebDAV Ordner geloescht" ($job.status -eq 'Completed' -and (Names $a
 Invoke-Docker compose -f $Compose --profile testing up -d ftp | Out-Null
 $ftpReady = $false
 for ($i = 0; $i -lt 60; $i++) {
-    $state = (docker inspect -f '{{.State.Running}}' matfile-ftp | Out-String).Trim()
+    $state = (docker inspect -f '{{.State.Running}}' "$RemotePrefix-ftp" | Out-String).Trim()
     if ($state -eq 'true') { $ftpReady = $true; break }
     Start-Sleep -Milliseconds 500
 }
 Start-Sleep -Seconds 3
-Invoke-Docker exec matfile-ftp sh -c "rm -rf /ftp/matfile/* 2>/dev/null; echo 'Datei per FTP' > /ftp/matfile/ftp.txt; chown -R matfile /ftp/matfile" | Out-Null
+Invoke-Docker exec "$RemotePrefix-ftp" sh -c "rm -rf /ftp/matfile/* 2>/dev/null; echo 'Datei per FTP' > /ftp/matfile/ftp.txt; chown -R matfile /ftp/matfile" | Out-Null
 Add-Result "FTP-Server laeuft" $ftpReady "running=$ftpReady"
 
 # Der Server chrootet den Benutzer nicht, deshalb begrenzt der Basispfad den Zugriff.
@@ -267,12 +269,12 @@ Add-Result "Basispfad begrenzt den FTP-Zugriff" ($ftpEscape.Status -eq 400) "sta
 Invoke-Docker compose -f $Compose --profile testing up -d smb | Out-Null
 $smbReady = $false
 for ($i = 0; $i -lt 60; $i++) {
-    $state = (docker inspect -f '{{.State.Running}}' matfile-smb | Out-String).Trim()
+    $state = (docker inspect -f '{{.State.Running}}' "$RemotePrefix-smb" | Out-String).Trim()
     if ($state -eq 'true') { $smbReady = $true; break }
     Start-Sleep -Milliseconds 500
 }
 Start-Sleep -Seconds 5
-Invoke-Docker exec matfile-smb sh -c "mkdir -p /share && rm -rf /share/* 2>/dev/null; echo 'Datei per SMB' > /share/smb.txt; chown -R matfile /share" | Out-Null
+Invoke-Docker exec "$RemotePrefix-smb" sh -c "mkdir -p /share && rm -rf /share/* 2>/dev/null; echo 'Datei per SMB' > /share/smb.txt; chown -R matfile /share" | Out-Null
 Add-Result "SMB-Server laeuft" $smbReady "running=$smbReady"
 
 $smbBase = @{

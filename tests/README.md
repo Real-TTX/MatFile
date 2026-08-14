@@ -6,51 +6,39 @@ Die Skripte laufen gegen den **laufenden Container** und prüfen die Anwendung v
 kurz die Mindestlänge über `/api/system`, weil `admin` sonst zu kurz wäre. Am saubersten
 bleibt trotzdem eine **frische Datenbank** je Suite.
 
-```powershell
-# Stack frisch aufsetzen
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d --build
+## Alles auf einmal: eigener Teststack
 
-# Anmeldung, Sitzung, Sprachen (M1)
-.\tests\test-auth.ps1
-
-# Danach erneut zuruecksetzen, dann Adminbereich (M2)
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d
-.\tests\test-admin.ps1
-
-# Und noch einmal zuruecksetzen, dann Speicherorte und API (M3)
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d
-.\tests\test-storage.ps1
-
-# Zuruecksetzen, dann Explorer-Zustand, Favoriten, Tabs und Download (M4)
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d
-.\tests\test-explorer.ps1
-
-# Zuruecksetzen, dann Dateioperationen, Upload und Jobs (M5)
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d
-.\tests\test-operations.ps1
-
-# Zuruecksetzen, dann Vorschau und Streaming (M6)
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d
-.\tests\test-preview.ps1
-```
-
-Alle Suiten hintereinander:
+`run-all.ps1` setzt vor **jeder** Suite eine frische Datenbank auf – standardmäßig auf dem
+Teststack aus `docker-compose.test.yml` (Port **2223**, eigenes Volume, Container
+`matfile-test`). Der Entwicklungsstack auf Port 2222 bleibt dabei unangetastet, samt der
+dort angelegten Speicherorte.
 
 ```powershell
-foreach ($t in 'test-auth','test-admin','test-storage','test-explorer','test-operations',
-               'test-preview','test-search','test-remote') {
-    docker compose -f docker-compose.dev.yml down -v | Out-Null
-    docker compose -f docker-compose.dev.yml up -d | Out-Null
-    Start-Sleep -Seconds 7
-    & ".\tests\$t.ps1"
-}
+.\tests\run-all.ps1                          # alle Suiten, Teststack
+.\tests\run-all.ps1 -Suites test-search      # einzelne Suiten
+.\tests\run-all.ps1 -SkipBuild               # ohne Neubau des Images
+.\tests\run-all.ps1 -Dev                     # stattdessen auf 2222 - loescht dort die Daten!
 ```
+
+Am Ende steht eine Zusammenfassung je Suite; der Exitcode ist 1, sobald eine Suite
+Fehler meldet.
+
+## Einzeln
+
+Der Teststack laesst sich auch von Hand aufsetzen und einzeln beschicken:
+
+```powershell
+docker compose -f docker-compose.test.yml down -v
+docker compose -f docker-compose.test.yml up -d --build
+
+.\tests\test-auth.ps1     -BaseUrl http://localhost:2223 -Compose .\docker-compose.test.yml
+.\tests\test-admin.ps1    -BaseUrl http://localhost:2223
+.\tests\test-storage.ps1  -BaseUrl http://localhost:2223 -Container matfile-test
+```
+
+Dasselbe geht gegen den Entwicklungsstack (`docker-compose.dev.yml`, Port 2222,
+Container `matfile-dev`) – dort löscht `down -v` allerdings auch die eigenen
+Speicherorte, Benutzer und Favoriten.
 
 `test-operations.ps1`, `test-preview.ps1` und `test-search.ps1` arbeiten bewusst in
 containerinternen Ordnern (`/storage/optest`, `/storage/pvtest`, `/storage/suchtest`),
@@ -105,5 +93,6 @@ mit `-SeedPassword <kennwort>` übergeben.
 `test-storage.ps1` legt über `docker exec` Testdaten unter `/storage/internal` im Container an
 (inklusive eines Symlinks nach `/etc`, um die Pfadprüfung zu testen).
 
-Beide Skripte geben pro Prüfung `OK`/`FAIL` aus und beenden sich mit Exitcode 1,
-sobald eine Prüfung fehlschlägt.
+Jedes Skript gibt pro Prüfung `OK`/`FAIL` aus und beendet sich mit Exitcode 1,
+sobald eine Prüfung fehlschlägt. Welchen Container es anspricht, steht in `-Container`;
+`test-remote.ps1` benennt die Gegenstellen über `-RemotePrefix` (`matfile-test` im Teststack).
