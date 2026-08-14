@@ -246,8 +246,14 @@ Noch offen (eigener Feinschliff-Durchgang, siehe M8):
 
 ### Icon
 Eigenes SVG-Logo (Ordner + Datei, Farbverlauf), daraus generiert:
-`favicon.ico` (16/32/48), `favicon.svg`, `apple-touch-icon.png` (180),
-PWA-Icons 192/512 + `site.webmanifest`.
+`favicon.ico` (16/32/48), `matfile.svg`, `apple-touch-icon.png` (180),
+PWA-Icons 192/512 (dazu eine maskierbare Fassung) + `site.webmanifest`.
+
+Erzeugt werden sie von `tools/make-icons.mjs`: Edge rendert das SVG im
+Headless-Modus in den gewünschten Kantenlängen, die `favicon.ico` setzt das
+Skript selbst aus den PNGs zusammen. So bleibt es bei einer Quelle - dem SVG -
+ohne npm-Werkzeugkette. Nach einer Änderung am Logo das Skript einmal laufen
+lassen und die PNGs mit einchecken.
 
 ---
 
