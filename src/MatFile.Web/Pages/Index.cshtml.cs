@@ -34,7 +34,8 @@ public class IndexModel : PageModel
             "Explorer.Roots", "Explorer.Bookmarks", "Explorer.NoRoots",
             "Explorer.EmptyFolder", "Explorer.Loading", "Explorer.Name", "Explorer.Size",
             "Explorer.Modified", "Explorer.Type", "Explorer.Folder", "Explorer.File",
-            "Explorer.Items", "Explorer.Selected", "Explorer.NewTab", "Explorer.CloseTab",
+            "Explorer.Items", "Explorer.Selected", "Explorer.NewTab", "Explorer.OpenInNewTab",
+            "Explorer.CloseTab",
             "Explorer.Pin", "Explorer.Unpin", "Explorer.Back", "Explorer.Forward", "Explorer.Up",
             "Explorer.Refresh", "Explorer.Search", "Explorer.ViewList", "Explorer.ViewGrid",
             "Explorer.ShowHidden", "Explorer.AddBookmark", "Explorer.RemoveBookmark",
@@ -91,7 +92,7 @@ public class IndexModel : PageModel
 
             // Rekursive Suche
             "Explorer.SearchRecursive", "Explorer.SearchContent",
-            "Explorer.SearchTab", "Explorer.SearchNewTab", "Explorer.SearchTerm",
+            "Explorer.SearchTab", "Explorer.SearchTerm",
             "Explorer.SearchScope", "Explorer.SearchFolder", "Explorer.SearchWholeLocation",
             "Explorer.SearchStart", "Explorer.SearchNothingYet", "Explorer.SearchPlaceholder",
             "Explorer.SearchRunning", "Explorer.SearchDone", "Explorer.SearchCancelled",

@@ -429,22 +429,28 @@ function rootItem(root, withStatus) {
         link.appendChild(dot);
     }
 
-    link.addEventListener('click', () => navigate(activeTab(), root.id, ''));
+    link.addEventListener('click', () => openRoot(root.id));
 
-    if (can.manageRoots) {
-        link.addEventListener('contextmenu', event => {
-            event.preventDefault();
-            event.stopPropagation();
+    link.addEventListener('contextmenu', event => {
+        event.preventDefault();
+        event.stopPropagation();
 
-            openMenu(event.clientX, event.clientY, [
-                { label: t('EditLocation'), icon: 'pencil', action: () => editLocation(root.id) },
-                {
-                    label: t('RemoveLocation'), icon: 'trash', danger: true,
-                    action: () => removeLocation(root)
-                }
-            ]);
-        });
-    }
+        const items = [
+            { label: t('Open'), icon: 'folder', action: () => openRoot(root.id) },
+            { label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(root.id, '') }
+        ];
+
+        if (can.manageRoots) {
+            items.push('-');
+            items.push({ label: t('EditLocation'), icon: 'pencil', action: () => editLocation(root.id) });
+            items.push({
+                label: t('RemoveLocation'), icon: 'trash', danger: true,
+                action: () => removeLocation(root)
+            });
+        }
+
+        openMenu(event.clientX, event.clientY, items);
+    });
 
     item.appendChild(link);
     return item;
@@ -624,6 +630,31 @@ function renderBookmarks() {
         link.appendChild(label);
         link.addEventListener('click', () => navigate(activeTab(), bookmark.rootId, bookmark.path));
 
+        link.addEventListener('contextmenu', event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            openMenu(event.clientX, event.clientY, [
+                {
+                    label: t('Open'), icon: 'folder',
+                    action: () => navigate(activeTab(), bookmark.rootId, bookmark.path)
+                },
+                {
+                    label: t('OpenInNewTab'), icon: 'plus',
+                    action: () => openTab(bookmark.rootId, bookmark.path)
+                },
+                '-',
+                {
+                    label: t('RemoveBookmark'), icon: 'trash', danger: true,
+                    action: async () => {
+                        await api.deleteBookmark(bookmark.id);
+                        state.bookmarks = state.bookmarks.filter(b => b.id !== bookmark.id);
+                        renderBookmarks();
+                    }
+                }
+            ]);
+        });
+
         const remove = button('mfx-side-remove', 'x', t('RemoveBookmark'), async event => {
             event.stopPropagation();
             await api.deleteBookmark(bookmark.id);
@@ -694,8 +725,16 @@ function renderTabs() {
         el.tabs.appendChild(item);
     });
 
-    // Das Pluszeichen öffnet die erweiterte Suche in einem neuen Tab.
-    const add = button('mfx-tab-add', 'plus', t('SearchNewTab'), () => openSearchTab('', false));
+    // Das Pluszeichen öffnet einen gewöhnlichen Tab; der Rechtsklick fragt nach der Art.
+    const add = button('mfx-tab-add', 'plus', t('NewTab'), () => newTab());
+
+    add.addEventListener('contextmenu', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const rect = add.getBoundingClientRect();
+        openMenu(rect.left, rect.bottom + 4, tabKindMenu());
+    });
 
     el.tabs.appendChild(add);
 }
@@ -1579,6 +1618,34 @@ async function addBookmark(entry) {
 
 // ---------------------------------------------------------------- Erweiterte Suche
 
+/** Neuer Ordnertab - beim aktuellen Ordner, aus einem Suchtab heraus beim Speicherort. */
+function newTab() {
+    const tab = activeTab();
+
+    if (!tab) {
+        if (state.roots.length === 0) {
+            flash(noRootsText(), true);
+            return;
+        }
+
+        openTab(state.roots[0].id, '');
+        return;
+    }
+
+    openTab(tab.rootId, tab.kind === 'search' ? '' : tab.path);
+}
+
+/**
+ * Auswahl der Tabarten. Kommen später weitere dazu, stehen sie hier -
+ * das Pluszeichen selbst bleibt der schnelle Weg zum Ordnertab.
+ */
+function tabKindMenu() {
+    return [
+        { label: t('NewTab'), icon: 'folder', action: () => newTab() },
+        { label: t('SearchTab'), icon: 'search-deep', action: () => openSearchTab('', false) }
+    ];
+}
+
 /** Ein Tab, der nicht einen Ordner zeigt, sondern eine Suche. */
 function createSearchTab(rootId, path, term) {
     const tab = createTab(rootId, path, false);
@@ -2025,7 +2092,7 @@ function entryMenu(entry) {
 
     if (entry.isDirectory) {
         items.push({ label: t('Open'), icon: 'folder', action: () => openEntry(entry) });
-        items.push({ label: t('NewTab'), icon: 'plus', action: () => openTab(tab.rootId, entry.path) });
+        items.push({ label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(tab.rootId, entry.path) });
     } else if (entry.preview && entry.preview !== 'none') {
         items.push({
             label: t('Preview'),
@@ -2500,12 +2567,8 @@ function menuItems(name) {
                 action: () => compressSelected()
             },
             '-',
-            {
-                label: t('NewTab'), icon: 'plus',
-                disabled: !tab,
-                action: () => openTab(tab.rootId, tab.kind === 'search' ? '' : tab.path)
-            },
-            { label: t('SearchNewTab'), icon: 'search-deep', action: () => openSearchTab('', false) },
+            { label: t('NewTab'), icon: 'plus', action: () => newTab() },
+            { label: t('SearchTab'), icon: 'search-deep', action: () => openSearchTab('', false) },
             {
                 label: t('Properties'), icon: 'settings',
                 disabled: !tab || tab.kind === 'search',

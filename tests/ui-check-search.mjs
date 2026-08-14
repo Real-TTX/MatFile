@@ -98,8 +98,32 @@ await sleep(300);
 
 const filtered = await evaluate(`[...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent)`);
 
-// Das Pluszeichen oeffnet die erweiterte Suche in einem neuen Tab
+// Das Pluszeichen oeffnet einen gewoehnlichen Tab
 await evaluate(`document.querySelector('.mfx-tab-add').click(); true;`);
+await sleep(900);
+
+const plainTab = await evaluate(`(() => ({
+    searchView: !!document.querySelector('.mfx-search-view'),
+    tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent),
+    addTitle: document.querySelector('.mfx-tab-add')?.title
+}))()`);
+
+// Die Tabarten stehen im Rechtsklick auf das Pluszeichen
+await evaluate(`(() => {
+    document.querySelector('.mfx-tab-add').dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, clientX: 420, clientY: 120 }));
+    return true;
+})()`);
+await sleep(400);
+
+const kindMenu = await evaluate(`[...document.querySelectorAll('#mfx-menu .mfx-menu-item span')].map(e => e.textContent)`);
+
+await evaluate(`(() => {
+    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => b.textContent.trim() === 'Suche' || b.textContent.trim() === 'Search');
+    item.click();
+    return true;
+})()`);
 await sleep(700);
 
 const searchTab = await evaluate(`(() => {
@@ -281,7 +305,7 @@ const backInSearch = await evaluate(`(() => {
 })()`);
 
 console.log(JSON.stringify({
-    toolbar, filtered, searchTab, done, withContent, empty, afterContent,
+    toolbar, filtered, plainTab, kindMenu, searchTab, done, withContent, empty, afterContent,
     revealed, backInSearch, consoleErrors
 }, null, 2));
 

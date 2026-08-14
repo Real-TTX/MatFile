@@ -317,6 +317,7 @@
   <data name="Explorer.Items"><value>{0} Einträge</value></data>
   <data name="Explorer.Selected"><value>{0} ausgewählt</value></data>
   <data name="Explorer.NewTab"><value>Neuer Tab</value></data>
+  <data name="Explorer.OpenInNewTab"><value>In neuem Tab öffnen</value></data>
   <data name="Explorer.CloseTab"><value>Tab schließen</value></data>
   <data name="Explorer.Pin"><value>Tab anheften</value></data>
   <data name="Explorer.Unpin"><value>Tab lösen</value></data>
@@ -347,7 +348,6 @@
   <data name="Explorer.SearchPlaceholder"><value>Filtern · Enter durchsucht Unterordner</value></data>
   <data name="Explorer.SearchRecursive"><value>In allen Unterordnern suchen</value></data>
   <data name="Explorer.SearchTab"><value>Suche</value></data>
-  <data name="Explorer.SearchNewTab"><value>Erweiterte Suche in neuem Tab</value></data>
   <data name="Explorer.SearchTerm"><value>Suchbegriff</value></data>
   <data name="Explorer.SearchScope"><value>Speicherort</value></data>
   <data name="Explorer.SearchFolder"><value>Ordner</value></data>
