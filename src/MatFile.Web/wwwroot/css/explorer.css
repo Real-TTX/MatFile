@@ -1387,6 +1387,67 @@
     overflow: hidden;
 }
 
+/* Administration: Spalte mit den Bereichen links, Ansicht rechts. */
+.mfx-admin {
+    width: min(1000px, 96vw);
+}
+
+.mfx-admin-main {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.mfx-admin-nav {
+    display: flex;
+    flex: 0 0 200px;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--mf-space-3) var(--mf-space-2);
+    border-right: 1px solid var(--mf-border);
+    background: var(--mf-surface-alt);
+    overflow-y: auto;
+}
+
+.mfx-admin-item {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    padding: 7px var(--mf-space-3);
+    border: 0;
+    border-radius: var(--mf-radius);
+    background: transparent;
+    color: var(--mf-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mfx-admin-item:hover {
+    background: var(--mf-surface);
+}
+
+.mfx-admin-item.is-active {
+    background: var(--mf-accent-soft);
+    color: var(--mf-accent);
+    font-weight: 500;
+}
+
+.mfx-admin-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.mfx-admin-title {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: var(--mf-space-3) var(--mf-space-4) 0;
+    font-size: 15px;
+}
+
 /* Dialoge ohne Listenansicht brauchen keine feste Höhe.
    "auto" reicht nicht: ein modaler Dialog spannt sich zwischen oben und unten auf. */
 .mfx-manage.mfx-manage-compact {

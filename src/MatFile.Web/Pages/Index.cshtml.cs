@@ -113,7 +113,7 @@ public class IndexModel : PageModel
             "Explorer.NoExplorerAccess",
 
             // Verwaltungsdialoge - dieselben Bezeichnungen wie früher im Adminbereich
-            "Admin.Users", "Admin.Roles", "Admin.Roots",
+            "Admin.Title", "Admin.Users", "Admin.Roles", "Admin.Roots",
             "System.Title", "System.Hint", "System.MinPasswordLength", "System.MinPasswordLengthHint",
             "System.SessionLifetime", "System.SessionLifetimeHint", "System.MaxFailedAttempts",
             "System.MaxFailedAttemptsHint", "System.LockoutMinutes", "System.LockoutMinutesHint",

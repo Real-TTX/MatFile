@@ -156,11 +156,20 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 
 ### Verwaltung (nach den CRUD-Guidelines)
 
-Benutzer, Rollen und Speicherorte sind **Dialoge im Explorer**, erreichbar über die
-Menüleiste. Ein eigener Adminbereich als Seitenbaum existiert nicht mehr – die Verwaltung
-soll dort sitzen, wo gearbeitet wird, und die Guidelines gelten im Dialog genauso:
+Die Verwaltung sitzt in **einem Administrationsbereich**: ein Fenster, das der Punkt
+*Administration* in der Menüleiste öffnet, mit einer Spalte links (Benutzer, Rollen,
+Speicherorte, Systemeinstellungen) und der jeweiligen Ansicht rechts. Es gibt weder
+eigene Adminseiten noch verteilte Einzeldialoge – die Verwaltung bleibt im Explorer,
+aber an einer Stelle. Der Punkt erscheint nur, wenn der Benutzer mindestens eines der
+Verwaltungsrechte hat; die Spalte zeigt genau die Bereiche, die er benutzen darf.
 
-- Liste und Bearbeiten sind **getrennte Ansichten** desselben Dialogs (statt Unterseite).
+Jeder Bereich bekommt beim Wechsel **eigene Elemente**. Lädt ein vorher offener Bereich
+noch nach, schreibt er in seine abgehängten Knoten statt in die neue Ansicht – sonst
+gewinnt beim schnellen Wechseln die langsamere Antwort.
+
+Die CRUD-Guidelines gelten in jedem Bereich:
+
+- Liste und Bearbeiten sind **getrennte Ansichten** desselben Bereichs (statt Unterseite).
 - Über der Tabelle eine **Toolbar**: Suchtext, Filter, „hinzufügen".
 - Direkt unter der Tabelle nur die **Pagination**.
 - Aktionen der Liste **unterhalb**, linksbündig; **Löschen mit Abstand** abgesetzt.
@@ -178,8 +187,9 @@ Der Dialog für Speicherorte selbst:
 - **Erweitert** (aufklappbar) für Port, Sortierung, TLS, passiven Modus und „aktiv".
 
 Verbindungsdaten eines Speicherorts bearbeitet weiterhin der eigene, plakative Dialog;
-die **Rechtematrix je Rolle** sitzt im Verwaltungsdialog. Die Dialoge sprechen dieselbe
-JSON-API (`/api/users`, `/api/roles`, `/api/roots`), gegen die auch die Tests laufen.
+die **Rechtematrix je Rolle** sitzt im Bereich *Speicherorte*. Alles spricht dieselbe
+JSON-API (`/api/users`, `/api/roles`, `/api/roots`, `/api/system`), gegen die auch die
+Tests laufen.
 
 Gestaltung der Dialoge:
 
@@ -315,7 +325,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M6** | Preview/Streaming: Range-Requests, Bild/Video/Audio/PDF/Text, Overlay-Viewer, Detailbereich mit Protokoll | Medien direkt im Browser |
 | **M7** | Remote-Provider **SMB, SFTP, FTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung, Abschnitt „Verbindungen" in der Seitenleiste mit Statuspunkt | Externe Freigaben eingebunden |
 | **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **erweiterte Suche als eigener Tab** (rekursiv, mit Inhaltssuche), Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste, starre Hülle gegen Layoutsprünge | Bedienung aus einer Fläche |
-| **M7d** | Systemeinstellungen als Dialog (`ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), eigener Teststack | Verwaltung vollständig |
+| **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
 | **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |

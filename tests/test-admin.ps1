@@ -23,7 +23,8 @@ Add-Result "Administrator angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath 
 # Der Explorer traegt die Verwaltung jetzt selbst - kein Adminbereich mehr
 $page = Invoke-WebRequest "$BaseUrl/" -WebSession $admin -UseBasicParsing
 Add-Result "Menueleiste mit Verwaltung" (
-    $page.Content -match 'mfx-menubar' -and $page.Content -match 'data-menu="settings"') ""
+    $page.Content -match 'mfx-menubar' -and $page.Content -match 'data-menu="settings"' -and
+    $page.Content -match 'data-menu="admin"') ""
 Add-Result "Rechte im Seitenkopf" (
     $page.Content -match 'manageUsers: true' -and $page.Content -match 'manageRoles: true' -and
     $page.Content -match 'manageSettings: true') ""
@@ -75,6 +76,7 @@ Add-Result "Testbenutzer angemeldet" ($r.BaseResponse.ResponseUri.AbsolutePath -
 Add-Result "Keine Verwaltungsrechte in der Oberflaeche" (
     $r.Content -match 'manageUsers: false' -and $r.Content -match 'manageRoles: false') ""
 Add-Result "Kein Speicherortmenue" ($r.Content -notmatch 'data-menu="locations"') ""
+Add-Result "Keine Verwaltung in der Menueleiste" ($r.Content -notmatch 'data-menu="admin"') ""
 
 $denied = Get-MatJson "$BaseUrl/api/users" $tester
 Add-Result "Benutzerverwaltung gesperrt" ($denied.Status -eq 403) "status=$($denied.Status)"

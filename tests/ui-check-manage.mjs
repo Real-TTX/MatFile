@@ -67,25 +67,29 @@ await evaluate(`document.querySelector('#Input_Username').value='admin';
 await sleep(1500);
 await go(`${BASE}/`);
 
+// Der Administrationsbereich ist ein eigener Punkt in der Menueleiste.
 const menu = await evaluate(`(() => {
-    document.querySelector('.mfx-menubar-item[data-menu="settings"]').click();
-    return [...document.querySelectorAll('#mfx-menu .mfx-menu-item span')].map(e => e.textContent);
-})()`);
-
-// Benutzerdialog ueber das Menue oeffnen
-await evaluate(`(() => {
-    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
-        .find(b => b.textContent.trim().startsWith('Benutzer') || b.textContent.trim().startsWith('Users'));
-    item.click();
-    return true;
+    const bar = [...document.querySelectorAll('.mfx-menubar-item')].map(b => b.textContent.trim());
+    document.querySelector('.mfx-menubar-item[data-menu="admin"]').click();
+    return bar;
 })()`);
 await sleep(1200);
+
+const sections = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-admin');
+    return {
+        open: !!box,
+        head: box?.querySelector('.mfx-dialog-head h2')?.textContent,
+        items: [...box.querySelectorAll('.mfx-admin-nav .mfx-admin-item')].map(b => b.textContent.trim()),
+        active: box.querySelector('.mfx-admin-item.is-active')?.textContent.trim()
+    };
+})()`);
 
 const users = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     if (!box) return null;
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         columns: [...box.querySelectorAll('.mf-table thead th')].map(e => e.textContent),
         rows: [...box.querySelectorAll('.mf-table tbody tr')].map(r => [...r.querySelectorAll('td')].map(c => c.textContent.trim())),
         pager: box.querySelector('.mfx-manage-pager')?.textContent?.trim(),
@@ -103,7 +107,7 @@ await sleep(600);
 const formView = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         fields: [...box.querySelectorAll('.mf-field label')].map(e => e.textContent),
         roleChecks: [...box.querySelectorAll('.mfx-manage-box .mf-check span')].map(e => e.textContent),
         checks: [...box.querySelectorAll('.mf-checklist .mf-check span')].map(e => e.textContent),
@@ -127,7 +131,7 @@ await sleep(1500);
 const afterCreate = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         rows: [...box.querySelectorAll('.mf-table tbody tr')].map(r => r.querySelector('td')?.textContent.trim()),
         flash: document.querySelector('.mfx-flash')?.textContent || null
     };
@@ -156,14 +160,11 @@ const afterDelete = await evaluate(`(() => {
     return [...box.querySelectorAll('.mf-table tbody tr')].map(r => r.querySelector('td')?.textContent.trim());
 })()`);
 
-// Dialog schliessen und Rollen oeffnen
+// Im selben Fenster auf Rollen wechseln
 await evaluate(`(() => {
-    const box = document.querySelector('dialog.mfx-manage');
-    [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].pop().click();
-    document.querySelector('.mfx-menubar-item[data-menu="settings"]').click();
-    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
-        .find(b => b.textContent.trim().startsWith('Rollen') || b.textContent.trim().startsWith('Roles'));
-    item.click();
+    const box = document.querySelector('dialog.mfx-admin');
+    [...box.querySelectorAll('.mfx-admin-item')]
+        .find(b => /^(Rollen|Roles)/.test(b.textContent.trim())).click();
     return true;
 })()`);
 await sleep(1200);
@@ -171,7 +172,7 @@ await sleep(1200);
 const roles = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         rows: [...box.querySelectorAll('.mf-table tbody tr')].map(r => [...r.querySelectorAll('td')].map(c => c.textContent.trim())),
         systemBadges: [...box.querySelectorAll('.mf-table .mf-badge')].map(b => b.textContent)
     };
@@ -188,7 +189,7 @@ await sleep(900);
 const systemRole = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         hint: box.querySelector('.mfx-manage-note')?.textContent,
         nameDisabled: box.querySelector('.mf-field input')?.disabled,
         rightsDisabled: [...box.querySelectorAll('.mfx-manage-box input')].every(i => i.disabled),
@@ -205,13 +206,9 @@ await evaluate(`(() => {
 })()`);
 await sleep(800);
 await evaluate(`(() => {
-    const box = document.querySelector('dialog.mfx-manage');
-    [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].pop().click();
-    document.querySelector('.mfx-menubar-item[data-menu="locations"]').click();
-    // Unter den vorhandenen Speicherorten steht die Verwaltung - nach Beschriftung suchen.
-    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
-        .find(b => /administration|Verwaltung/i.test(b.textContent));
-    item.click();
+    const box = document.querySelector('dialog.mfx-admin');
+    [...box.querySelectorAll('.mfx-admin-item')]
+        .find(b => /^(Speicherorte|Storage locations)/.test(b.textContent.trim())).click();
     return true;
 })()`);
 await sleep(1200);
@@ -220,7 +217,7 @@ const locations = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     if (!box) return null;
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         columns: [...box.querySelectorAll('.mf-table thead th')].map(e => e.textContent),
         rows: [...box.querySelectorAll('.mf-table tbody tr')].map(r => [...r.querySelectorAll('td')].map(c => c.textContent.trim())),
         toolbar: [...box.querySelectorAll('.mfx-manage-toolbar .mf-btn')].map(b => b.textContent.trim())
@@ -238,7 +235,7 @@ await sleep(1000);
 const access = await evaluate(`(() => {
     const box = document.querySelector('dialog.mfx-manage');
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         heading: box.querySelector('.mfx-manage-heading')?.textContent,
         columns: [...box.querySelectorAll('.mf-table thead th')].map(e => e.textContent),
         rows: [...box.querySelectorAll('.mf-table tbody tr')].map(r => r.querySelector('td')?.textContent.trim()),
@@ -268,14 +265,11 @@ const afterAccess = await evaluate(`(() => {
     };
 })()`);
 
-// Systemeinstellungen: lesen, aendern, speichern, erneut oeffnen
+// Systemeinstellungen: lesen, aendern, speichern, Bereich erneut aufrufen
 await evaluate(`(() => {
-    const box = document.querySelector('dialog.mfx-manage');
-    [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].pop().click();
-    document.querySelector('.mfx-menubar-item[data-menu="settings"]').click();
-    const item = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
-        .find(b => b.textContent.trim().startsWith('System'));
-    item.click();
+    const box = document.querySelector('dialog.mfx-admin');
+    [...box.querySelectorAll('.mfx-admin-item')]
+        .find(b => /^(Systemeinstellungen|System settings)/.test(b.textContent.trim())).click();
     return true;
 })()`);
 await sleep(1200);
@@ -285,7 +279,7 @@ const systemDialog = await evaluate(`(() => {
     if (!box) return null;
     const rect = box.getBoundingClientRect();
     return {
-        title: box.querySelector('h2')?.textContent,
+        title: box.querySelector('.mfx-admin-title')?.textContent,
         note: box.querySelector('.mfx-manage-note')?.textContent,
         fields: [...box.querySelectorAll('.mf-field > label')].map(e => e.textContent),
         values: [...box.querySelectorAll('.mf-field input[type=number]')].map(i => i.value),
@@ -311,10 +305,12 @@ await sleep(1500);
 
 const systemFlash = await evaluate(`document.querySelector('.mfx-flash')?.textContent || null`);
 
+// Bereich wechseln und zurueck - so wird der Wert frisch geladen
 await evaluate(`(() => {
-    document.querySelector('.mfx-menubar-item[data-menu="settings"]').click();
-    [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
-        .find(b => b.textContent.trim().startsWith('System')).click();
+    const box = document.querySelector('dialog.mfx-admin');
+    const items = [...box.querySelectorAll('.mfx-admin-item')];
+    items.find(b => /^(Rollen|Roles)/.test(b.textContent.trim())).click();
+    items.find(b => /^(Systemeinstellungen|System settings)/.test(b.textContent.trim())).click();
     return true;
 })()`);
 await sleep(1200);
@@ -335,7 +331,7 @@ await evaluate(`(() => {
 })()`);
 await sleep(1200);
 
-console.log(JSON.stringify({ menu, users, formView, afterCreate, afterDelete, roles, systemRole, locations, access, afterAccess, systemDialog, systemFlash, systemAgain, consoleErrors }, null, 2));
+console.log(JSON.stringify({ menu, sections, users, formView, afterCreate, afterDelete, roles, systemRole, locations, access, afterAccess, systemDialog, systemFlash, systemAgain, consoleErrors }, null, 2));
 
 socket.close();
 edge.kill();

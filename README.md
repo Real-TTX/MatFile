@@ -15,8 +15,8 @@ keinen komfortablen Zugriff auf Dateien bieten.
 - **Zugriffsrechte** (rwx für Besitzer, Gruppe, Andere) über *Eigenschaften* setzen –
   bei lokalen Pfaden, SFTP und FTP; SMB und WebDAV kennen sie nicht
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
-- Verwaltung von Benutzern, Rollen, Speicherorten und **Systemeinstellungen**
-  **als Dialoge im Explorer** – ohne eigenen Adminbereich
+- **Administrationsbereich** im Explorer: Benutzer, Rollen, Speicherorte und
+  Systemeinstellungen in einem Fenster, erreichbar über die Menüleiste
 - Oberfläche in **Englisch (Standard)** und **Deutsch**, im UI umschaltbar
 
 Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
@@ -76,14 +76,15 @@ auf Englisch; über den Weltkugel-Knopf unten links in der Seitenleiste (oder *E
 Sprache…* in der Menüleiste) lässt sich Deutsch wählen – die Auswahl wird am Benutzerkonto
 gespeichert. Direkt darunter steht die laufende Version.
 
-Benutzer, Rollen und Speicherorte werden über die **Menüleiste über den Tabs** verwaltet
-(*Einstellungen* bzw. *Speicherorte*). Jeder Punkt erscheint nur mit dem passenden Recht.
+Verwaltet wird alles im **Administrationsbereich**: *Administration* in der Menüleiste über
+den Tabs öffnet ein Fenster mit den Bereichen **Benutzer, Rollen, Speicherorte und
+Systemeinstellungen**. Der Punkt erscheint nur mit mindestens einem Verwaltungsrecht, und die
+Spalte zeigt genau die Bereiche, für die das Recht da ist.
 
-Unter *Einstellungen → Systemeinstellungen* (Recht `ManageSettings`) stehen die Werte, die für
-alle gelten: Mindestlänge für Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer,
-HTTPS-Cookie und der Kennwortwechsel beim ersten Start. Sie landen in
-`/data/config/matfile.json`; Mindestlänge und Sperre wirken sofort, Cookie und Sitzungsdauer
-nach einem Neustart des Containers.
+Die **Systemeinstellungen** (Recht `ManageSettings`) gelten für alle: Mindestlänge für
+Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer, HTTPS-Cookie und der
+Kennwortwechsel beim ersten Start. Sie landen in `/data/config/matfile.json`; Mindestlänge
+und Sperre wirken sofort, Cookie und Sitzungsdauer nach einem Neustart des Containers.
 
 Das Volume `/data` enthält:
 

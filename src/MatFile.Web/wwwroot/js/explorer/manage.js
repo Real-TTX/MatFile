@@ -1,22 +1,27 @@
-// Verwaltung als Dialoge im Explorer: Benutzer, Rollen und Speicherorte.
-// Jeder Dialog zeigt zuerst die Liste und wechselt zum Bearbeiten in eine eigene Ansicht.
+// Der Administrationsbereich des Explorers: ein Fenster mit einer Spalte links
+// (Benutzer, Rollen, Speicherorte, System) und der jeweiligen Ansicht rechts.
+// Jeder Bereich zeigt zuerst die Liste und wechselt zum Bearbeiten in eine eigene Ansicht.
 import { api, t, icon, formatDate } from './api.js';
 import { askConfirm, flash } from './dialogs.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
 
 // ---------------------------------------------------------------- Bausteine
 
-function shell(titleText, iconName) {
+/**
+ * Rahmen des Administrationsbereichs. `sections` sind die erlaubten Bereiche in
+ * der Reihenfolge der Spalte; jeder bringt seine eigene Ansicht mit.
+ */
+function frame(sections, active) {
     const dialog = document.createElement('dialog');
-    dialog.className = 'mfx-dialog mfx-manage';
+    dialog.className = 'mfx-dialog mfx-manage mfx-admin';
 
     const head = document.createElement('header');
     head.className = 'mfx-dialog-head';
-    head.appendChild(icon(iconName, 20));
+    head.appendChild(icon('shield', 20));
 
-    const title = document.createElement('h2');
-    title.textContent = titleText;
-    head.appendChild(title);
+    const heading = document.createElement('h2');
+    heading.textContent = t('Admin.Title');
+    head.appendChild(heading);
 
     const spacer = document.createElement('span');
     spacer.className = 'mf-spacer';
@@ -31,18 +36,65 @@ function shell(titleText, iconName) {
     close.addEventListener('click', () => dialog.close());
     head.appendChild(close);
 
-    const body = document.createElement('div');
-    body.className = 'mfx-manage-body';
+    const main = document.createElement('div');
+    main.className = 'mfx-admin-main';
 
-    const foot = document.createElement('div');
-    foot.className = 'mf-actions mfx-manage-foot';
+    const nav = document.createElement('nav');
+    nav.className = 'mfx-admin-nav';
+    nav.setAttribute('aria-label', t('Admin.Title'));
 
-    dialog.append(head, body, foot);
+    const content = document.createElement('div');
+    content.className = 'mfx-admin-content';
+
+    main.append(nav, content);
+    dialog.append(head, main);
     dialog.addEventListener('close', () => dialog.remove());
     document.body.appendChild(dialog);
     dialog.showModal();
 
-    return { dialog, title, body, foot };
+    // Nach aussen zaehlt nur der Dialog; jeder Bereich bekommt eigene Elemente.
+    const shared = { dialog };
+    const buttons = new Map();
+
+    const show = key => {
+        const section = sections.find(item => item.key === key) || sections[0];
+        if (!section) {
+            return;
+        }
+
+        buttons.forEach((element, name) => element.classList.toggle('is-active', name === section.key));
+
+        // Eigene Elemente je Bereich: laedt ein alter Bereich noch nach, schreibt
+        // er in seine inzwischen abgehaengten Knoten und nicht in die neue Ansicht.
+        const title = document.createElement('h3');
+        title.className = 'mfx-admin-title';
+
+        const body = document.createElement('div');
+        body.className = 'mfx-manage-body';
+
+        const foot = document.createElement('div');
+        foot.className = 'mf-actions mfx-manage-foot';
+
+        content.replaceChildren(title, body, foot);
+
+        shared.section = section.key;
+        shared.title = title;
+        shared.body = body;
+        shared.foot = foot;
+
+        section.open({ ...shared, title, body, foot,
+            get reopen() { return shared.reopen; },
+            get onRootsChanged() { return shared.onRootsChanged; } });
+    };
+
+    sections.forEach(section => {
+        const item = button(section.label, 'mfx-admin-item', () => show(section.key), section.icon);
+        buttons.set(section.key, item);
+        nav.appendChild(item);
+    });
+
+    show(active);
+    return shared;
 }
 
 function button(label, className, onClick, iconName) {
@@ -283,8 +335,7 @@ function showError(error) {
 
 // ---------------------------------------------------------------- Benutzer
 
-export function openUsers() {
-    const view = shell(t('Admin.Users'), 'users');
+function usersSection(view) {
     let roles = [];
     let search = '';
     let page = 1;
@@ -432,8 +483,7 @@ export function openUsers() {
 
 // ---------------------------------------------------------------- Rollen
 
-export function openRoles() {
-    const view = shell(t('Admin.Roles'), 'shield');
+function rolesSection(view) {
     let catalog = [];
     let search = '';
     let page = 1;
@@ -584,12 +634,10 @@ function numberBox(value, min, max) {
  * Einstellungen aus matfile.json. Manche greifen sofort, andere erst nach
  * einem Neustart des Containers - das steht am jeweiligen Feld.
  */
-export function openSystem() {
-    const view = shell(t('System.Title'), 'settings');
-    // Hier gibt es keinen Wechsel zwischen Liste und Formular - der Dialog darf mitwachsen.
-    view.dialog.classList.add('mfx-manage-compact');
-
+function systemSection(view) {
     async function form() {
+        view.title.textContent = t('System.Title');
+
         let data;
 
         try {
@@ -675,14 +723,13 @@ const RIGHTS = [
  * Speicherorte verwalten. Verbindungsdaten bearbeitet der bekannte Dialog,
  * hier stehen Übersicht und die Rechte je Rolle.
  */
-export function openLocations(onChanged) {
-    const view = shell(t('Admin.Roots'), 'hard');
+function rootsSection(view) {
     let search = '';
     let page = 1;
 
     const changed = () => {
-        if (onChanged) {
-            onChanged();
+        if (view.onRootsChanged) {
+            view.onRootsChanged();
         }
     };
 
@@ -737,7 +784,7 @@ export function openLocations(onChanged) {
     }
 
     async function add(preferRemote) {
-        // Der Dialog für Speicherorte ist selbst modal - der Verwaltungsdialog wartet.
+        // Der Dialog für Speicherorte ist selbst modal - der Verwaltungsbereich wartet.
         view.dialog.close();
 
         if (await openRootDialog(null, preferRemote)) {
@@ -745,7 +792,7 @@ export function openLocations(onChanged) {
             changed();
         }
 
-        openLocations(onChanged);
+        view.reopen('roots');
     }
 
     async function form(id) {
@@ -819,7 +866,7 @@ export function openLocations(onChanged) {
                     changed();
                 }
 
-                openLocations(onChanged);
+                view.reopen('roots');
             }, 'pencil'),
             gap(),
             button(t('Common.Delete'), 'mf-btn mf-btn-danger', () => remove(detail), 'trash'));
@@ -861,4 +908,34 @@ export function openLocations(onChanged) {
     }
 
     list();
+}
+
+// ---------------------------------------------------------------- Einstieg
+
+const SECTIONS = [
+    { key: 'users', right: 'manageUsers', icon: 'users', label: 'Admin.Users', open: usersSection },
+    { key: 'roles', right: 'manageRoles', icon: 'shield', label: 'Admin.Roles', open: rolesSection },
+    { key: 'roots', right: 'manageRoots', icon: 'hard', label: 'Admin.Roots', open: rootsSection },
+    { key: 'system', right: 'manageSettings', icon: 'settings', label: 'System.Title', open: systemSection }
+];
+
+/**
+ * Öffnet den Administrationsbereich.
+ * `options.section` wählt den Bereich, `options.can` entscheidet über die Spalte,
+ * `options.onRootsChanged` meldet geänderte Speicherorte an den Explorer.
+ */
+export function openAdmin(options) {
+    const settings = options || {};
+    const allowed = SECTIONS
+        .filter(section => (settings.can || {})[section.right])
+        .map(section => ({ ...section, label: t(section.label) }));
+
+    if (allowed.length === 0) {
+        return null;
+    }
+
+    const view = frame(allowed, settings.section);
+    view.onRootsChanged = settings.onRootsChanged;
+    view.reopen = section => openAdmin({ ...settings, section });
+    return view;
 }

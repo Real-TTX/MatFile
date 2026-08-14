@@ -46,8 +46,8 @@ damit `sample-data/` aus dem Repo nicht mit Testdateien verschmutzt wird.
 
 Gemeinsame Hilfen stehen in `_helpers.ps1`: Anmeldung, JSON-Aufrufe mit Statuscode und
 Fehlerkörper sowie das Anlegen von Speicherorten, Benutzern und Rechtematrizen über `/api`.
-Seit die Verwaltung in Dialogen steckt, gibt es keine Adminseiten mehr, gegen die man testen
-könnte – die Suiten sprechen direkt die API an, die auch die Dialoge benutzen.
+Seit die Verwaltung im Administrationsbereich steckt, gibt es keine Adminseiten mehr, gegen
+die man testen könnte – die Suiten sprechen direkt die API an, die auch die Oberfläche benutzt.
 
 ## Oberflächenprüfung im Browser
 
@@ -66,7 +66,7 @@ node .\tests\ui-check-locations.mjs http://localhost:2222 admin .\rootflow.png
 # Erweiterte Suche als Tab: Pluszeichen, Fortschritt, Inhaltssuche, Sprung in den Ordner
 node .\tests\ui-check-search.mjs http://localhost:2222 admin Suche .\search.png
 
-# Verwaltungsdialoge: Benutzer, Rollen, Rechtematrix eines Speicherorts, Systemeinstellungen
+# Administrationsbereich: Benutzer, Rollen, Rechtematrix eines Speicherorts, Systemeinstellungen
 node .\tests\ui-check-manage.mjs http://localhost:2222 admin .\manage.png
 
 # Texteditor: Syntaxhervorhebung, Breite, Bearbeiten und Speichern

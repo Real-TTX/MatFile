@@ -5,7 +5,7 @@ import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
 import { newSearch, startSearch, cancelSearch, disposeSearch, isRunning } from './search.js';
-import { openUsers, openRoles, openLocations, openSystem } from './manage.js';
+import { openAdmin } from './manage.js';
 
 const can = window.matfileCan || {};
 
@@ -2739,8 +2739,7 @@ function menuItems(name) {
                 label: t('EditLocation'), icon: 'pencil',
                 disabled: !tab || tab.kind === 'search',
                 action: () => editLocation(tab.rootId)
-            },
-            { label: t('Manage'), icon: 'settings', action: () => openLocations(() => reloadRoots()) }
+            }
         ];
 
         // Darunter die vorhandenen Speicherorte zum direkten Öffnen.
@@ -2781,33 +2780,28 @@ function menuItems(name) {
         }
     ];
 
-    // Verwaltung sitzt in denselben Menüs - jeder Punkt nur mit dem passenden Recht.
-    const administration = [];
+    // Die Verwaltung hat einen eigenen Bereich - hier steht nur noch die Wahl der Ansicht.
+    return settings;
+}
 
-    if (can.manageUsers) {
-        administration.push({ label: t('Admin.Users'), icon: 'users', action: () => openUsers() });
-    }
-
-    if (can.manageRoles) {
-        administration.push({ label: t('Admin.Roles'), icon: 'shield', action: () => openRoles() });
-    }
-
-    if (can.manageRoots) {
-        administration.push({ label: t('Admin.Roots'), icon: 'hard', action: () => openLocations(() => reloadRoots()) });
-    }
-
-    if (can.manageSettings) {
-        administration.push({ label: t('System.Title'), icon: 'settings', action: () => openSystem() });
-    }
-
-    return administration.length === 0 ? settings : [...administration, '-', ...settings];
+/** Öffnet den Administrationsbereich, wahlweise direkt in einem Abschnitt. */
+function openAdministration(section) {
+    openAdmin({ can, section, onRootsChanged: () => reloadRoots() });
 }
 
 document.querySelectorAll('.mfx-menubar-item').forEach(button => {
     button.addEventListener('click', event => {
+        event.stopPropagation();
+
+        // Die Administration ist kein Menü, sondern ein eigener Bereich.
+        if (button.dataset.menu === 'admin') {
+            closeMenu();
+            openAdministration();
+            return;
+        }
+
         const rect = button.getBoundingClientRect();
         openMenu(rect.left, rect.bottom + 2, menuItems(button.dataset.menu));
-        event.stopPropagation();
     });
 });
 
@@ -2819,7 +2813,7 @@ if (el.more) {
             { label: t('AddFolder'), icon: 'folder', action: () => addLocation(false) },
             { label: t('AddConnection'), icon: 'hard', action: () => addLocation(true) },
             '-',
-            { label: t('Manage'), icon: 'settings', action: () => openLocations(() => reloadRoots()) }
+            { label: t('Admin.Title'), icon: 'shield', action: () => openAdministration('roots') }
         ]);
 
         event.stopPropagation();

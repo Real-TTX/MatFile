@@ -90,6 +90,12 @@
                 <button type="button" class="mfx-menubar-item" data-menu="locations">@L["Admin.Roots"]</button>
             }
             <button type="button" class="mfx-menubar-item" data-menu="settings">@L["Explorer.MenuSettings"]</button>
+            @* Verwaltung an einer Stelle statt verteilt in den Menüs. *@
+            @if (User.HasPermission(Permission.ManageUsers) || User.HasPermission(Permission.ManageRoles)
+                 || User.HasPermission(Permission.ManageRoots) || User.HasPermission(Permission.ManageSettings))
+            {
+                <button type="button" class="mfx-menubar-item" data-menu="admin">@L["Admin.Title"]</button>
+            }
         </nav>
 
         <div class="mfx-tabbar" id="mfx-tabs" role="tablist"></div>
