@@ -213,6 +213,50 @@ Add-Result "Upload ohne Recht gesperrt" ($noUpload.Status -eq 403) "status=$($no
 $noDelete = Api POST "$BaseUrl/api/fs/delete" $tester @{ rootId = $rootId; paths = @('Projekte') }
 Add-Result "Loeschen ohne Recht gesperrt" ($noDelete.Status -eq 403) "status=$($noDelete.Status)"
 
+# --- Groessengrenze beim Hochladen ---------------------------------------
+$system = (Get-MatJson "$BaseUrl/api/system" $admin).Data
+$limit = @{
+    sessionLifetimeDays = $system.sessionLifetimeDays
+    loginMaxFailedAttempts = $system.loginMaxFailedAttempts
+    loginLockoutMinutes = $system.loginLockoutMinutes
+    loginAttemptsPerMinute = $system.loginAttemptsPerMinute
+    minPasswordLength = $system.minPasswordLength
+    maxUploadMegabytes = 1
+    requireSecureCookie = $system.requireSecureCookie
+    requirePasswordChangeOnFirstLogin = $system.requirePasswordChangeOnFirstLogin
+}
+Add-Result "Ohne Grenze steht 0" ($system.maxUploadMegabytes -eq 0) "maxUpload=$($system.maxUploadMegabytes)"
+
+$setLimit = Send-MatJson 'Put' "$BaseUrl/api/system" $admin $limit
+Add-Result "Grenze gesetzt" ($setLimit.Status -eq 200 -and $setLimit.Data.maxUploadMegabytes -eq 1) "maxUpload=$($setLimit.Data.maxUploadMegabytes)"
+
+$tooBig = Api POST "$BaseUrl/api/fs/upload/begin" $admin @{
+    rootId = $rootId; path = ''; name = 'zu-gross.bin'; size = 5MB; overwrite = $false
+}
+Add-Result "Zu grosse Datei abgelehnt" (
+    $tooBig.Status -eq 413 -and $tooBig.Data.error -eq 'upload_too_large') "status=$($tooBig.Status)"
+
+$smallEnough = Api POST "$BaseUrl/api/fs/upload/begin" $admin @{
+    rootId = $rootId; path = ''; name = 'passt.bin'; size = 1024; overwrite = $false
+}
+Add-Result "Kleine Datei weiter erlaubt" ($smallEnough.Status -eq 200) "status=$($smallEnough.Status)"
+
+# Wer mehr schickt als angekuendigt, wird beim Teilstueck gestoppt - sonst liesse
+# sich die Grenze umgehen, indem man eine kleine Groesse ankuendigt.
+$overflow = [byte[]]::new(2MB)
+$overflowResult = $null
+try {
+    Invoke-WebRequest "$BaseUrl/api/fs/upload/chunk?uploadId=$($smallEnough.Data.uploadId)&offset=0" `
+        -Method Post -WebSession $admin -UseBasicParsing -Body $overflow -ContentType 'application/octet-stream' | Out-Null
+} catch {
+    $overflowResult = [int]$_.Exception.Response.StatusCode
+}
+Add-Result "Mehr als angekuendigt wird gestoppt" ($overflowResult -eq 413 -or $overflowResult -eq 400) "status=$overflowResult"
+
+$limit.maxUploadMegabytes = 0
+$reset = Send-MatJson 'Put' "$BaseUrl/api/system" $admin $limit
+Add-Result "Grenze wieder aufgehoben" ($reset.Data.maxUploadMegabytes -eq 0) "maxUpload=$($reset.Data.maxUploadMegabytes)"
+
 # --- Zugriffsrechte auf einem lokalen Ordner -----------------------------
 $perm = Api GET "$BaseUrl/api/fs/permissions?rootId=$rootId&path=$(Enc 'Dokumente')" $admin
 Add-Result "Lokale Rechte gelesen" (

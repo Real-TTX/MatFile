@@ -85,7 +85,8 @@ Verwaltungsrecht, und die Spalte zeigt genau die Bereiche, für die das Recht da
 
 Die **Systemeinstellungen** (Recht `ManageSettings`) gelten für alle: Mindestlänge für
 Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer, Anmeldeversuche je Minute,
-HTTPS-Cookie und der Kennwortwechsel beim ersten Start. Sie landen in
+Höchstgröße beim Hochladen (0 = keine Grenze), HTTPS-Cookie und der Kennwortwechsel beim
+ersten Start. Sie landen in
 `/data/config/matfile.json`; Mindestlänge und Kontosperre wirken sofort, Cookie, Sitzungsdauer
 und Rate-Limit nach einem Neustart des Containers.
 

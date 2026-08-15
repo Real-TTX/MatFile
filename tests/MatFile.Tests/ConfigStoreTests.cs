@@ -25,6 +25,8 @@ public class ConfigStoreTests : IDisposable
         Assert.Equal(15, store.Settings.LoginLockoutMinutes);
         Assert.Equal(20, store.Settings.LoginAttemptsPerMinute);
         Assert.Equal(8, store.Settings.MinPasswordLength);
+        // 0 heisst: keine Grenze beim Hochladen - auf einem NAS der Normalfall.
+        Assert.Equal(0, store.Settings.MaxUploadMegabytes);
         Assert.False(store.Settings.RequireSecureCookie);
         Assert.False(store.Settings.RequirePasswordChangeOnFirstLogin);
     }
@@ -41,6 +43,7 @@ public class ConfigStoreTests : IDisposable
             LoginLockoutMinutes = 10,
             LoginAttemptsPerMinute = 5,
             MinPasswordLength = 20,
+            MaxUploadMegabytes = 2048,
             RequireSecureCookie = true,
             RequirePasswordChangeOnFirstLogin = true
         });
@@ -54,6 +57,7 @@ public class ConfigStoreTests : IDisposable
         Assert.Equal(10, wiedergelesen.LoginLockoutMinutes);
         Assert.Equal(5, wiedergelesen.LoginAttemptsPerMinute);
         Assert.Equal(20, wiedergelesen.MinPasswordLength);
+        Assert.Equal(2048, wiedergelesen.MaxUploadMegabytes);
         Assert.True(wiedergelesen.RequireSecureCookie);
         Assert.True(wiedergelesen.RequirePasswordChangeOnFirstLogin);
     }

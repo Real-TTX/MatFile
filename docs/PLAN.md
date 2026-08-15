@@ -114,7 +114,10 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   verschiedener Benutzernamen. Abgewiesene Versuche bekommen 429 mit `Retry-After: 60` und
   die Fehlerseite; alles andere bleibt ungebremst.
 - **Autorisierung** zweistufig: Rolle (globale Fähigkeiten) → `RootAccess` (pro Root/Mount).
-- Upload-Größenlimit, MIME-Sniffing-Schutz (`X-Content-Type-Options`), Downloads immer
+- **Upload-Größenlimit** (`MaxUploadMegabytes`, 0 = keine Grenze) greift schon beim
+  Anmelden des Uploads und noch einmal je Teilstück – wer eine kleine Größe ankündigt
+  und dann weiterschickt, wird ebenfalls gestoppt. MIME-Sniffing-Schutz
+  (`X-Content-Type-Options`), Downloads immer
   mit `Content-Disposition: attachment` außer bei explizitem Preview.
 
 ---
@@ -333,7 +336,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
-| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, Limits, Fehlerseiten, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |
+| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, ~~Limits~~, ~~Fehlerseiten~~, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |
 
 ---
 

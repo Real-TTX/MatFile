@@ -219,6 +219,8 @@
   <data name="System.LockoutMinutesHint"><value>Danach ist die Anmeldung wieder möglich.</value></data>
   <data name="System.AttemptsPerMinute"><value>Anmeldeversuche je Minute</value></data>
   <data name="System.AttemptsPerMinuteHint"><value>Je Absender, über alle Konten. Gilt nach einem Neustart.</value></data>
+  <data name="System.MaxUpload"><value>Höchstgröße beim Hochladen in MB</value></data>
+  <data name="System.MaxUploadHint"><value>0 bedeutet keine Grenze. Gilt sofort.</value></data>
   <data name="System.Security"><value>Sicherheit</value></data>
   <data name="System.SecureCookie"><value>Sitzungscookie nur über HTTPS senden</value></data>
   <data name="System.FirstLogin"><value>Kennwortwechsel für das mitgelieferte Konto beim ersten Start verlangen</value></data>
@@ -414,6 +416,7 @@
   <data name="Explorer.Discard"><value>Verwerfen</value></data>
   <data name="Explorer.ErrorModifiedElsewhere"><value>Die Datei wurde zwischenzeitlich geändert. Bitte neu öffnen und noch einmal speichern.</value></data>
   <data name="Explorer.ErrorFileTooLarge"><value>Diese Datei ist für den Editor zu groß.</value></data>
+  <data name="Explorer.ErrorUploadTooLarge"><value>Diese Datei überschreitet die Grenze beim Hochladen.</value></data>
   <data name="Explorer.ErrorNotEditable"><value>Dieser Dateityp lässt sich nicht bearbeiten.</value></data>
 
   <data name="Explorer.Upload"><value>Hochladen</value></data>

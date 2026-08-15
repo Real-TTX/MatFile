@@ -101,6 +101,20 @@ function done(id, delay) {
 
 // ---------------------------------------------------------------- Uploads
 
+/** Sagt, woran es lag - bei einer Größengrenze hilft „fehlgeschlagen" allein nicht weiter. */
+function uploadError(error, file) {
+    const code = error && error.code;
+
+    if (code && code !== 'error') {
+        const text = t(errorKey(code), '');
+        if (text) {
+            return text;
+        }
+    }
+
+    return t('UploadFailed').replace('{0}', file.name);
+}
+
 async function uploadFile(file, rootId, path) {
     const id = `up-${file.name}-${Date.now()}-${Math.round(file.size)}`;
     set(id, { label: file.name, percent: 0, state: 'running' });
@@ -122,7 +136,7 @@ async function uploadFile(file, rootId, path) {
         } else {
             set(id, { state: 'failed', percent: 100 });
             done(id, 5000);
-            flash(t('UploadFailed').replace('{0}', file.name), true);
+            flash(uploadError(error, file), true);
             return false;
         }
     }

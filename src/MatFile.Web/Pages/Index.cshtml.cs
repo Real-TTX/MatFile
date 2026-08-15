@@ -75,7 +75,8 @@ public class IndexModel : PageModel
 
             // Texteditor
             "Explorer.Edit", "Explorer.Revert", "Explorer.UnsavedTitle", "Explorer.UnsavedQuestion",
-            "Explorer.Discard", "Explorer.ErrorFileTooLarge", "Explorer.ErrorNotEditable",
+            "Explorer.Discard", "Explorer.ErrorFileTooLarge", "Explorer.ErrorUploadTooLarge",
+            "Explorer.ErrorNotEditable",
             "Explorer.ErrorModifiedElsewhere",
 
             // Verbindungen
@@ -119,7 +120,8 @@ public class IndexModel : PageModel
             "System.Title", "System.Hint", "System.MinPasswordLength", "System.MinPasswordLengthHint",
             "System.SessionLifetime", "System.SessionLifetimeHint", "System.MaxFailedAttempts",
             "System.MaxFailedAttemptsHint", "System.LockoutMinutes", "System.LockoutMinutesHint",
-            "System.AttemptsPerMinute", "System.AttemptsPerMinuteHint", "System.Security",
+            "System.AttemptsPerMinute", "System.AttemptsPerMinuteHint",
+            "System.MaxUpload", "System.MaxUploadHint", "System.Security",
             "System.SecureCookie", "System.FirstLogin", "System.RestartHint",
             "System.ConfigFile", "System.Version",
             "Common.Save", "Common.Back", "Common.Delete", "Common.New", "Common.Edit",

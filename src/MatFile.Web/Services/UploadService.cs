@@ -23,15 +23,24 @@ public sealed class UploadService
 {
     private readonly MatFilePaths _paths;
     private readonly StorageRootService _roots;
+    private readonly MatFileConfigStore _config;
     private readonly ILogger<UploadService> _logger;
 
-    public UploadService(MatFilePaths paths, StorageRootService roots, ILogger<UploadService> logger)
+    public UploadService(
+        MatFilePaths paths,
+        StorageRootService roots,
+        MatFileConfigStore config,
+        ILogger<UploadService> logger)
     {
         _paths = paths;
         _roots = roots;
+        _config = config;
         _logger = logger;
         Directory.CreateDirectory(UploadDirectory);
     }
+
+    /// <summary>Höchstgröße in Byte, oder 0 wenn keine Grenze gesetzt ist.</summary>
+    private long MaxBytes => Math.Max(0, _config.Settings.MaxUploadMegabytes) * 1024L * 1024L;
 
     private string UploadDirectory => Path.Combine(_paths.TempDirectory, "uploads");
 
@@ -52,6 +61,14 @@ public sealed class UploadService
         if (!PathGuard.IsValidName(name))
         {
             throw StorageException.InvalidName(name);
+        }
+
+        // Die angekündigte Größe wird gleich hier geprüft - sonst liegt erst alles
+        // im Zwischenspeicher, bevor es scheitert.
+        if (MaxBytes > 0 && size > MaxBytes)
+        {
+            throw new StorageException("upload_too_large",
+                $"The file exceeds the limit of {_config.Settings.MaxUploadMegabytes} MB.");
         }
 
         var targetPath = PathGuard.Combine(path, name);
@@ -95,6 +112,14 @@ public sealed class UploadService
         {
             await AbortAsync(uploadId, userId);
             throw new StorageException("size_exceeded", "More data was sent than announced.");
+        }
+
+        // Wer eine kleine Größe ankündigt und dann weiterschickt, wird hier gestoppt.
+        if (MaxBytes > 0 && received > MaxBytes)
+        {
+            await AbortAsync(uploadId, userId);
+            throw new StorageException("upload_too_large",
+                $"The file exceeds the limit of {_config.Settings.MaxUploadMegabytes} MB.");
         }
 
         return received;

@@ -374,6 +374,7 @@ public static class FileOperationEndpoints
             "access_denied" => StatusCodes.Status403Forbidden,
             "conflict" => StatusCodes.Status409Conflict,
             "permissions_unsupported" => StatusCodes.Status501NotImplemented,
+            "upload_too_large" => StatusCodes.Status413PayloadTooLarge,
             "root_unavailable" => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status400BadRequest
         };

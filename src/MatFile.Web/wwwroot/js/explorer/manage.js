@@ -652,6 +652,7 @@ function systemSection(view) {
         const lockout = numberBox(data.loginLockoutMinutes, 1, 1440);
         const lifetime = numberBox(data.sessionLifetimeDays, 1, 365);
         const perMinute = numberBox(data.loginAttemptsPerMinute, 3, 1000);
+        const maxUpload = numberBox(data.maxUploadMegabytes, 0, 1048576);
 
         const secure = check(t('System.SecureCookie'), data.requireSecureCookie);
         const firstLogin = check(t('System.FirstLogin'), data.requirePasswordChangeOnFirstLogin);
@@ -681,6 +682,7 @@ function systemSection(view) {
                 field(t('System.MaxFailedAttempts'), attempts, t('System.MaxFailedAttemptsHint')),
                 field(t('System.LockoutMinutes'), lockout, t('System.LockoutMinutesHint')),
                 field(t('System.AttemptsPerMinute'), perMinute, t('System.AttemptsPerMinuteHint')),
+                field(t('System.MaxUpload'), maxUpload, t('System.MaxUploadHint')),
                 field(t('System.Security'), checkColumn([secure, firstLogin]), t('System.RestartHint'), true)),
             facts);
 
@@ -692,6 +694,7 @@ function systemSection(view) {
                     loginLockoutMinutes: Number(lockout.value) || 15,
                     loginAttemptsPerMinute: Number(perMinute.value) || 20,
                     minPasswordLength: Number(minLength.value) || 8,
+                    maxUploadMegabytes: Number(maxUpload.value) || 0,
                     requireSecureCookie: secure.input.checked,
                     requirePasswordChangeOnFirstLogin: firstLogin.input.checked
                 });

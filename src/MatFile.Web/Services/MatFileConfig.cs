@@ -23,6 +23,12 @@ public sealed class MatFileSettings
     /// <summary>Mindestlänge für Kennwörter.</summary>
     public int MinPasswordLength { get; set; } = 8;
 
+    /// <summary>
+    /// Höchstgröße einer hochgeladenen Datei in Megabyte. 0 bedeutet: keine Grenze -
+    /// auf einem NAS ist das der Normalfall.
+    /// </summary>
+    public int MaxUploadMegabytes { get; set; }
+
     /// <summary>Cookie nur über HTTPS senden. Bei TLS-Terminierung im NAS-Proxy meist nicht nötig.</summary>
     public bool RequireSecureCookie { get; set; }
 

@@ -219,6 +219,8 @@
   <data name="System.LockoutMinutesHint"><value>After this time sign-in is possible again.</value></data>
   <data name="System.AttemptsPerMinute"><value>Sign-in attempts per minute</value></data>
   <data name="System.AttemptsPerMinuteHint"><value>Per sender, across all accounts. Applies after a restart.</value></data>
+  <data name="System.MaxUpload"><value>Maximum upload size in MB</value></data>
+  <data name="System.MaxUploadHint"><value>0 means no limit. Applies immediately.</value></data>
   <data name="System.Security"><value>Security</value></data>
   <data name="System.SecureCookie"><value>Send the session cookie over HTTPS only</value></data>
   <data name="System.FirstLogin"><value>Require a password change for the seeded account on first start</value></data>
@@ -414,6 +416,7 @@
   <data name="Explorer.Discard"><value>Discard</value></data>
   <data name="Explorer.ErrorModifiedElsewhere"><value>The file was changed in the meantime. Reopen it before saving.</value></data>
   <data name="Explorer.ErrorFileTooLarge"><value>This file is too large for the editor.</value></data>
+  <data name="Explorer.ErrorUploadTooLarge"><value>This file exceeds the upload limit.</value></data>
   <data name="Explorer.ErrorNotEditable"><value>This file type cannot be edited.</value></data>
 
   <data name="Explorer.Upload"><value>Upload</value></data>

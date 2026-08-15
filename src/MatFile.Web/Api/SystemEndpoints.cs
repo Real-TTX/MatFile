@@ -15,6 +15,7 @@ public static class SystemEndpoints
         int LoginLockoutMinutes,
         int LoginAttemptsPerMinute,
         int MinPasswordLength,
+        int MaxUploadMegabytes,
         bool RequireSecureCookie,
         bool RequirePasswordChangeOnFirstLogin);
 
@@ -33,6 +34,7 @@ public static class SystemEndpoints
                 settings.LoginLockoutMinutes,
                 settings.LoginAttemptsPerMinute,
                 settings.MinPasswordLength,
+                settings.MaxUploadMegabytes,
                 settings.RequireSecureCookie,
                 settings.RequirePasswordChangeOnFirstLogin,
 
@@ -56,6 +58,8 @@ public static class SystemEndpoints
             settings.LoginLockoutMinutes = Math.Clamp(request.LoginLockoutMinutes, 1, 1440);
             settings.LoginAttemptsPerMinute = Math.Clamp(request.LoginAttemptsPerMinute, 3, 1000);
             settings.MinPasswordLength = Math.Clamp(request.MinPasswordLength, 4, 128);
+            // 0 heisst: keine Grenze.
+            settings.MaxUploadMegabytes = Math.Clamp(request.MaxUploadMegabytes, 0, 1_048_576);
             settings.RequireSecureCookie = request.RequireSecureCookie;
             settings.RequirePasswordChangeOnFirstLogin = request.RequirePasswordChangeOnFirstLogin;
 
@@ -68,6 +72,7 @@ public static class SystemEndpoints
                 settings.LoginLockoutMinutes,
                 settings.LoginAttemptsPerMinute,
                 settings.MinPasswordLength,
+                settings.MaxUploadMegabytes,
                 settings.RequireSecureCookie,
                 settings.RequirePasswordChangeOnFirstLogin
             });
