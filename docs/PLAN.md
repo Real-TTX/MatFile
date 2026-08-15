@@ -199,7 +199,19 @@ die **Rechtematrix je Rolle** sitzt im Bereich *Speicherorte*. Alles spricht die
 JSON-API (`/api/users`, `/api/roles`, `/api/roots`, `/api/system`), gegen die auch die
 Tests laufen.
 
-Gestaltung der Dialoge:
+Gestaltung der Dialoge - **für jeden Dialog gleich**, vom Umbenennen bis zur
+Administration:
+
+- **Kopfzeile** (Symbol, Titel, Schließen-Kreuz), **Mittelteil**, **Fußzeile** mit den
+  Knöpfen. Kopf und Fuß sind abgesetzt und gehen bis zum Rand; der Rahmen selbst hat
+  deshalb kein Polster.
+- Diese Grundgestaltung steht in `matfile.css`, nicht in `explorer.css` – der Sprachdialog
+  erscheint auch auf der Anmelde- und Fehlerseite, wo das Stylesheet des Explorers fehlt.
+  Vorher trug er dort den weißen Standardrahmen des Browsers.
+- Der Fokus landet beim Öffnen auf dem Hauptknopf bzw. im ersten Feld, nicht auf dem
+  Schließen-Kreuz.
+
+Weitere Regeln:
 
 - **Feste Größe** je Dialog (Verwaltung 860×620, Speicherort 720×760). Ohne das springt
   der Rahmen beim Wechsel zwischen Liste und Formular oder beim Umschalten des Speichertyps.

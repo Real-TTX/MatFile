@@ -249,29 +249,9 @@
     gap: var(--mf-space-3) var(--mf-space-4);
 }
 
-/* Kopf und Fuss bleiben stehen, der Mittelteil scrollt. */
-.mfx-dialog-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+/* Der Speicherort-Dialog setzt seine Abschnitte selbst und braucht unten Luft. */
+.mfx-root-dialog > .mfx-dialog-body {
     padding-bottom: var(--mf-space-4);
-}
-
-.mfx-dialog-head {
-    display: flex;
-    align-items: center;
-    gap: var(--mf-space-3);
-    flex: 0 0 auto;
-    padding: var(--mf-space-3) var(--mf-space-4);
-    border-bottom: 1px solid var(--mf-border);
-    background: var(--mf-surface-alt);
-    color: var(--mf-accent);
-}
-
-.mfx-dialog-head h2 {
-    margin: 0;
-    color: var(--mf-text);
-    font-size: 16px;
 }
 
 .mfx-dialog-section {
@@ -1833,33 +1813,8 @@
 
 /* --- Dialog und Hinweis --- */
 
-/* Dialoge mit eigener Kopf- und Fusszeile füllen den Rahmen ganz aus.
-   Zwei Klassen im Selektor, damit die Regel unabhängig von der Reihenfolge greift. */
-.mfx-dialog.mfx-root-dialog,
-.mfx-dialog.mfx-manage,
-.mfx-dialog.mfx-browse-dialog {
-    padding: 0;
-}
-
-.mfx-dialog {
-    min-width: 320px;
-    max-width: 90vw;
-    padding: var(--mf-space-5);
-    border: 1px solid var(--mf-border);
-    border-radius: var(--mf-radius-lg);
-    background: var(--mf-surface);
-    color: var(--mf-text);
-}
-
-.mfx-dialog::backdrop {
-    background: rgba(0, 0, 0, .45);
-}
-
-.mfx-dialog h2 {
-    margin: 0 0 var(--mf-space-3);
-    font-size: 17px;
-    word-break: break-all;
-}
+/* Rahmen, Kopf- und Fusszeile der Dialoge stehen in matfile.css - sie gelten
+   auch auf Anmeldung und Fehlerseite. Hier folgen nur die Zutaten des Explorers. */
 
 /* Zugriffsrechte im Eigenschaftenblatt: neun Kästchen wie bei chmod. */
 .mfx-perm {

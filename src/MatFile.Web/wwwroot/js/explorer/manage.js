@@ -29,7 +29,7 @@ function frame(sections, active) {
 
     const close = document.createElement('button');
     close.type = 'button';
-    close.className = 'mfx-btn';
+    close.className = 'mfx-btn mfx-dialog-close';
     close.title = t('Close');
     close.setAttribute('aria-label', t('Close'));
     close.appendChild(icon('x', 14));

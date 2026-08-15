@@ -1,25 +1,56 @@
 // Kleine Dialoge auf Basis von <dialog> - lokalisiert, ohne Bibliothek.
-import { t } from './api.js';
+// Bauform wie bei den grossen: Kopfzeile, Inhalt, Fusszeile - jeweils bis zum Rand.
+import { t, icon } from './api.js';
 
-function build(title) {
+/**
+ * Rahmen eines Dialogs. Zurück kommt der Dialog selbst und der Mittelteil,
+ * in den der Aufrufer seinen Inhalt hängt.
+ */
+function build(title, iconName) {
     const dialog = document.createElement('dialog');
     dialog.className = 'mfx-dialog';
 
+    const head = document.createElement('header');
+    head.className = 'mfx-dialog-head';
+
+    if (iconName) {
+        head.appendChild(icon(iconName, 20));
+    }
+
     const heading = document.createElement('h2');
     heading.textContent = title;
-    dialog.appendChild(heading);
+    head.appendChild(heading);
 
-    return dialog;
+    const spacer = document.createElement('span');
+    spacer.className = 'mf-spacer';
+    head.appendChild(spacer);
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'mfx-btn mfx-dialog-close';
+    close.title = t('Close');
+    close.setAttribute('aria-label', t('Close'));
+    close.appendChild(icon('x', 14));
+    close.addEventListener('click', () => dialog.close());
+    head.appendChild(close);
+
+    const body = document.createElement('div');
+    body.className = 'mfx-dialog-body mfx-dialog-pad';
+
+    dialog.append(head, body);
+    return { dialog, body };
 }
 
 function actions(dialog, confirmLabel, danger, onConfirm) {
     const row = document.createElement('div');
-    row.className = 'mf-actions';
+    row.className = 'mf-actions mfx-dialog-foot';
 
     const confirm = document.createElement('button');
     confirm.type = 'button';
     confirm.className = 'mf-btn ' + (danger ? 'mf-btn-danger' : 'mf-btn-primary');
     confirm.textContent = confirmLabel;
+    // Ohne diese Vorgabe landet der Fokus beim Öffnen auf dem Schliessen-Kreuz.
+    confirm.autofocus = true;
     confirm.addEventListener('click', onConfirm);
 
     const cancel = document.createElement('button');
@@ -44,7 +75,7 @@ function actions(dialog, confirmLabel, danger, onConfirm) {
 /** Fragt einen Namen ab. Liefert null beim Abbrechen. */
 export function askName(title, label, value) {
     return new Promise(resolve => {
-        const dialog = build(title);
+        const { dialog, body } = build(title, 'pencil');
         let answered = null;
 
         const field = document.createElement('div');
@@ -58,7 +89,7 @@ export function askName(title, label, value) {
         input.type = 'text';
         input.value = value || '';
         field.appendChild(input);
-        dialog.appendChild(field);
+        body.appendChild(field);
 
         const confirm = () => {
             const name = input.value.trim();
@@ -102,7 +133,7 @@ const FILE_TYPES = ['.txt', '.md', '.json', '.xml', '.yml', '.csv', '.log', '.sh
  */
 export function askFileName(title, label, value) {
     return new Promise(resolve => {
-        const dialog = build(title);
+        const { dialog, body } = build(title, 'file-plus');
         let answered = null;
 
         const field = document.createElement('div');
@@ -116,7 +147,7 @@ export function askFileName(title, label, value) {
         input.type = 'text';
         input.value = value || '';
         field.appendChild(input);
-        dialog.appendChild(field);
+        body.appendChild(field);
 
         // Endung anklicken: der Name davor bleibt stehen.
         const chips = document.createElement('div');
@@ -143,7 +174,7 @@ export function askFileName(title, label, value) {
             chips.appendChild(chip);
         });
 
-        dialog.appendChild(chips);
+        body.appendChild(chips);
 
         const confirm = () => {
             const name = input.value.trim();
@@ -182,13 +213,16 @@ export function askFileName(title, label, value) {
 /** Sicherheitsabfrage. Liefert true, wenn bestätigt wurde. */
 export function askConfirm(title, message, confirmLabel, danger) {
     return new Promise(resolve => {
-        const dialog = build(title);
+        // Bewusst dasselbe Symbol wie bei Angaben: die Farbe des Knopfes sagt,
+        // wie ernst es ist - ein Warndreieck gibt es im Zeichensatz nicht.
+        const { dialog, body } = build(title, 'info');
         let answered = false;
 
         const text = document.createElement('p');
         text.className = 'mf-muted';
+        text.style.margin = '0';
         text.textContent = message;
-        dialog.appendChild(text);
+        body.appendChild(text);
 
         actions(dialog, confirmLabel, danger, () => {
             answered = true;
@@ -205,14 +239,13 @@ export function askConfirm(title, message, confirmLabel, danger) {
     });
 }
 
-/** Zeigt eine Liste aus Bezeichnung und Wert. */
 /**
  * Zeigt Angaben als Liste. Über `options.extra` kommt ein weiterer Abschnitt darunter,
  * über `options.action` ein zusätzlicher Knopf neben dem Schließen.
  */
 export function showFacts(title, facts, options) {
-    const dialog = build(title);
     const settings = options || {};
+    const { dialog, body } = build(title, settings.icon || 'info');
 
     const list = document.createElement('dl');
     list.className = 'mf-facts';
@@ -226,20 +259,21 @@ export function showFacts(title, facts, options) {
         list.appendChild(dd);
     });
 
-    dialog.appendChild(list);
+    body.appendChild(list);
 
     if (settings.extra) {
-        dialog.appendChild(settings.extra);
+        body.appendChild(settings.extra);
     }
 
     const row = document.createElement('div');
-    row.className = 'mf-actions';
+    row.className = 'mf-actions mfx-dialog-foot';
 
     if (settings.action) {
         const primary = document.createElement('button');
         primary.type = 'button';
         primary.className = 'mf-btn mf-btn-primary';
         primary.textContent = settings.action.label;
+        primary.autofocus = true;
         primary.addEventListener('click', () => settings.action.onClick(dialog));
         row.appendChild(primary);
     }
@@ -248,6 +282,7 @@ export function showFacts(title, facts, options) {
     close.type = 'button';
     close.className = settings.action ? 'mf-btn' : 'mf-btn mf-btn-primary';
     close.textContent = t('Close');
+    close.autofocus = !settings.action;
     close.addEventListener('click', () => dialog.close());
     row.appendChild(close);
     dialog.appendChild(row);

@@ -2379,11 +2379,6 @@ document.addEventListener('keydown', event => {
         return;
     }
 
-    // Im Suchfenster gelten seine eigenen Tasten, nicht die der Dateiliste.
-    if (event.target instanceof Element && event.target.closest('.mfx-window')) {
-        return;
-    }
-
     const tab = activeTab();
     if (!tab) {
         return;

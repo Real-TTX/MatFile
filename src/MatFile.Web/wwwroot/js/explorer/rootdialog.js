@@ -26,6 +26,18 @@ const FIELDS = {
     passive: ['Ftp']
 };
 
+/** Schliessen-Kreuz für die Kopfzeile - wie in den übrigen Dialogen. */
+function closeButton(dialog) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mfx-btn mfx-dialog-close';
+    button.title = t('Close');
+    button.setAttribute('aria-label', t('Close'));
+    button.appendChild(icon('x', 14));
+    button.addEventListener('click', () => dialog.close());
+    return button;
+}
+
 function field(label, control, hint) {
     const wrapper = document.createElement('div');
     wrapper.className = 'mf-field';
@@ -110,6 +122,8 @@ function browseRemote(connection, startPath) {
         head.className = 'mfx-dialog-head';
         head.appendChild(icon('folder', 20));
         head.appendChild(Object.assign(document.createElement('h2'), { textContent: t('ChooseFolder') }));
+        head.appendChild(Object.assign(document.createElement('span'), { className: 'mf-spacer' }));
+        head.appendChild(closeButton(dialog));
         dialog.appendChild(head);
 
         const crumb = document.createElement('div');
@@ -243,6 +257,8 @@ export function openRootDialog(root, preferRemote) {
 
         const title = document.createElement('h2');
         head.appendChild(title);
+        head.appendChild(Object.assign(document.createElement('span'), { className: 'mf-spacer' }));
+        head.appendChild(closeButton(dialog));
         dialog.appendChild(head);
 
         // Mittelteil scrollt, Kopf und Fuss bleiben stehen.
