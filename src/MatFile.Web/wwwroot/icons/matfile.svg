@@ -6,27 +6,17 @@
       <stop offset="0.55" stop-color="#3b82f6" />
       <stop offset="1" stop-color="#4f46e5" />
     </linearGradient>
-    <linearGradient id="mf-front" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" />
-      <stop offset="1" stop-color="#e6edf7" />
-    </linearGradient>
   </defs>
 
   <rect width="512" height="512" rx="112" fill="url(#mf-bg)" />
 
-  <!-- Ordner-Rückwand -->
-  <path d="M88 176c0-17.7 14.3-32 32-32h88l40 44h144c17.7 0 32 14.3 32 32v28H88z"
-        fill="#ffffff" opacity="0.45" />
+  <!-- Angedeuteter Ordner hinter dem Buchstaben: die Herkunft bleibt sichtbar,
+       das Zeichen selbst ist aber das M. -->
+  <path d="M96 168c0-13.3 10.7-24 24-24h72l32 36h192c13.3 0 24 10.7 24 24v180c0 13.3-10.7 24-24 24H120c-13.3 0-24-10.7-24-24z"
+        fill="#ffffff" opacity="0.18" />
 
-  <!-- Blatt, das aus dem Ordner schaut -->
-  <path d="M206 132h74l50 50v106H206z" fill="#ffffff" />
-  <path d="M280 132l50 50h-50z" fill="#c7d5ea" />
-  <g fill="#9db3d1">
-    <rect x="232" y="196" width="72" height="12" rx="6" />
-    <rect x="232" y="226" width="52" height="12" rx="6" />
-  </g>
-
-  <!-- Ordner-Vorderseite -->
-  <path d="M88 232h336c17.7 0 32 14.3 32 32v96c0 17.7-14.3 32-32 32H120c-17.7 0-32-14.3-32-32z"
-        fill="url(#mf-front)" />
+  <!-- M in einem Zug gezeichnet - keine Schrift nötig, also überall gleich. -->
+  <path d="M152 372V186l104 104 104-104v186"
+        fill="none" stroke="#ffffff" stroke-width="52"
+        stroke-linecap="round" stroke-linejoin="round" />
 </svg>
