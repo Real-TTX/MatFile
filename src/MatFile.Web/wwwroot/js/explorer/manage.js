@@ -651,6 +651,7 @@ function systemSection(view) {
         const attempts = numberBox(data.loginMaxFailedAttempts, 1, 50);
         const lockout = numberBox(data.loginLockoutMinutes, 1, 1440);
         const lifetime = numberBox(data.sessionLifetimeDays, 1, 365);
+        const perMinute = numberBox(data.loginAttemptsPerMinute, 3, 1000);
 
         const secure = check(t('System.SecureCookie'), data.requireSecureCookie);
         const firstLogin = check(t('System.FirstLogin'), data.requirePasswordChangeOnFirstLogin);
@@ -679,6 +680,7 @@ function systemSection(view) {
                 field(t('System.SessionLifetime'), lifetime, t('System.SessionLifetimeHint')),
                 field(t('System.MaxFailedAttempts'), attempts, t('System.MaxFailedAttemptsHint')),
                 field(t('System.LockoutMinutes'), lockout, t('System.LockoutMinutesHint')),
+                field(t('System.AttemptsPerMinute'), perMinute, t('System.AttemptsPerMinuteHint')),
                 field(t('System.Security'), checkColumn([secure, firstLogin]), t('System.RestartHint'), true)),
             facts);
 
@@ -688,6 +690,7 @@ function systemSection(view) {
                     sessionLifetimeDays: Number(lifetime.value) || 14,
                     loginMaxFailedAttempts: Number(attempts.value) || 5,
                     loginLockoutMinutes: Number(lockout.value) || 15,
+                    loginAttemptsPerMinute: Number(perMinute.value) || 20,
                     minPasswordLength: Number(minLength.value) || 8,
                     requireSecureCookie: secure.input.checked,
                     requirePasswordChangeOnFirstLogin: firstLogin.input.checked
@@ -910,13 +913,102 @@ function rootsSection(view) {
     list();
 }
 
+// ---------------------------------------------------------------- Protokoll
+
+/**
+ * Was ist wann passiert - über alle Speicherorte hinweg. Nur zum Lesen;
+ * Einträge entstehen bei den Aktionen selbst.
+ */
+function activitySection(view) {
+    let search = '';
+    let action = '';
+    let rootId = '';
+    let page = 1;
+
+    async function list() {
+        view.title.textContent = t('Activity.Title');
+
+        let data;
+
+        try {
+            data = await api.activityLog({ search, action, rootId, page });
+        } catch (error) {
+            showError(error);
+            return;
+        }
+
+        const roots = new Map((data.roots || []).map(root => [root.id, root.name]));
+
+        const columns = [
+            { label: t('Activity.When'), cell: row => formatDate(row.date) },
+            { label: t('Activity.Who'), cell: row => row.user || row.username || '–' },
+            { label: t('Activity.What'), cell: row => t('Action' + row.action, row.action) },
+            { label: t('Activity.Where'), cell: row => roots.get(row.rootId) || '–' },
+            {
+                label: t('Path'),
+                cell: row => {
+                    const path = document.createElement('code');
+                    path.className = 'mf-mono';
+                    path.textContent = row.path || '/';
+                    return path;
+                }
+            }
+        ];
+
+        view.body.replaceChildren(
+            toolbar(value => { search = value; page = 1; list(); }, [
+                choice(data.actions, action, t('Activity.AllActions'), value => {
+                    action = value;
+                    page = 1;
+                    list();
+                }, value => t('Action' + value, value)),
+                choice((data.roots || []).map(root => String(root.id)), rootId, t('Activity.AllRoots'), value => {
+                    rootId = value;
+                    page = 1;
+                    list();
+                }, value => roots.get(Number(value)) || value)
+            ]),
+            tableOf(columns, data.items, null, t('Activity.Empty')),
+            pager(data, target => { page = target; list(); }));
+
+        view.foot.replaceChildren(
+            button(t('Refresh'), 'mf-btn', () => list(), 'refresh'),
+            button(t('Close'), 'mf-btn', () => view.dialog.close()));
+    }
+
+    list();
+}
+
+/** Auswahlfeld für die Filterleiste - erster Eintrag steht für „alle". */
+function choice(values, selected, allLabel, onChange, labelOf) {
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', allLabel);
+
+    const all = document.createElement('option');
+    all.value = '';
+    all.textContent = allLabel;
+    select.appendChild(all);
+
+    (values || []).forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = labelOf ? labelOf(value) : value;
+        option.selected = String(selected) === String(value);
+        select.appendChild(option);
+    });
+
+    select.addEventListener('change', () => onChange(select.value));
+    return select;
+}
+
 // ---------------------------------------------------------------- Einstieg
 
 const SECTIONS = [
     { key: 'users', right: 'manageUsers', icon: 'users', label: 'Admin.Users', open: usersSection },
     { key: 'roles', right: 'manageRoles', icon: 'shield', label: 'Admin.Roles', open: rolesSection },
     { key: 'roots', right: 'manageRoots', icon: 'hard', label: 'Admin.Roots', open: rootsSection },
-    { key: 'system', right: 'manageSettings', icon: 'settings', label: 'System.Title', open: systemSection }
+    { key: 'system', right: 'manageSettings', icon: 'settings', label: 'System.Title', open: systemSection },
+    { key: 'activity', right: 'viewActivityLog', icon: 'clock', label: 'Activity.Title', open: activitySection }
 ];
 
 /**

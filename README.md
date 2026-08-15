@@ -15,8 +15,9 @@ keinen komfortablen Zugriff auf Dateien bieten.
 - **Zugriffsrechte** (rwx für Besitzer, Gruppe, Andere) über *Eigenschaften* setzen –
   bei lokalen Pfaden, SFTP und FTP; SMB und WebDAV kennen sie nicht
 - Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
-- **Administrationsbereich** im Explorer: Benutzer, Rollen, Speicherorte und
-  Systemeinstellungen in einem Fenster, erreichbar über die Menüleiste
+- **Administrationsbereich** im Explorer: Benutzer, Rollen, Speicherorte,
+  Systemeinstellungen und **Protokoll** in einem Fenster, erreichbar über die Menüleiste
+- **Rate-Limit** für Anmeldeversuche zusätzlich zur Kontosperre
 - Oberfläche in **Englisch (Standard)** und **Deutsch**, im UI umschaltbar
 
 Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
@@ -77,14 +78,18 @@ Sprache…* in der Menüleiste) lässt sich Deutsch wählen – die Auswahl wird
 gespeichert. Direkt darunter steht die laufende Version.
 
 Verwaltet wird alles im **Administrationsbereich**: *Administration* in der Menüleiste über
-den Tabs öffnet ein Fenster mit den Bereichen **Benutzer, Rollen, Speicherorte und
-Systemeinstellungen**. Der Punkt erscheint nur mit mindestens einem Verwaltungsrecht, und die
-Spalte zeigt genau die Bereiche, für die das Recht da ist.
+den Tabs öffnet ein Fenster mit den Bereichen **Benutzer, Rollen, Speicherorte,
+Systemeinstellungen und Protokoll**. Der Punkt erscheint nur mit mindestens einem
+Verwaltungsrecht, und die Spalte zeigt genau die Bereiche, für die das Recht da ist.
 
 Die **Systemeinstellungen** (Recht `ManageSettings`) gelten für alle: Mindestlänge für
-Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer, HTTPS-Cookie und der
-Kennwortwechsel beim ersten Start. Sie landen in `/data/config/matfile.json`; Mindestlänge
-und Sperre wirken sofort, Cookie und Sitzungsdauer nach einem Neustart des Containers.
+Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer, Anmeldeversuche je Minute,
+HTTPS-Cookie und der Kennwortwechsel beim ersten Start. Sie landen in
+`/data/config/matfile.json`; Mindestlänge und Kontosperre wirken sofort, Cookie, Sitzungsdauer
+und Rate-Limit nach einem Neustart des Containers.
+
+Das **Protokoll** (Recht `ViewActivityLog`) zeigt, wer wann was gemacht hat – über alle
+Speicherorte, mit Suche und Filtern nach Aktion und Speicherort.
 
 Das Volume `/data` enthält:
 

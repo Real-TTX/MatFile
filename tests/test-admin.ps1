@@ -94,6 +94,11 @@ Add-Result "Ohne Anmeldung gesperrt" ($unauth.Status -eq 401) "status=$($unauth.
 $unauthSystem = Get-MatJson "$BaseUrl/api/system" $anon
 Add-Result "Systemeinstellungen ohne Anmeldung gesperrt" ($unauthSystem.Status -eq 401) "status=$($unauthSystem.Status)"
 
+$deniedLog = Get-MatJson "$BaseUrl/api/activity" $tester
+Add-Result "Protokoll ohne Recht gesperrt" ($deniedLog.Status -eq 403) "status=$($deniedLog.Status)"
+$unauthLog = Get-MatJson "$BaseUrl/api/activity" $anon
+Add-Result "Protokoll ohne Anmeldung gesperrt" ($unauthLog.Status -eq 401) "status=$($unauthLog.Status)"
+
 # --- Rollen ---------------------------------------------------------------
 $roleList = Get-MatJson "$BaseUrl/api/roles" $admin
 $roleNames = $roleList.Data.items | ForEach-Object { $_.name }
@@ -220,6 +225,31 @@ Add-Result "Werte auf gueltigen Bereich begrenzt" (
 $restored = Send-MatJson 'Put' "$BaseUrl/api/system" $admin $defaults
 Add-Result "Systemeinstellungen zurueckgesetzt" (
     $restored.Status -eq 200 -and $restored.Data.minPasswordLength -eq 8) "status=$($restored.Status)"
+
+# --- Protokoll ------------------------------------------------------------
+$log = Get-MatJson "$BaseUrl/api/activity?pageSize=10" $admin
+$actions = $log.Data.items | ForEach-Object { $_.action }
+Add-Result "Protokoll lesbar" (
+    $log.Status -eq 200 -and $log.Data.total -ge 1 -and $actions -contains 'Login') "total=$($log.Data.total)"
+Add-Result "Protokoll seitenweise" (
+    @($log.Data.items).Count -le 10 -and $log.Data.page -eq 1 -and $log.Data.pageCount -ge 1) "seiten=$($log.Data.pageCount)"
+Add-Result "Auswahl fuer die Filter" (
+    $log.Data.actions -contains 'Login' -and $null -ne $log.Data.roots) "aktionen=$($log.Data.actions.Count)"
+
+$newest = $log.Data.items[0].date
+$older = $log.Data.items[-1].date
+Add-Result "Neueste zuerst" ([datetime]$newest -ge [datetime]$older) "$newest >= $older"
+
+$filtered = Get-MatJson "$BaseUrl/api/activity?action=Login" $admin
+$onlyLogin = @($filtered.Data.items | Where-Object { $_.action -ne 'Login' }).Count
+Add-Result "Nach Aktion gefiltert" (
+    $filtered.Status -eq 200 -and $filtered.Data.total -ge 1 -and $onlyLogin -eq 0) "fremde=$onlyLogin"
+
+$nothing = Get-MatJson "$BaseUrl/api/activity?action=GibtsNicht" $admin
+Add-Result "Filter ohne Treffer" ($nothing.Data.total -eq 0 -and @($nothing.Data.items).Count -eq 0) "total=$($nothing.Data.total)"
+
+$byUser = Get-MatJson "$BaseUrl/api/activity?search=admin" $admin
+Add-Result "Suche im Protokoll" ($byUser.Status -eq 200 -and $byUser.Data.total -ge 1) "total=$($byUser.Data.total)"
 
 # --- Sprache --------------------------------------------------------------
 $page = Invoke-WebRequest "$BaseUrl/" -WebSession $admin -UseBasicParsing

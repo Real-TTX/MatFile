@@ -123,6 +123,8 @@
   <data name="Error.ForbiddenTitle"><value>Access denied</value></data>
   <data name="Error.ForbiddenMessage"><value>You do not have the required permissions for this area.</value></data>
   <data name="Error.CodeTitle"><value>Error {0}</value></data>
+  <data name="Error.TooManyTitle"><value>Too many attempts</value></data>
+  <data name="Error.TooManyMessage"><value>Too many sign-in attempts were made. Please wait a minute and try again.</value></data>
   <data name="Error.RequestId"><value>Request id</value></data>
   <data name="Error.Home"><value>Go to start page</value></data>
 
@@ -139,6 +141,14 @@
 
   <data name="Admin.Title"><value>Administration</value></data>
   <data name="Admin.Users"><value>Users</value></data>
+  <data name="Activity.Title"><value>Activity log</value></data>
+  <data name="Activity.When"><value>When</value></data>
+  <data name="Activity.Who"><value>Who</value></data>
+  <data name="Activity.What"><value>Action</value></data>
+  <data name="Activity.Where"><value>Storage location</value></data>
+  <data name="Activity.AllActions"><value>All actions</value></data>
+  <data name="Activity.AllRoots"><value>All storage locations</value></data>
+  <data name="Activity.Empty"><value>No entries.</value></data>
   <data name="Admin.Roles"><value>Roles</value></data>
 
   <data name="Pagination.Label"><value>Pagination</value></data>
@@ -207,6 +217,8 @@
   <data name="System.MaxFailedAttemptsHint"><value>After that the account is locked temporarily.</value></data>
   <data name="System.LockoutMinutes"><value>Lockout duration in minutes</value></data>
   <data name="System.LockoutMinutesHint"><value>After this time sign-in is possible again.</value></data>
+  <data name="System.AttemptsPerMinute"><value>Sign-in attempts per minute</value></data>
+  <data name="System.AttemptsPerMinuteHint"><value>Per sender, across all accounts. Applies after a restart.</value></data>
   <data name="System.Security"><value>Security</value></data>
   <data name="System.SecureCookie"><value>Send the session cookie over HTTPS only</value></data>
   <data name="System.FirstLogin"><value>Require a password change for the seeded account on first start</value></data>

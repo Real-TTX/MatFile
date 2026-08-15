@@ -1485,6 +1485,17 @@
     flex: 0 1 280px;
 }
 
+/* Filter der Protokollansicht - gleiche Höhe wie das Suchfeld daneben. */
+.mfx-manage-toolbar select {
+    height: 34px;
+    padding: 0 var(--mf-space-2);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface);
+    color: var(--mf-text);
+    font: inherit;
+}
+
 .mfx-manage-toolbar .mfx-search input {
     width: 100%;
 }

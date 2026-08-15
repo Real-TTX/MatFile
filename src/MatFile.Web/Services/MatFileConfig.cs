@@ -14,6 +14,12 @@ public sealed class MatFileSettings
     /// <summary>Dauer der Kontosperre in Minuten.</summary>
     public int LoginLockoutMinutes { get; set; } = 15;
 
+    /// <summary>
+    /// Anmeldeversuche je Minute und Absender. Greift vor der Kennwortprüfung und
+    /// bremst damit auch das Durchprobieren vieler verschiedener Konten.
+    /// </summary>
+    public int LoginAttemptsPerMinute { get; set; } = 20;
+
     /// <summary>Mindestlänge für Kennwörter.</summary>
     public int MinPasswordLength { get; set; } = 8;
 

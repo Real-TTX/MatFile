@@ -13,6 +13,7 @@ public static class SystemEndpoints
         int SessionLifetimeDays,
         int LoginMaxFailedAttempts,
         int LoginLockoutMinutes,
+        int LoginAttemptsPerMinute,
         int MinPasswordLength,
         bool RequireSecureCookie,
         bool RequirePasswordChangeOnFirstLogin);
@@ -30,6 +31,7 @@ public static class SystemEndpoints
                 settings.SessionLifetimeDays,
                 settings.LoginMaxFailedAttempts,
                 settings.LoginLockoutMinutes,
+                settings.LoginAttemptsPerMinute,
                 settings.MinPasswordLength,
                 settings.RequireSecureCookie,
                 settings.RequirePasswordChangeOnFirstLogin,
@@ -52,6 +54,7 @@ public static class SystemEndpoints
             settings.SessionLifetimeDays = Math.Clamp(request.SessionLifetimeDays, 1, 365);
             settings.LoginMaxFailedAttempts = Math.Clamp(request.LoginMaxFailedAttempts, 1, 50);
             settings.LoginLockoutMinutes = Math.Clamp(request.LoginLockoutMinutes, 1, 1440);
+            settings.LoginAttemptsPerMinute = Math.Clamp(request.LoginAttemptsPerMinute, 3, 1000);
             settings.MinPasswordLength = Math.Clamp(request.MinPasswordLength, 4, 128);
             settings.RequireSecureCookie = request.RequireSecureCookie;
             settings.RequirePasswordChangeOnFirstLogin = request.RequirePasswordChangeOnFirstLogin;
@@ -63,6 +66,7 @@ public static class SystemEndpoints
                 settings.SessionLifetimeDays,
                 settings.LoginMaxFailedAttempts,
                 settings.LoginLockoutMinutes,
+                settings.LoginAttemptsPerMinute,
                 settings.MinPasswordLength,
                 settings.RequireSecureCookie,
                 settings.RequirePasswordChangeOnFirstLogin

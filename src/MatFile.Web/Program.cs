@@ -1,5 +1,6 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using System.Threading.RateLimiting;
 using MatFile.Web;
 using MatFile.Web.Api;
 using MatFile.Web.Data;
@@ -139,6 +140,42 @@ builder.Services.AddRazorPages(options =>
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
 });
 
+// Anmeldeversuche begrenzen: die Kontosperre schützt ein Konto, das hier bremst den
+// Absender - also auch das Durchprobieren vieler verschiedener Benutzernamen.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        if (!HttpMethods.IsPost(context.Request.Method) || !IsLoginPath(context.Request.Path))
+        {
+            return RateLimitPartition.GetNoLimiter("frei");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(ClientKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = Math.Clamp(settings.LoginAttemptsPerMinute, 3, 1000),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+
+    options.OnRejected = (context, _) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        return ValueTask.CompletedTask;
+    };
+});
+
+static bool IsLoginPath(PathString path)
+    => path.StartsWithSegments("/Login") || path.StartsWithSegments("/Account/ChangePassword");
+
+// Hinter einem Reverse-Proxy steht die echte Adresse in X-Forwarded-For; darum kümmert
+// sich UseForwardedHeaders, das vor dem Limiter läuft.
+static string ClientKey(HttpContext context)
+    => context.Connection.RemoteIpAddress?.ToString() ?? "unbekannt";
+
 // MatFile läuft typischerweise hinter einem Reverse-Proxy des NAS.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -157,6 +194,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/Error", "?code={0}");
+app.UseRateLimiter();
 app.UseRouting();
 app.UseRequestLocalization();
 app.UseAuthentication();
@@ -198,6 +236,7 @@ app.MapRootManagementEndpoints();
 app.MapSearchEndpoints();
 app.MapAdminEndpoints();
 app.MapSystemEndpoints();
+app.MapActivityEndpoints();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {

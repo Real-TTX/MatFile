@@ -24,6 +24,12 @@ public class ErrorModel : PageModel
     public string Title { get; private set; } = string.Empty;
     public string Message { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// Scheitert ein POST (etwa ein gebremster Anmeldeversuch), führt die Fehlerseite
+    /// die ursprüngliche Methode aus - sonst bliebe die Seite ohne Text.
+    /// </summary>
+    public void OnPost() => OnGet();
+
     public void OnGet()
     {
         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
@@ -41,6 +47,10 @@ public class ErrorModel : PageModel
             case 403:
                 Title = _text["Error.ForbiddenTitle"];
                 Message = _text["Error.ForbiddenMessage"];
+                break;
+            case 429:
+                Title = _text["Error.TooManyTitle"];
+                Message = _text["Error.TooManyMessage"];
                 break;
             default:
                 if (ErrorCode.HasValue)

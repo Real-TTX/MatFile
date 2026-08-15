@@ -123,6 +123,8 @@
   <data name="Error.ForbiddenTitle"><value>Kein Zugriff</value></data>
   <data name="Error.ForbiddenMessage"><value>Für diesen Bereich fehlen die nötigen Rechte.</value></data>
   <data name="Error.CodeTitle"><value>Fehler {0}</value></data>
+  <data name="Error.TooManyTitle"><value>Zu viele Versuche</value></data>
+  <data name="Error.TooManyMessage"><value>Es wurden zu viele Anmeldeversuche unternommen. Bitte eine Minute warten und es dann erneut versuchen.</value></data>
   <data name="Error.RequestId"><value>Request-Id</value></data>
   <data name="Error.Home"><value>Zur Startseite</value></data>
 
@@ -139,6 +141,14 @@
 
   <data name="Admin.Title"><value>Verwaltung</value></data>
   <data name="Admin.Users"><value>Benutzer</value></data>
+  <data name="Activity.Title"><value>Protokoll</value></data>
+  <data name="Activity.When"><value>Wann</value></data>
+  <data name="Activity.Who"><value>Wer</value></data>
+  <data name="Activity.What"><value>Aktion</value></data>
+  <data name="Activity.Where"><value>Speicherort</value></data>
+  <data name="Activity.AllActions"><value>Alle Aktionen</value></data>
+  <data name="Activity.AllRoots"><value>Alle Speicherorte</value></data>
+  <data name="Activity.Empty"><value>Keine Einträge.</value></data>
   <data name="Admin.Roles"><value>Rollen</value></data>
 
   <data name="Pagination.Label"><value>Seitenwechsel</value></data>
@@ -207,6 +217,8 @@
   <data name="System.MaxFailedAttemptsHint"><value>Danach ist das Konto vorübergehend gesperrt.</value></data>
   <data name="System.LockoutMinutes"><value>Sperrdauer in Minuten</value></data>
   <data name="System.LockoutMinutesHint"><value>Danach ist die Anmeldung wieder möglich.</value></data>
+  <data name="System.AttemptsPerMinute"><value>Anmeldeversuche je Minute</value></data>
+  <data name="System.AttemptsPerMinuteHint"><value>Je Absender, über alle Konten. Gilt nach einem Neustart.</value></data>
   <data name="System.Security"><value>Sicherheit</value></data>
   <data name="System.SecureCookie"><value>Sitzungscookie nur über HTTPS senden</value></data>
   <data name="System.FirstLogin"><value>Kennwortwechsel für das mitgelieferte Konto beim ersten Start verlangen</value></data>

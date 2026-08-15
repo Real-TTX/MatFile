@@ -128,6 +128,9 @@ export const api = {
     permissions: (rootId, path) => request('/api/fs/permissions' + queryString({ rootId, path })),
     savePermissions: (rootId, path, mode) => send('/api/fs/permissions', 'PUT', { rootId, path, mode }),
 
+    // Das ganze Protokoll; api.activity oben liefert nur den einzelnen Eintrag.
+    activityLog: query => request('/api/activity' + queryString(query)),
+
     system: () => request('/api/system'),
     saveSystem: data => send('/api/system', 'PUT', data),
 
@@ -234,6 +237,7 @@ const icons = {
     pencil: "<path d='M12 20h9'/><path d='M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'/>",
     trash: "<polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/>",
     refresh: "<polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/>",
+    clock: "<circle cx='12' cy='12' r='10'/><polyline points='12 6 12 12 16 14'/>",
     hard: "<line x1='22' y1='12' x2='2' y2='12'/><path d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/>",
     server: "<rect x='2' y='2' width='20' height='8' rx='2'/><rect x='2' y='14' width='20' height='8' rx='2'/><line x1='6' y1='6' x2='6.01' y2='6'/><line x1='6' y1='18' x2='6.01' y2='18'/>",
     cloud: "<path d='M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z'/>",

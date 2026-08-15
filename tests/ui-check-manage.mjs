@@ -331,7 +331,48 @@ await evaluate(`(() => {
 })()`);
 await sleep(1200);
 
-console.log(JSON.stringify({ menu, sections, users, formView, afterCreate, afterDelete, roles, systemRole, locations, access, afterAccess, systemDialog, systemFlash, systemAgain, consoleErrors }, null, 2));
+// Protokoll: Tabelle, Filter, Blaetterleiste
+await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-admin');
+    [...box.querySelectorAll('.mfx-admin-item')]
+        .find(b => /^(Protokoll|Activity log)/.test(b.textContent.trim())).click();
+    return true;
+})()`);
+await sleep(1500);
+
+const activity = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-admin');
+    return {
+        title: box.querySelector('.mfx-admin-title')?.textContent,
+        columns: [...box.querySelectorAll('.mf-table thead th')].map(e => e.textContent),
+        rows: box.querySelectorAll('.mf-table tbody tr').length,
+        filters: [...box.querySelectorAll('.mfx-manage-toolbar select')].map(s => s.options.length),
+        pager: box.querySelector('.mfx-manage-pager')?.textContent?.trim(),
+        footButtons: [...box.querySelectorAll('.mfx-manage-foot .mf-btn')].map(b => b.textContent.trim())
+    };
+})()`);
+
+// Nach einer Aktion filtern: es duerfen nur noch deren Zeilen stehen
+const filtered = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-admin');
+    const select = box.querySelector('.mfx-manage-toolbar select');
+    const option = [...select.options].find(o => o.value === 'Login') || select.options[1];
+    select.value = option.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return option.value;
+})()`);
+await sleep(1200);
+
+const afterFilter = await evaluate(`(() => {
+    const box = document.querySelector('dialog.mfx-admin');
+    const actions = [...box.querySelectorAll('.mf-table tbody tr')].map(r => r.children[2]?.textContent.trim());
+    return { rows: actions.length, distinct: [...new Set(actions)] };
+})()`);
+
+const shot5 = await send('Page.captureScreenshot', { format: 'png' });
+writeFileSync(OUT.replace(/\.png$/, '-activity.png'), Buffer.from(shot5.data, 'base64'));
+
+console.log(JSON.stringify({ menu, sections, users, formView, afterCreate, afterDelete, roles, systemRole, locations, access, afterAccess, systemDialog, systemFlash, systemAgain, activity, filtered, afterFilter, consoleErrors }, null, 2));
 
 socket.close();
 edge.kill();

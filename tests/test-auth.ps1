@@ -162,6 +162,36 @@ $anon = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $h2 = Invoke-RestMethod "$BaseUrl/healthz" -WebSession $anon
 Add-Result "healthz anonym" ($h2.status -eq 'healthy' -and $h2.databaseReady -eq $true) "status=$($h2.status)"
 
+# 14. Anmeldeversuche je Minute begrenzt.
+# Steht bewusst am Ende: danach ist die Anmeldung fuer diese Adresse eine Minute
+# lang gebremst. Der Benutzername existiert nicht - so wird kein Konto gesperrt.
+$flood = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$page = Invoke-WebRequest "$BaseUrl/Login" -WebSession $flood -UseBasicParsing
+$token = Get-Token $page.Content
+$body = "__RequestVerificationToken=$([System.Uri]::EscapeDataString($token))&Input.Username=gibtsnicht&Input.Password=egal"
+$codes = @()
+
+for ($i = 0; $i -lt 25; $i++) {
+    try {
+        $attempt = Invoke-WebRequest "$BaseUrl/Login" -Method Post -WebSession $flood -UseBasicParsing `
+            -Body $body -ContentType 'application/x-www-form-urlencoded'
+        $codes += [int]$attempt.StatusCode
+    } catch {
+        $codes += [int]$_.Exception.Response.StatusCode
+        $blocked = $_.Exception.Response
+    }
+}
+
+$limited = @($codes | Where-Object { $_ -eq 429 }).Count
+Add-Result "Anmeldeversuche begrenzt" ($limited -ge 1) "$limited von $($codes.Count) abgewiesen"
+Add-Result "Hinweis auf Wartezeit" ($blocked -and $blocked.Headers['Retry-After'] -eq '60') "Retry-After=$($blocked.Headers['Retry-After'])"
+
+$stillOpen = Invoke-WebRequest "$BaseUrl/Login" -WebSession $flood -UseBasicParsing
+Add-Result "Anmeldeseite bleibt erreichbar" ($stillOpen.StatusCode -eq 200) "status=$($stillOpen.StatusCode)"
+
+$stillHealthy = Invoke-RestMethod "$BaseUrl/healthz"
+Add-Result "Andere Aufrufe ungebremst" ($stillHealthy.status -eq 'healthy') "status=$($stillHealthy.status)"
+
 Write-Host ""
 $failed = @($results | Where-Object { -not $_.OK })
 Write-Host "Ergebnis: $($results.Count - $failed.Count)/$($results.Count) bestanden"

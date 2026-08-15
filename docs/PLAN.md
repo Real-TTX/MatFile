@@ -108,6 +108,11 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 - **Credentials** der Remote-Verbindungen mit ASP.NET DataProtection verschlüsselt;
   Keys im Volume → überleben Restart. Session-Mounts speichern *nie* Zugangsdaten in der DB.
 - **Login-Rate-Limit** + Lockout, Anti-Forgery auf allen POSTs, Secure/HttpOnly/SameSite-Cookie.
+  Beides greift auf verschiedenen Ebenen: Die **Kontosperre** schützt ein einzelnes Konto nach
+  zu vielen Fehlversuchen, das **Rate-Limit** bremst den Absender (POST auf `/Login` und
+  `/Account/ChangePassword`, Standard 20 je Minute) – damit auch das Durchprobieren vieler
+  verschiedener Benutzernamen. Abgewiesene Versuche bekommen 429 mit `Retry-After: 60` und
+  die Fehlerseite; alles andere bleibt ungebremst.
 - **Autorisierung** zweistufig: Rolle (globale Fähigkeiten) → `RootAccess` (pro Root/Mount).
 - Upload-Größenlimit, MIME-Sniffing-Schutz (`X-Content-Type-Options`), Downloads immer
   mit `Content-Disposition: attachment` außer bei explizitem Preview.
@@ -158,7 +163,7 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
 
 Die Verwaltung sitzt in **einem Administrationsbereich**: ein Fenster, das der Punkt
 *Administration* in der Menüleiste öffnet, mit einer Spalte links (Benutzer, Rollen,
-Speicherorte, Systemeinstellungen) und der jeweiligen Ansicht rechts. Es gibt weder
+Speicherorte, Systemeinstellungen, Protokoll) und der jeweiligen Ansicht rechts. Es gibt weder
 eigene Adminseiten noch verteilte Einzeldialoge – die Verwaltung bleibt im Explorer,
 aber an einer Stelle. Der Punkt erscheint nur, wenn der Benutzer mindestens eines der
 Verwaltungsrechte hat; die Spalte zeigt genau die Bereiche, die er benutzen darf.
@@ -328,7 +333,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
-| **M9** | Härtung: Rate-Limit, ActivityLog, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
+| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
 
 ---
 
@@ -365,7 +370,11 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   Server die Rechte im Listing mitschickt. SMB und WebDAV kennen kein solches Modell;
   dort meldet die API `supported: false` und der Dialog zeigt den Abschnitt gar nicht erst.
   Ändern setzt `CanWrite` am Speicherort voraus und landet im Protokoll.
-- **Systemeinstellungen** (`ManageSettings`, Dialog unter *Einstellungen*) schreiben
+- **Protokoll** (`ViewActivityLog`, Bereich in der Administration) zeigt alle Einträge des
+  `ActivityLog` über sämtliche Speicherorte, neueste zuerst, mit Suche und Filtern nach
+  Aktion und Speicherort. Geschrieben werden die Einträge weiterhin dort, wo die Aktion
+  passiert; die Ansicht liest nur.
+- **Systemeinstellungen** (`ManageSettings`, Bereich in der Administration) schreiben
   `matfile.json` zur Laufzeit: Mindestlänge für Kennwörter, Sitzungsdauer, Fehlversuche
   und Sperrdauer, HTTPS-Cookie, Kennwortwechsel beim ersten Start. Werte werden serverseitig
   auf gültige Bereiche begrenzt. Was aus der Datenbank kommt (Kennwortprüfung, Sperre),
