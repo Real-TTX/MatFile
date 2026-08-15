@@ -71,6 +71,15 @@ jobs:
       - name: Build & Test
         run: |
           dotnet build MatFile.slnx -c Release -p:MatFileVersion=${{ steps.version.outputs.version }}
+          dotnet test MatFile.slnx -c Release --no-build --logger "trx;LogFileName=tests.trx"
+
+      - name: Testergebnis sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testergebnis
+          path: '**/TestResults/*.trx'
+          if-no-files-found: ignore
 
       - name: Buildx einrichten
         uses: docker/setup-buildx-action@v3

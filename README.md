@@ -39,7 +39,8 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M7b | NFS über OS-Mount, Mounts nur für die Sitzung | offen |
 | M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
 
-Integrationstests gegen den laufenden Container: siehe [tests/README.md](tests/README.md).
+Unit-Tests (`dotnet test MatFile.slnx`) und Integrationstests gegen den laufenden Container:
+siehe [tests/README.md](tests/README.md).
 
 ## Schnellstart
 
@@ -121,6 +122,12 @@ Lokal ohne Docker:
 
 ```bash
 dotnet run --project src/MatFile.Web
+```
+
+Die Unit-Tests brauchen keinen Container:
+
+```powershell
+dotnet test MatFile.slnx
 ```
 
 Die Integrationstests laufen auf einem **eigenen Stack** (Port 2223, eigenes Volume), damit

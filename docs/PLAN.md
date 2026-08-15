@@ -333,7 +333,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
-| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, Limits, Fehlerseiten, README/Doku, Tests der Kern-Services | Release-fähig |
+| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, Limits, Fehlerseiten, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |
 
 ---
 

@@ -1,3 +1,27 @@
+# Tests
+
+## Unit-Tests (ohne Container)
+
+`MatFile.Tests` prüft die Bausteine, die für sich allein entscheidbar sind – vor allem
+die Pfadprüfung, an der hängt, ob ein Ausbruch aus einem Speicherort möglich ist.
+
+```powershell
+dotnet test MatFile.slnx
+```
+
+| Datei | Prüft |
+|---|---|
+| `PathGuardTests.cs` | Normalisierung, Eltern- und Namensregeln, Auflösung gegen den Speicherort, blockierte Ausbrüche über `..` und absolute Pfade, **Speicherort auf der Wurzel** |
+| `RemotePathTests.cs` | Basispfad der Gegenstelle vereinheitlichen und zusammensetzen, blockierte Ausbrüche |
+| `PermissionModeTests.cs` | Bitmuster ↔ Oktalschreibweise der Zugriffsrechte, Sonderbits bleiben aussen vor, Grenzen |
+| `PreviewPolicyTests.cs` | Welche Endung als was gilt und was **nie inline** ausgeliefert wird (HTML, SVG) |
+| `ConnectionSettingsTests.cs` | JSON lesen/schreiben inkl. kaputter Datei, Standardports je Protokoll |
+| `ConfigStoreTests.cs` | Standardwerte beim ersten Start, Speichern und Wiederlesen, kaputte oder unbekannte Einträge |
+| `PasswordHasherTests.cs` | PBKDF2-Format, eigenes Salz je Hash, abgelehnte Fremdformate |
+| `RootPermissionsTests.cs` | Rechte mehrerer Rollen addieren sich |
+
+Die CI führt sie bei jedem Push mit aus (`dotnet test MatFile.slnx`).
+
 # Integrationstests
 
 Die Skripte laufen gegen den **laufenden Container** und prüfen die Anwendung von außen

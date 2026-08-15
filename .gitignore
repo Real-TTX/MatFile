@@ -1,6 +1,7 @@
 # Build output
 bin/
 obj/
+TestResults/
 [Dd]ebug/
 [Rr]elease/
 artifacts/
