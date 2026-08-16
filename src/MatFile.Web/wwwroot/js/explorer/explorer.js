@@ -2344,6 +2344,13 @@ el.listing.addEventListener('mousedown', event => {
         return;
     }
 
+    // Die Kopfzeile gehört nicht zur Auswahl: dort wird sortiert und alles an-
+    // oder abgewählt. Ohne diese Zeile löschte das Drücken erst die Auswahl und
+    // der Haken setzte sie beim Loslassen sofort wieder - abwählen war unmöglich.
+    if (event.target.closest('.mfx-list-head')) {
+        return;
+    }
+
     const row = event.target.closest('.mfx-row');
 
     if (!row) {
