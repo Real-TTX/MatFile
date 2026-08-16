@@ -391,6 +391,13 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 - **WebDAV**: Apache leitet Ordner ohne abschließenden Schrägstrich per 301 um, und
   `HttpClient` verwirft beim automatischen Folgen den Authorization-Header. Der Provider
   folgt Umleitungen deshalb selbst; automatisches Folgen ist im Handler abgeschaltet.
+- **Verbindungen zu SFTP und FTP kommen aus einem Pool** (`ConnectionPool<T>`, Singleton).
+  Ein Listing über SFTP dauerte vorher rund 840 ms – fast alles davon war das Anmelden;
+  mit Pool sind es rund 17 ms. Eine Verbindung wird immer nur an einen Aufrufer gleichzeitig
+  ausgeliehen (die Clients vertragen keine parallelen Aufrufe), nach einem Fehler verworfen
+  und nach zwei Minuten ohne Nutzung geschlossen. Ströme (Download, Upload) halten ihre
+  Leihgabe, bis der Strom geschlossen wird. Der Schlüssel enthält das Kennwort nur als
+  Prüfsumme, damit verschiedene Zugänge nie auf derselben Verbindung landen.
 - **Kennwortwechsel beim ersten Start** ist über `RequirePasswordChangeOnFirstLogin`
   in `matfile.json` steuerbar und standardmäßig **aus**, damit `admin`/`admin` beim
   Entwickeln direkt funktioniert. Für den produktiven Betrieb einschalten.

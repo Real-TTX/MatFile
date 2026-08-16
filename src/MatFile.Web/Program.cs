@@ -43,6 +43,14 @@ builder.Services.AddScoped<UploadService>();
 builder.Services.AddSingleton<JobService>();
 builder.Services.AddHostedService<JobRunner>();
 builder.Services.AddSingleton<SearchService>();
+// Offene Verbindungen zu SFTP und FTP wiederverwenden - das Anmelden kostet
+// bei SSH mehrere hundert Millisekunden je Anfrage.
+builder.Services.AddSingleton(_ => new ConnectionPool<Renci.SshNet.SftpClient>(
+    client => client.IsConnected, client => client.Dispose()));
+builder.Services.AddSingleton(_ => new ConnectionPool<FluentFTP.AsyncFtpClient>(
+    client => client.IsConnected, client => client.Dispose()));
+builder.Services.AddHostedService<ConnectionPoolSweeper>();
+
 builder.Services.AddSingleton<StorageProviderFactory>();
 builder.Services.AddSingleton<SecretProtector>();
 

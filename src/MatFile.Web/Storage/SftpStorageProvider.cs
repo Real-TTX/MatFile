@@ -6,26 +6,51 @@ using Renci.SshNet.Sftp;
 namespace MatFile.Web.Storage;
 
 /// <summary>
-/// Zugriff auf eine SFTP-Gegenstelle. Für jede Operation wird eine Verbindung
-/// aufgebaut und wieder geschlossen - das ist unkompliziert und robust; ein
-/// Verbindungspool wäre die nächste Optimierung.
+/// Zugriff auf eine SFTP-Gegenstelle. Die Verbindungen kommen aus einem Pool -
+/// Anmelden kostet bei SSH mehrere hundert Millisekunden, und jede Anfrage des
+/// Explorers wäre sonst genau so lange unterwegs.
 /// </summary>
 public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
 {
     private readonly ConnectionSettings _settings;
     private readonly string _basePath;
     private readonly string? _password;
+    private readonly ConnectionPool<SftpClient>? _pool;
 
-    public SftpStorageProvider(StorageRoot root, ConnectionSettings settings, string? password)
+    public SftpStorageProvider(
+        StorageRoot root,
+        ConnectionSettings settings,
+        string? password,
+        ConnectionPool<SftpClient>? pool = null)
     {
         _settings = settings;
         _basePath = RemotePath.NormalizeBase(root.BasePath);
         _password = password;
+        _pool = pool;
     }
 
     public StorageType StorageType => StorageType.Sftp;
 
-    private SftpClient Connect()
+    /// <summary>
+    /// Verbindung aus dem Pool oder eine neue. Der Rückgabewert gehört in ein using -
+    /// beim Verlassen geht die Verbindung zurück, nach einem Fehler wird sie verworfen.
+    /// </summary>
+    private ConnectionPool<SftpClient>.Lease Connect()
+    {
+        if (_pool is null)
+        {
+            // Ohne Pool (Verbindungstest) bleibt es beim Wegwerfclient.
+            return new ConnectionPool<SftpClient>(c => c.IsConnected, c => c.Dispose()).Rent("einmalig", CreateClient);
+        }
+
+        var key = ConnectionPool<SftpClient>.KeyOf(
+            "sftp", _settings.Host, _settings.EffectivePort(StorageType.Sftp).ToString(),
+            _settings.Username, _password);
+
+        return _pool.Rent(key, CreateClient);
+    }
+
+    private SftpClient CreateClient()
     {
         var info = new Renci.SshNet.ConnectionInfo(
             _settings.Host,
@@ -65,7 +90,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
     {
         try
         {
-            using var client = Connect();
+            using var lease = Connect();
+            var client = lease.Client;
             return Task.FromResult(client.Exists(_basePath.Length == 0 ? "/" : _basePath));
         }
         catch (StorageException)
@@ -79,7 +105,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         if (!client.Exists(remote))
         {
@@ -113,7 +140,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         if (!client.Exists(remote))
         {
@@ -128,16 +156,16 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        var client = Connect();
+        var lease = Connect();
 
-        if (!client.Exists(remote))
+        if (!lease.Client.Exists(remote))
         {
-            client.Dispose();
+            lease.Dispose();
             throw StorageException.NotFound(normalized);
         }
 
-        // Der Strom hält die Verbindung offen und schließt sie beim Dispose mit.
-        return Task.FromResult<Stream>(new ClientStream(client, client.OpenRead(remote)));
+        // Der Strom hält die Verbindung, solange gelesen wird, und gibt sie danach zurück.
+        return Task.FromResult<Stream>(new ClientStream(lease, lease.Client.OpenRead(remote)));
     }
 
     public Task<Stream> OpenWriteAsync(string relativePath, bool overwrite, CancellationToken cancellationToken = default)
@@ -145,17 +173,17 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        var client = Connect();
+        var lease = Connect();
 
-        if (!overwrite && client.Exists(remote))
+        if (!overwrite && lease.Client.Exists(remote))
         {
-            client.Dispose();
+            lease.Dispose();
             throw StorageException.Conflict(normalized);
         }
 
-        EnsureParent(client, normalized);
+        EnsureParent(lease.Client, normalized);
 
-        return Task.FromResult<Stream>(new ClientStream(client, client.Create(remote)));
+        return Task.FromResult<Stream>(new ClientStream(lease, lease.Client.Create(remote)));
     }
 
     public Task<StorageEntry> CreateDirectoryAsync(string relativePath, CancellationToken cancellationToken = default)
@@ -163,7 +191,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         if (client.Exists(remote))
         {
@@ -186,7 +215,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var targetPath = PathGuard.Combine(PathGuard.GetParent(normalized), newName);
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         var source = Resolve(normalized);
         var target = Resolve(targetPath);
@@ -207,7 +237,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
 
     public Task MoveAsync(string sourcePath, string targetPath, bool overwrite, CancellationToken cancellationToken = default)
     {
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         var source = Resolve(sourcePath);
         var target = Resolve(targetPath);
@@ -242,7 +273,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
             throw StorageException.InvalidPath(normalized);
         }
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
         var remote = Resolve(normalized);
 
         if (!client.Exists(remote))
@@ -261,7 +293,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         if (!client.Exists(remote))
         {
@@ -285,7 +318,8 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        using var client = Connect();
+        using var lease = Connect();
+        var client = lease.Client;
 
         if (!client.Exists(remote))
         {
@@ -364,15 +398,18 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
         file.Name.StartsWith('.'),
         file.IsSymbolicLink);
 
-    /// <summary>Hält die SFTP-Verbindung so lange offen, wie der Strom gebraucht wird.</summary>
+    /// <summary>
+    /// Hält die geliehene Verbindung, solange der Strom gebraucht wird, und gibt
+    /// sie danach in den Pool zurück.
+    /// </summary>
     private sealed class ClientStream : Stream
     {
-        private readonly SftpClient _client;
+        private readonly ConnectionPool<SftpClient>.Lease _lease;
         private readonly Stream _inner;
 
-        public ClientStream(SftpClient client, Stream inner)
+        public ClientStream(ConnectionPool<SftpClient>.Lease lease, Stream inner)
         {
-            _client = client;
+            _lease = lease;
             _inner = inner;
         }
 
@@ -398,7 +435,7 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
             if (disposing)
             {
                 _inner.Dispose();
-                _client.Dispose();
+                _lease.Dispose();
             }
 
             base.Dispose(disposing);

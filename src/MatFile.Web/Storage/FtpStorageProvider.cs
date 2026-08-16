@@ -13,17 +13,42 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
     private readonly ConnectionSettings _settings;
     private readonly string _basePath;
     private readonly string? _password;
+    private readonly ConnectionPool<AsyncFtpClient>? _pool;
 
-    public FtpStorageProvider(StorageRoot root, ConnectionSettings settings, string? password)
+    public FtpStorageProvider(
+        StorageRoot root,
+        ConnectionSettings settings,
+        string? password,
+        ConnectionPool<AsyncFtpClient>? pool = null)
     {
         _settings = settings;
         _basePath = RemotePath.NormalizeBase(root.BasePath);
         _password = password;
+        _pool = pool;
     }
 
     public StorageType StorageType => StorageType.Ftp;
 
-    private async Task<AsyncFtpClient> ConnectAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Verbindung aus dem Pool oder eine neue. Gehört in ein using - beim Verlassen
+    /// geht sie zurück in den Pool.
+    /// </summary>
+    private ConnectionPool<AsyncFtpClient>.Lease Connect(CancellationToken cancellationToken)
+    {
+        if (_pool is null)
+        {
+            return new ConnectionPool<AsyncFtpClient>(c => c.IsConnected, c => c.Dispose())
+                .Rent("einmalig", () => CreateAsync(cancellationToken).GetAwaiter().GetResult());
+        }
+
+        var key = ConnectionPool<AsyncFtpClient>.KeyOf(
+            "ftp", _settings.Host, _settings.EffectivePort(StorageType.Ftp).ToString(),
+            _settings.Username, _password, _settings.UseTls.ToString(), _settings.Passive.ToString());
+
+        return _pool.Rent(key, () => CreateAsync(cancellationToken).GetAwaiter().GetResult());
+    }
+
+    private async Task<AsyncFtpClient> CreateAsync(CancellationToken cancellationToken)
     {
         var client = new AsyncFtpClient(
             _settings.Host,
@@ -69,7 +94,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
     {
         try
         {
-            await using var client = await ConnectAsync(cancellationToken);
+            using var lease = Connect(cancellationToken);
+            var client = lease.Client;
             return await client.DirectoryExists(_basePath.Length == 0 ? "/" : _basePath, cancellationToken);
         }
         catch (StorageException)
@@ -83,7 +109,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         if (!await client.DirectoryExists(remote, cancellationToken))
         {
@@ -112,7 +139,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         }
 
         var remote = Resolve(normalized);
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         if (await client.DirectoryExists(remote, cancellationToken))
         {
@@ -136,7 +164,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        var client = await ConnectAsync(cancellationToken);
+        var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         try
         {
@@ -146,11 +175,11 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
             }
 
             var stream = await client.OpenRead(remote, FtpDataType.Binary, 0, token: cancellationToken);
-            return new ClientStream(client, stream);
+            return new ClientStream(lease, stream);
         }
         catch
         {
-            await client.DisposeAsync();
+            lease.Dispose();
             throw;
         }
     }
@@ -160,7 +189,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        var client = await ConnectAsync(cancellationToken);
+        var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         try
         {
@@ -176,11 +206,11 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
             }
 
             var stream = await client.OpenWrite(remote, FtpDataType.Binary, false, cancellationToken);
-            return new ClientStream(client, stream);
+            return new ClientStream(lease, stream);
         }
         catch
         {
-            await client.DisposeAsync();
+            lease.Dispose();
             throw;
         }
     }
@@ -190,7 +220,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         if (await client.DirectoryExists(remote, cancellationToken) || await client.FileExists(remote, cancellationToken))
         {
@@ -222,7 +253,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var source = Resolve(sourcePath);
         var target = Resolve(targetPath);
 
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         var isDirectory = await client.DirectoryExists(source, cancellationToken);
 
@@ -262,7 +294,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         }
 
         var remote = Resolve(normalized);
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         if (await client.DirectoryExists(remote, cancellationToken))
         {
@@ -289,7 +322,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         var item = await client.GetObjectInfo(remote, true, cancellationToken);
 
@@ -314,7 +348,8 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        await using var client = await ConnectAsync(cancellationToken);
+        using var lease = Connect(cancellationToken);
+        var client = lease.Client;
 
         if (!await client.FileExists(remote, cancellationToken)
             && !await client.DirectoryExists(remote, cancellationToken))
@@ -363,15 +398,18 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         item.Name.StartsWith('.'),
         item.Type == FtpObjectType.Link);
 
-    /// <summary>Hält die FTP-Verbindung offen, solange der Strom gebraucht wird.</summary>
+    /// <summary>
+    /// Hält die geliehene Verbindung, solange der Strom gebraucht wird, und gibt sie
+    /// danach in den Pool zurück.
+    /// </summary>
     private sealed class ClientStream : Stream
     {
-        private readonly AsyncFtpClient _client;
+        private readonly ConnectionPool<AsyncFtpClient>.Lease _lease;
         private readonly Stream _inner;
 
-        public ClientStream(AsyncFtpClient client, Stream inner)
+        public ClientStream(ConnectionPool<AsyncFtpClient>.Lease lease, Stream inner)
         {
-            _client = client;
+            _lease = lease;
             _inner = inner;
         }
 
@@ -407,7 +445,7 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
         public override async ValueTask DisposeAsync()
         {
             await _inner.DisposeAsync();
-            await _client.DisposeAsync();
+            _lease.Dispose();
         }
 
         protected override void Dispose(bool disposing)
@@ -415,7 +453,7 @@ public sealed class FtpStorageProvider : IStorageProvider, IPermissionStorage
             if (disposing)
             {
                 _inner.Dispose();
-                _client.Dispose();
+                _lease.Dispose();
             }
 
             base.Dispose(disposing);

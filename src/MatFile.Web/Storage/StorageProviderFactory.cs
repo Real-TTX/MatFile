@@ -12,12 +12,21 @@ public sealed class StorageProviderFactory
     private readonly SecretProtector _protector;
     private readonly IHttpClientFactory _httpClients;
     private readonly MatFilePaths _paths;
+    private readonly ConnectionPool<Renci.SshNet.SftpClient> _sftpPool;
+    private readonly ConnectionPool<FluentFTP.AsyncFtpClient> _ftpPool;
 
-    public StorageProviderFactory(SecretProtector protector, IHttpClientFactory httpClients, MatFilePaths paths)
+    public StorageProviderFactory(
+        SecretProtector protector,
+        IHttpClientFactory httpClients,
+        MatFilePaths paths,
+        ConnectionPool<Renci.SshNet.SftpClient> sftpPool,
+        ConnectionPool<FluentFTP.AsyncFtpClient> ftpPool)
     {
         _protector = protector;
         _httpClients = httpClients;
         _paths = paths;
+        _sftpPool = sftpPool;
+        _ftpPool = ftpPool;
     }
 
     public const string WebDavClient = "webdav";
@@ -29,8 +38,8 @@ public sealed class StorageProviderFactory
     public IStorageProvider Create(StorageRoot root, ConnectionSettings settings, string? password) => root.StorageType switch
     {
         StorageType.Local => new LocalStorageProvider(root, _paths.DataDirectory),
-        StorageType.Sftp => new SftpStorageProvider(root, settings, password),
-        StorageType.Ftp => new FtpStorageProvider(root, settings, password),
+        StorageType.Sftp => new SftpStorageProvider(root, settings, password, _sftpPool),
+        StorageType.Ftp => new FtpStorageProvider(root, settings, password, _ftpPool),
         StorageType.Smb => new SmbStorageProvider(root, settings, password),
         StorageType.WebDav => new WebDavStorageProvider(root, settings, password, _httpClients.CreateClient(WebDavClient)),
         _ => throw new StorageException("provider_not_supported",

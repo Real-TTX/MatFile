@@ -18,6 +18,7 @@ dotnet test MatFile.slnx
 | `ConnectionSettingsTests.cs` | JSON lesen/schreiben inkl. kaputter Datei, Standardports je Protokoll |
 | `ConfigStoreTests.cs` | Standardwerte beim ersten Start, Speichern und Wiederlesen, kaputte oder unbekannte Einträge |
 | `PasswordHasherTests.cs` | PBKDF2-Format, eigenes Salz je Hash, abgelehnte Fremdformate |
+| `ConnectionPoolTests.cs` | Wiederverwenden, nie zwei Ausleihen derselben Verbindung, Kaputtes und Abgerissenes wird geschlossen, Höchstzahl je Gegenstelle, Aufräumen und Beenden, Schlüssel verrät das Kennwort nicht |
 | `RootPermissionsTests.cs` | Rechte mehrerer Rollen addieren sich |
 
 Die CI führt sie bei jedem Push mit aus (`dotnet test MatFile.slnx`).
