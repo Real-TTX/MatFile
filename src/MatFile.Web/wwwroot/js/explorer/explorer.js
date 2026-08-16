@@ -1337,6 +1337,26 @@ function selectAll() {
     selectionChanged();
 }
 
+/** Ist gerade alles ausgewählt, was zu sehen ist? */
+function allSelected() {
+    const tab = activeTab();
+    if (!tab) {
+        return false;
+    }
+
+    const entries = visibleEntries(tab);
+    return entries.length > 0 && entries.every(entry => tab.selection.has(entry.path));
+}
+
+/** Derselbe Weg hin und zurück - wie beim Haken in der Kopfzeile der Liste. */
+function toggleSelectAll() {
+    if (allSelected()) {
+        clearSelection();
+    } else {
+        selectAll();
+    }
+}
+
 function clearSelection() {
     const tab = activeTab();
     if (!tab) {
@@ -2294,7 +2314,11 @@ function folderMenu() {
         { label: t('NewFile'), icon: 'file-plus', disabled: !rights.canWrite, action: () => newFile() },
         '-',
         { label: t('Paste'), icon: 'file', disabled: !state.clipboard || !rights.canWrite, action: () => paste() },
-        { label: t('SelectAll'), icon: 'list', action: () => selectAll() },
+        {
+            label: allSelected() ? t('ClearSelection') : t('SelectAll'),
+            icon: allSelected() ? 'x' : 'list',
+            action: () => toggleSelectAll()
+        },
         '-',
         { label: t('Refresh'), icon: 'refresh', action: () => reload() },
         { label: t('AddBookmark'), icon: 'star', action: () => addBookmark(null) },
@@ -2417,8 +2441,10 @@ document.addEventListener('keydown', event => {
         const key = event.key.toLowerCase();
 
         if (key === 'a') {
+            // Zweimal Strg+A hebt die Auswahl wieder auf - derselbe Weg zurück
+            // wie beim Haken in der Kopfzeile und im Menü.
             event.preventDefault();
-            selectAll();
+            toggleSelectAll();
             return;
         }
 
@@ -2715,7 +2741,11 @@ function menuItems(name) {
             { label: t('Rename'), icon: 'pencil', disabled: !rights.canWrite || !single, action: () => renameEntry(selected[0]) },
             { label: t('Delete'), icon: 'trash', danger: true, disabled: !rights.canDelete || selected.length === 0, action: () => deleteSelected() },
             '-',
-            { label: t('SelectAll'), icon: 'list', action: () => selectAll() },
+            {
+                label: allSelected() ? t('ClearSelection') : t('SelectAll'),
+                icon: allSelected() ? 'x' : 'list',
+                action: () => toggleSelectAll()
+            },
             { label: t('AddBookmark'), icon: 'star', action: () => addBookmark(single && selected[0].isDirectory ? selected[0] : null) },
             '-',
             { label: t('SearchRecursive'), icon: 'search-deep', action: () => focusSearch(false) },

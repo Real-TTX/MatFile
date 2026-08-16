@@ -367,6 +367,7 @@
   <data name="Explorer.CopyPath"><value>Copy path</value></data>
   <data name="Explorer.Copied"><value>Path copied</value></data>
   <data name="Explorer.Properties"><value>Properties</value></data>
+  <data name="Explorer.ClearSelection"><value>Clear selection</value></data>
   <data name="Explorer.PermTitle"><value>Access rights</value></data>
   <data name="Explorer.ActionPermissions"><value>Access rights changed</value></data>
   <data name="Explorer.PermOwner"><value>Owner</value></data>

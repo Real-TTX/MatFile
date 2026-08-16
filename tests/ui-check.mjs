@@ -268,6 +268,33 @@ await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Esca
 await sleep(300);
 const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
 
+// Alles auswählen und auf demselben Weg wieder aufheben
+const auswahl = await evaluate(`(() => {
+    const status = () => document.querySelector('#mfx-status').textContent.trim();
+    const eintrag = () => {
+        document.querySelector('.mfx-menubar-item[data-menu="edit"]').click();
+        return [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+            .find(b => /Alles auswählen|Select all|Auswahl aufheben|Clear selection/.test(b.textContent));
+    };
+
+    const zuerst = eintrag();
+    const beschriftungVorher = zuerst.textContent.trim();
+    zuerst.click();
+
+    return new Promise(r => setTimeout(() => {
+        const gewaehlt = status();
+        const danach = eintrag();
+        const beschriftungNachher = danach.textContent.trim();
+        danach.click();
+
+        setTimeout(() => r({
+            beschriftungVorher, beschriftungNachher,
+            gewaehlt, wiederFrei: status()
+        }), 400);
+    }, 400));
+})()`);
+await sleep(300);
+
 // Eigenschaften eines Ordners: Angaben und Zugriffsrechte
 await evaluate(`(() => {
     const row = [...document.querySelectorAll('.mfx-row')]
@@ -360,7 +387,7 @@ await sleep(1000);
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
-    properties, modeChange, afterSave, reopened,
+    auswahl, properties, modeChange, afterSave, reopened,
     consoleErrors, failedRequests
 }, null, 2));
 
