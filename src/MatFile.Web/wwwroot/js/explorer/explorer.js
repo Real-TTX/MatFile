@@ -38,7 +38,8 @@ const el = {
     details: document.getElementById('mfx-details'),
     detailsToggle: document.getElementById('mfx-details-toggle'),
     more: document.getElementById('mfx-more'),
-    sidebarToggle: document.getElementById('mfx-sidebar-toggle')
+    sidebarToggle: document.getElementById('mfx-sidebar-toggle'),
+    sidebarResizer: document.getElementById('mfx-sidebar-resizer')
 };
 
 const state = {
@@ -46,8 +47,11 @@ const state = {
     bookmarks: [],
     settings: {
         viewMode: 'list', sortKey: 'name', sortDir: 'asc',
-        showHidden: false, showDetails: false, showSidebar: true, sidebarWidth: 260
+        showHidden: false, showDetails: false, showSidebar: true, sidebarWidth: 260,
+        sidebarTree: false
     },
+    // Aufgeklappte Knoten des Ordnerbaums als "rootId:pfad".
+    expanded: new Set(),
     tabs: [],
     active: 0,
     filter: '',
@@ -399,6 +403,123 @@ function iconForRoot(root) {
     }
 }
 
+/** Schlüssel eines Knotens im Baum - Speicherort und Pfad zusammen. */
+function nodeKey(rootId, path) {
+    return `${rootId}:${path || ''}`;
+}
+
+/**
+ * Dreieck zum Auf- und Zuklappen. Die Kinder werden erst beim ersten Öffnen
+ * geholt und danach behalten, solange der Knoten offen bleibt.
+ */
+function twisty(rootId, path, item) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mfx-side-twisty';
+    button.appendChild(icon('chevron', 12));
+    button.setAttribute('aria-label', t('Expand'));
+    button.setAttribute('aria-expanded', 'false');
+
+    button.addEventListener('click', async event => {
+        event.stopPropagation();
+
+        const key = nodeKey(rootId, path);
+        const open = state.expanded.has(key);
+
+        if (open) {
+            state.expanded.delete(key);
+            item.querySelector('.mfx-side-children')?.remove();
+            button.setAttribute('aria-expanded', 'false');
+            button.classList.remove('is-open');
+            return;
+        }
+
+        state.expanded.add(key);
+        button.setAttribute('aria-expanded', 'true');
+        button.classList.add('is-open');
+        button.classList.add('is-busy');
+
+        try {
+            const children = await childNodes(rootId, path);
+            item.querySelector('.mfx-side-children')?.remove();
+            item.appendChild(children);
+        } catch (error) {
+            state.expanded.delete(key);
+            button.setAttribute('aria-expanded', 'false');
+            button.classList.remove('is-open');
+            handleError(error);
+        } finally {
+            button.classList.remove('is-busy');
+        }
+    });
+
+    return button;
+}
+
+/** Die Unterordner eines Knotens als Liste. Dateien bleiben aussen vor. */
+async function childNodes(rootId, path) {
+    const data = await api.list(rootId, path);
+    const list = document.createElement('ul');
+    list.className = 'mfx-side-list mfx-side-children';
+
+    const folders = data.entries.filter(entry => entry.isDirectory
+        && (state.settings.showHidden || !entry.isHidden));
+
+    if (folders.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'mfx-side-empty';
+        empty.textContent = t('EmptyFolder');
+        list.appendChild(empty);
+        return list;
+    }
+
+    folders.forEach(entry => list.appendChild(folderItem(rootId, entry)));
+    return list;
+}
+
+/** Ein Ordner im Baum: aufklappen links, öffnen rechts. */
+function folderItem(rootId, entry) {
+    const item = document.createElement('li');
+    item.className = 'mfx-side-node';
+
+    const row = document.createElement('div');
+    row.className = 'mfx-side-row';
+    row.appendChild(twisty(rootId, entry.path, item));
+
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'mfx-side-item';
+    link.dataset.rootId = rootId;
+    link.dataset.path = entry.path;
+    link.title = entry.name;
+
+    const symbol = document.createElement('span');
+    symbol.className = 'mfx-side-icon';
+    symbol.appendChild(icon('folder', 16));
+    link.appendChild(symbol);
+
+    const label = document.createElement('span');
+    label.className = 'mfx-side-label';
+    label.textContent = entry.name;
+    link.appendChild(label);
+
+    link.addEventListener('click', () => navigate(activeTab(), rootId, entry.path));
+
+    link.addEventListener('contextmenu', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        openMenu(event.clientX, event.clientY, [
+            { label: t('Open'), icon: 'folder', action: () => navigate(activeTab(), rootId, entry.path) },
+            { label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(rootId, entry.path) }
+        ]);
+    });
+
+    row.appendChild(link);
+    item.appendChild(row);
+    return item;
+}
+
 function rootItem(root, withStatus) {
     const item = document.createElement('li');
 
@@ -452,7 +573,19 @@ function rootItem(root, withStatus) {
         openMenu(event.clientX, event.clientY, items);
     });
 
-    item.appendChild(link);
+    // Mit Baum steht das Dreieck davor, ohne bleibt es beim schlichten Eintrag.
+    if (state.settings.sidebarTree) {
+        item.className = 'mfx-side-node';
+
+        const row = document.createElement('div');
+        row.className = 'mfx-side-row';
+        row.appendChild(twisty(root.id, '', item));
+        row.appendChild(link);
+        item.appendChild(row);
+    } else {
+        item.appendChild(link);
+    }
+
     return item;
 }
 
@@ -1246,8 +1379,24 @@ function applySidebarVisibility() {
     document.getElementById('mfx').classList.toggle('is-sidebar-hidden', state.settings.showSidebar === false);
 }
 
+/** Ordnerbaum in der Seitenleiste an- oder abschalten. */
+function toggleSidebarTree() {
+    state.settings.sidebarTree = !state.settings.sidebarTree;
+    state.expanded.clear();
+    renderSidebar();
+    persistSettings();
+}
+
+/** Breite der Seitenleiste anwenden - der Wert steht am Benutzer. */
+function applySidebarWidth() {
+    const width = Math.min(520, Math.max(180, Number(state.settings.sidebarWidth) || 260));
+    state.settings.sidebarWidth = width;
+    document.documentElement.style.setProperty('--mf-sidebar-width', `${width}px`);
+}
+
 function applySettingsToToolbar() {
     applySidebarVisibility();
+    applySidebarWidth();
 
     el.hidden.setAttribute('aria-pressed', state.settings.showHidden ? 'true' : 'false');
     el.hidden.classList.toggle('is-active', state.settings.showHidden);
@@ -2689,6 +2838,60 @@ el.sidebarToggle.addEventListener('click', () => {
     el.backdrop.hidden = !open;
 });
 
+// Breite der Seitenleiste ziehen. Gespeichert wird erst beim Loslassen -
+// sonst ginge bei jedem Mausschub eine Anfrage raus.
+if (el.sidebarResizer) {
+    let dragging = false;
+
+    const setWidth = value => {
+        state.settings.sidebarWidth = value;
+        applySidebarWidth();
+    };
+
+    el.sidebarResizer.addEventListener('pointerdown', event => {
+        event.preventDefault();
+        dragging = true;
+        el.sidebarResizer.setPointerCapture(event.pointerId);
+        document.body.classList.add('is-resizing');
+    });
+
+    el.sidebarResizer.addEventListener('pointermove', event => {
+        if (!dragging) {
+            return;
+        }
+
+        // Die Leiste beginnt am linken Rand, deshalb ist die Zeigerposition die Breite.
+        setWidth(Math.round(event.clientX - el.sidebar.getBoundingClientRect().left));
+    });
+
+    const finish = event => {
+        if (!dragging) {
+            return;
+        }
+
+        dragging = false;
+        el.sidebarResizer.releasePointerCapture?.(event.pointerId);
+        document.body.classList.remove('is-resizing');
+        persistSettings();
+    };
+
+    el.sidebarResizer.addEventListener('pointerup', finish);
+    el.sidebarResizer.addEventListener('pointercancel', finish);
+
+    // Ohne Maus: Pfeiltasten schieben in Zehnerschritten.
+    el.sidebarResizer.addEventListener('keydown', event => {
+        const step = event.key === 'ArrowLeft' ? -10 : event.key === 'ArrowRight' ? 10 : 0;
+
+        if (step === 0) {
+            return;
+        }
+
+        event.preventDefault();
+        setWidth(state.settings.sidebarWidth + step);
+        persistSettings();
+    });
+}
+
 if (el.sideFirst) {
     el.sideFirst.addEventListener('click', () => addLocation(false));
 }
@@ -2781,6 +2984,12 @@ function menuItems(name) {
                 label: t('Sidebar') + (state.settings.showSidebar !== false ? ' ✓' : ''),
                 icon: 'folder',
                 action: () => toggleSidebar()
+            },
+            {
+                label: t('SidebarTree') + (state.settings.sidebarTree ? ' ✓' : ''),
+                icon: 'list',
+                disabled: state.settings.showSidebar === false,
+                action: () => toggleSidebarTree()
             },
             '-',
             { label: t('Refresh'), icon: 'refresh', action: () => reload() }

@@ -63,6 +63,19 @@ $put = Api PUT "$BaseUrl/api/settings" $admin @{ viewMode = 'unsinn'; sortKey = 
 $s = Api GET "$BaseUrl/api/settings" $admin
 Add-Result "Ungueltige Werte normalisiert" ($s.Data.viewMode -eq 'list' -and $s.Data.sortKey -eq 'name' -and $s.Data.sidebarWidth -eq 520) "width=$($s.Data.sidebarWidth)"
 
+# Ordnerbaum in der Seitenleiste: standardmaessig aus, je Benutzer schaltbar
+Add-Result "Ordnerbaum standardmaessig aus" ($s.Data.sidebarTree -eq $false) "baum=$($s.Data.sidebarTree)"
+
+$put = Api PUT "$BaseUrl/api/settings" $admin @{ viewMode = 'list'; sortKey = 'name'; sortDir = 'asc'; sidebarTree = $true; sidebarWidth = 240 }
+$s = Api GET "$BaseUrl/api/settings" $admin
+Add-Result "Ordnerbaum und Breite gespeichert" (
+    $s.Data.sidebarTree -eq $true -and $s.Data.sidebarWidth -eq 240) "baum=$($s.Data.sidebarTree) breite=$($s.Data.sidebarWidth)"
+
+$put = Api PUT "$BaseUrl/api/settings" $admin @{ viewMode = 'list'; sortKey = 'name'; sortDir = 'asc'; sidebarTree = $false; sidebarWidth = 10 }
+$s = Api GET "$BaseUrl/api/settings" $admin
+Add-Result "Schmale Breite auf das Mindestmass" (
+    $s.Data.sidebarWidth -eq 180 -and $s.Data.sidebarTree -eq $false) "breite=$($s.Data.sidebarWidth)"
+
 # --- Favoriten ------------------------------------------------------------
 $b = Api GET "$BaseUrl/api/bookmarks" $admin
 Add-Result "Favoriten anfangs leer" ($b.Status -eq 200 -and ($null -eq $b.Data -or $b.Data.Count -eq 0)) ""

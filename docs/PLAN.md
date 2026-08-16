@@ -131,6 +131,14 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   *Ansicht → Seitenleiste* ganz ausblendbar (die Wahl bleibt am Benutzer).
   **Ein Abschnitt ohne Einträge verschwindet ganz** – keine Überschrift ohne Inhalt. Solange
   es keinen Speicherort gibt, steht dort nur ein Knopf „Speicherort hinzufügen".
+- **Ordnerbaum in der Seitenleiste** (wie im Windows-Explorer): jeder Speicherort und jeder
+  Ordner lässt sich aufklappen, die Kinder werden erst beim Öffnen geholt. **Standardmäßig
+  aus** – bei einer langsamen Gegenstelle kostet jedes Aufklappen eine Abfrage. Ein- und
+  ausschalten über *Ansicht → Ordnerbaum in der Seitenleiste*, gespeichert je Benutzer
+  (`SidebarTree`).
+- **Breite der Seitenleiste** lässt sich am rechten Rand ziehen (oder mit den Pfeiltasten,
+  wenn der Griff den Fokus hat), zwischen 180 und 520 px. Gespeichert wird beim Loslassen,
+  nicht bei jeder Mausbewegung.
 - **Schmale Schirme** (bis 860 px): Seitenleiste als Überlagerung, Menü- und Werkzeugleiste
   schieben waagerecht statt umzubrechen, ab 560 px entfällt der Pfad in der Werkzeugleiste
   (er steht im Tab). Der **Detailbereich tritt an die Stelle der Liste – aber nur, wenn ein

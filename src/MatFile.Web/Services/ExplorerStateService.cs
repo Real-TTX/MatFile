@@ -16,6 +16,12 @@ public class ExplorerSettings
     public bool ShowDetails { get; set; }
     public bool ShowSidebar { get; set; } = true;
     public int SidebarWidth { get; set; } = 260;
+
+    /// <summary>
+    /// Ordner in der Seitenleiste aufklappen wie im Windows-Explorer.
+    /// Standardmäßig aus: bei langsamen Gegenstellen kostet jedes Aufklappen eine Abfrage.
+    /// </summary>
+    public bool SidebarTree { get; set; }
 }
 
 public record BookmarkDto(long Id, long RootId, string Name, string Path, string? Icon, int SortOrder);

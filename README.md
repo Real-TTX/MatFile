@@ -7,6 +7,8 @@ keinen komfortablen Zugriff auf Dateien bieten.
 - Zusätzliche Freigaben per **SMB, SFTP, FTP und WebDAV** – ohne Zusatzrechte im Container
   (NFS folgt über einen OS-Mount)
 - Explorer-Bedienung: Sidebar, **Tabs**, Menüleiste, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
+- Seitenleiste mit **Ordnerbaum zum Aufklappen** (je Benutzer zuschaltbar, standardmäßig aus)
+  und **ziehbarer Breite**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
 - **Dateien anlegen** (.txt, .json, .md, .xml …) und **Texteditor mit Syntaxhervorhebung** –
   ansehen und direkt bearbeiten

@@ -268,6 +268,53 @@ await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Esca
 await sleep(300);
 const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
 
+// Ordnerbaum in der Seitenleiste: einschalten, aufklappen, zuklappen, wieder aus
+const baum = await evaluate(`(() => {
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const punkt = () => {
+        document.querySelector('.mfx-menubar-item[data-menu="view"]').click();
+        return [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+            .find(b => /Ordnerbaum|Folder tree/.test(b.textContent));
+    };
+
+    return (async () => {
+        const vorher = punkt().textContent.trim();
+        const warAn = vorher.includes('✓');
+        if (!warAn) { punkt().click(); await warte(600); }
+
+        const dreiecke = document.querySelectorAll('#mfx-roots .mfx-side-twisty').length;
+        const ersteDreieck = document.querySelector('#mfx-roots .mfx-side-twisty');
+        ersteDreieck.click();
+        await warte(1500);
+
+        const kinder = document.querySelectorAll('#mfx-roots .mfx-side-children .mfx-side-item').length;
+        const offen = ersteDreieck.getAttribute('aria-expanded');
+
+        ersteDreieck.click();
+        await warte(400);
+        const nachDemZuklappen = document.querySelectorAll('#mfx-roots .mfx-side-children').length;
+
+        // Zustand wiederherstellen, damit der Check nichts umstellt
+        if (!warAn) { punkt().click(); await warte(500); }
+
+        return { dreiecke, kinder, offen, nachDemZuklappen };
+    })();
+})()`);
+await sleep(300);
+
+// Breite der Seitenleiste über die Tastatur ändern
+const breite = await evaluate(`(() => {
+    const griff = document.querySelector('#mfx-sidebar-resizer');
+    const breiteJetzt = () => Math.round(document.querySelector('#mfx-sidebar').getBoundingClientRect().width);
+    const vorher = breiteJetzt();
+    griff.focus();
+    griff.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    const nachRechts = breiteJetzt();
+    griff.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    return { vorher, nachRechts, wieder: breiteJetzt() };
+})()`);
+await sleep(500);
+
 // Alles auswählen und auf demselben Weg wieder aufheben
 const auswahl = await evaluate(`(() => {
     const status = () => document.querySelector('#mfx-status').textContent.trim();
@@ -387,7 +434,7 @@ await sleep(1000);
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
-    auswahl, properties, modeChange, afterSave, reopened,
+    baum, breite, auswahl, properties, modeChange, afterSave, reopened,
     consoleErrors, failedRequests
 }, null, 2));
 

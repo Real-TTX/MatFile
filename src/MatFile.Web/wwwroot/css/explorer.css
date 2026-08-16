@@ -25,6 +25,7 @@
 /* --- Seitenleiste --- */
 
 .mfx-sidebar {
+    position: relative;
     display: flex;
     flex-direction: column;
     flex: 0 0 var(--mf-sidebar-width);
@@ -34,11 +35,105 @@
     min-height: 0;
 }
 
+/* Ziehgriff am rechten Rand - schmal, aber mit ein paar Pixeln Greiffläche. */
+.mfx-sidebar-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -3px;
+    z-index: 5;
+    width: 7px;
+    cursor: col-resize;
+}
+
+.mfx-sidebar-resizer:hover,
+.mfx-sidebar-resizer:focus-visible {
+    background: var(--mf-accent-soft);
+    outline: none;
+}
+
+/* Während des Ziehens soll nichts markiert werden. */
+body.is-resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
+/* --- Ordnerbaum in der Seitenleiste --- */
+
+/* Ein Knoten steht als Spalte: erst die Zeile, darunter seine Kinder.
+   Ohne diese Regel gilt die Zeilenform der Liste und die Kinder stünden daneben. */
+.mfx-side-list li.mfx-side-node {
+    display: block;
+}
+
+.mfx-side-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Lange Namen werden gekürzt, statt die Leiste breiter zu schieben. */
+.mfx-side-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mfx-side-row .mfx-side-item {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mfx-side-twisty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--mf-radius);
+    background: transparent;
+    color: var(--mf-text-muted);
+    cursor: pointer;
+    transition: transform .12s ease;
+}
+
+.mfx-side-twisty:hover {
+    color: var(--mf-text);
+}
+
+.mfx-side-twisty.is-open {
+    transform: rotate(90deg);
+}
+
+.mfx-side-twisty.is-busy {
+    opacity: .5;
+}
+
+/* Zwei Klassen im Selektor: .mfx-side-list setzt weiter unten margin und padding
+   auf null und würde die Einrückung sonst wieder einkassieren. */
+.mfx-side-list.mfx-side-children {
+    margin: 0 0 0 17px;
+    padding-left: var(--mf-space-2);
+    border-left: 1px solid var(--mf-border);
+}
+
+.mfx-side-empty {
+    padding: 3px var(--mf-space-3);
+    color: var(--mf-text-muted);
+    font-size: 12px;
+}
+
 .mfx-side-scroll {
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--mf-space-3) var(--mf-space-2);
     overflow-y: auto;
+    /* Der Baum wird nach rechts eingerückt - gekürzt wird der Name, nicht geschoben. */
+    overflow-x: hidden;
 }
 
 /* --- Konto, Erscheinungsbild und Abmelden unten links --- */

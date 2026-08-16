@@ -368,6 +368,9 @@
   <data name="Explorer.Copied"><value>Pfad kopiert</value></data>
   <data name="Explorer.Properties"><value>Eigenschaften</value></data>
   <data name="Explorer.ClearSelection"><value>Auswahl aufheben</value></data>
+  <data name="Explorer.SidebarTree"><value>Ordnerbaum in der Seitenleiste</value></data>
+  <data name="Explorer.SidebarWidth"><value>Breite der Seitenleiste</value></data>
+  <data name="Explorer.Expand"><value>Aufklappen</value></data>
   <data name="Explorer.PermTitle"><value>Zugriffsrechte</value></data>
   <data name="Explorer.ActionPermissions"><value>Zugriffsrechte geändert</value></data>
   <data name="Explorer.PermOwner"><value>Besitzer</value></data>
