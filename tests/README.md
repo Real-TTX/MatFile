@@ -95,7 +95,15 @@ node .\tests\ui-check-manage.mjs http://localhost:2222 admin .\manage.png
 
 # Texteditor: Syntaxhervorhebung, Breite, Bearbeiten und Speichern
 node .\tests\ui-check-editor.mjs http://localhost:2222 admin Demo .\editor.png
+
+# Schmale Schirme: 1440 bis 390 px, Details statt Liste, Seitenleiste als Überlagerung
+node .\tests\ui-check-mobile.mjs http://localhost:2222 admin .\mobile.png
 ```
+
+`ui-check-mobile.mjs` prüft bei fünf Breiten, dass die Seite nicht waagerecht scrollt,
+die Dateiliste sichtbar bleibt, die Menüleiste nicht umbricht (sondern schiebt) und dass
+man auf dem Telefon aus den Details wieder zur Liste kommt. Der Exitcode ist 1, sobald
+eine dieser Bedingungen kippt – die Ausgabe nennt dann Breite und Grund.
 
 Benötigt Node (nur für diesen Check, nicht für den Build) und Microsoft Edge.
 

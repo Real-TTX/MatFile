@@ -487,8 +487,6 @@ a:hover {
    Rand gehen. Ohne diese Regeln bliebe der weisse Standardrahmen des Browsers. */
 
 .mfx-dialog {
-    display: flex;
-    flex-direction: column;
     min-width: 320px;
     max-width: 90vw;
     max-height: 90vh;
@@ -498,6 +496,13 @@ a:hover {
     border-radius: var(--mf-radius-lg);
     background: var(--mf-surface);
     color: var(--mf-text);
+}
+
+/* Nur der offene Dialog wird zur Spalte - ohne [open] überschreibt die Regel
+   den Browser-Standard und ein geschlossener Dialog stünde sichtbar im Weg. */
+.mfx-dialog[open] {
+    display: flex;
+    flex-direction: column;
 }
 
 .mfx-dialog::backdrop {

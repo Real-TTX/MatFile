@@ -1053,6 +1053,11 @@ function renderStatus() {
 
 let detailsTab = 'details';
 
+/** Merkt am Rumpf, ob der Detailbereich gerade etwas zeigt. */
+function markDetails(active) {
+    el.details.parentElement?.classList.toggle('is-details', !!active);
+}
+
 function renderDetails() {
     const tab = activeTab();
 
@@ -1061,15 +1066,21 @@ function renderDetails() {
     el.details.hidden = !show;
 
     if (!show) {
+        markDetails(false);
         return;
     }
     el.details.replaceChildren();
 
     if (!tab) {
+        markDetails(false);
         return;
     }
 
     const selected = selectedEntries();
+    // Auf schmalen Geräten tritt der Detailbereich an die Stelle der Liste -
+    // aber nur, wenn wirklich ein Eintrag gewählt ist. Sonst stünde man vor
+    // einer leeren Fläche und käme nicht an die Dateien.
+    markDetails(selected.length === 1);
 
     if (selected.length !== 1) {
         const empty = document.createElement('div');
@@ -1082,6 +1093,20 @@ function renderDetails() {
     }
 
     const entry = selected[0];
+
+    // Auf schmalen Geräten verdeckt der Detailbereich die Liste - hier führt der Weg zurück.
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'mf-btn mf-btn-quiet mfx-details-back';
+    back.appendChild(icon('chevron-left', 14));
+    back.appendChild(document.createTextNode(t('Back')));
+    back.addEventListener('click', () => {
+        activeTab().selection.clear();
+        renderListing();
+        renderDetails();
+        renderStatus();
+    });
+    el.details.appendChild(back);
 
     // Vorschaubild oder großes Symbol
     const figure = document.createElement('div');

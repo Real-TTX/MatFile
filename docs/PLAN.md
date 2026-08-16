@@ -131,6 +131,11 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   *Ansicht → Seitenleiste* ganz ausblendbar (die Wahl bleibt am Benutzer).
   **Ein Abschnitt ohne Einträge verschwindet ganz** – keine Überschrift ohne Inhalt. Solange
   es keinen Speicherort gibt, steht dort nur ein Knopf „Speicherort hinzufügen".
+- **Schmale Schirme** (bis 860 px): Seitenleiste als Überlagerung, Menü- und Werkzeugleiste
+  schieben waagerecht statt umzubrechen, ab 560 px entfällt der Pfad in der Werkzeugleiste
+  (er steht im Tab). Der **Detailbereich tritt an die Stelle der Liste – aber nur, wenn ein
+  Eintrag gewählt ist**; ein „Zurück"-Knopf führt zur Liste. Ohne diese Bedingung stand man
+  vor einer leeren Fläche und kam gar nicht an die Dateien. Geprüft von `ui-check-mobile.mjs`.
 - **Tab-Leiste** wie Windows Explorer: `+`, Schließen, Mittelklick, Drag-Reorder,
   Kontextmenü „Tab anheften/persistent machen" → gespeichert in `ExplorerTab`.
 - **Menüleiste über den Tabs** wie im Windows-Explorer: Datei · Bearbeiten · Ansicht ·
@@ -347,7 +352,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **erweiterte Suche als eigener Tab** (rekursiv, mit Inhaltssuche), Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste, starre Hülle gegen Layoutsprünge | Bedienung aus einer Fläche |
 | **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
-| **M8** | App-Icon & Favicon-Set, PWA-Manifest, Mobile-Feinschliff, Dark-Mode, Tastatur-Shortcuts | Optisch fertig |
+| **M8** | ~~App-Icon & Favicon-Set~~, ~~PWA-Manifest~~, ~~Mobile-Feinschliff~~, ~~Dark-Mode~~, Tastatur-Shortcuts (Übersicht fehlt), Thumbnails, Kopfzeile nach Mockup | Optisch fertig |
 | **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, ~~Limits~~, ~~Fehlerseiten~~, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |
 
 ---

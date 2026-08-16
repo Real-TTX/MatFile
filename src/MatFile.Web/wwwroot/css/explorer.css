@@ -1940,6 +1940,25 @@
         width: 90px;
     }
 
+    /* Menü- und Werkzeugleiste schieben statt umbrechen oder überzustehen. */
+    .mfx-menubar,
+    .mfx-toolbar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .mfx-menubar::-webkit-scrollbar,
+    .mfx-toolbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mfx-menubar-item,
+    .mfx-toolbar > * {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
     .mfx-details {
         flex: 0 0 100%;
         width: 100%;
@@ -1950,8 +1969,31 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .mfx-body:has(.mfx-details:not([hidden])) .mfx-listing {
+    /* Der Detailbereich tritt an die Stelle der Liste - aber nur, wenn er
+       wirklich einen Eintrag zeigt (Klasse setzt renderDetails). */
+    .mfx-body.is-details .mfx-listing {
         display: none;
+    }
+
+    .mfx-body:not(.is-details) .mfx-details {
+        display: none;
+    }
+
+    /* Zurück zur Liste: nur auf schmalen Geräten sichtbar. Zwei Klassen im
+       Selektor, damit die Grundregel weiter unten nicht dazwischenfunkt. */
+    .mfx-details .mfx-details-back {
+        display: inline-flex;
+    }
+}
+
+/* Auf dem Telefon ist für den Pfad kein Platz mehr - er steht im Tab. */
+@media (max-width: 560px) {
+    .mfx-breadcrumb {
+        display: none;
+    }
+
+    .mfx-search input {
+        width: 110px;
     }
 }
 
@@ -2089,6 +2131,13 @@
     :root[data-theme="auto"] .tok-tag { color: #1d4ed8; }
     :root[data-theme="auto"] .tok-attr { color: #92400e; }
     :root[data-theme="auto"] .tok-heading { color: #1d4ed8; }
+}
+
+/* Der Weg zurück zur Liste wird nur auf schmalen Geräten gebraucht. */
+.mfx-details-back {
+    display: none;
+    align-self: flex-start;
+    margin-bottom: var(--mf-space-2);
 }
 
 /* Seitenleiste über Ansicht ausblenden. */
