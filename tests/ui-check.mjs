@@ -268,6 +268,24 @@ await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Esca
 await sleep(300);
 const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
 
+// Übersicht der Tastenkürzel über F1
+await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1', bubbles: true })); true;`);
+await sleep(700);
+
+const tastenkuerzel = await evaluate(`(() => {
+    const box = [...document.querySelectorAll('dialog[open]')].pop();
+    if (!box) return null;
+    const werte = {
+        titel: box.querySelector('h2')?.textContent,
+        abschnitte: [...box.querySelectorAll('.mfx-manage-heading')].map(e => e.textContent),
+        tasten: [...box.querySelectorAll('.mfx-key')].map(e => e.textContent),
+        passt: box.getBoundingClientRect().height <= innerHeight
+    };
+    box.close();
+    return werte;
+})()`);
+await sleep(300);
+
 // Ordnerbaum in der Seitenleiste: einschalten, aufklappen, zuklappen, wieder aus
 const baum = await evaluate(`(() => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
@@ -434,7 +452,7 @@ await sleep(1000);
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
-    baum, breite, auswahl, properties, modeChange, afterSave, reopened,
+    tastenkuerzel, baum, breite, auswahl, properties, modeChange, afterSave, reopened,
     consoleErrors, failedRequests
 }, null, 2));
 

@@ -1911,6 +1911,24 @@ body.is-resizing {
 /* Rahmen, Kopf- und Fusszeile der Dialoge stehen in matfile.css - sie gelten
    auch auf Anmeldung und Fehlerseite. Hier folgen nur die Zutaten des Explorers. */
 
+/* Tastenkürzel: links die Taste als Kästchen, rechts wofür sie gut ist. */
+.mfx-keys {
+    grid-template-columns: minmax(110px, max-content) 1fr;
+    margin: 0 0 var(--mf-space-3);
+}
+
+.mfx-key {
+    justify-self: start;
+    padding: 2px var(--mf-space-2);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface-alt);
+    color: var(--mf-text);
+    font-family: var(--mf-font-mono);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
 /* Zugriffsrechte im Eigenschaftenblatt: neun Kästchen wie bei chmod. */
 .mfx-perm {
     margin-top: var(--mf-space-4);

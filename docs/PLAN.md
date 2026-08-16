@@ -131,6 +131,10 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   *Ansicht → Seitenleiste* ganz ausblendbar (die Wahl bleibt am Benutzer).
   **Ein Abschnitt ohne Einträge verschwindet ganz** – keine Überschrift ohne Inhalt. Solange
   es keinen Speicherort gibt, steht dort nur ein Knopf „Speicherort hinzufügen".
+- **Tastenkürzel**: Enter, Pfeiltasten (mit Umschalt erweitern), Rücktaste, F5, Strg+A/C/X/V,
+  F2, Entf, Strg+F, in Vorschau und Editor Pfeiltasten, Strg+S, Tab und Esc. **F1** zeigt die
+  Übersicht dazu – dieselbe steht unter *Einstellungen → Tastenkürzel*. Die Übersicht bildet
+  ab, was die Tastenbehandlung wirklich kennt.
 - **Ordnerbaum in der Seitenleiste** (wie im Windows-Explorer): jeder Speicherort und jeder
   Ordner lässt sich aufklappen, die Kinder werden erst beim Öffnen geholt. **Standardmäßig
   aus** – bei einer langsamen Gegenstelle kostet jedes Aufklappen eine Abfrage. Ein- und
@@ -360,7 +364,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **erweiterte Suche als eigener Tab** (rekursiv, mit Inhaltssuche), Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste, starre Hülle gegen Layoutsprünge | Bedienung aus einer Fläche |
 | **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
-| **M8** | ~~App-Icon & Favicon-Set~~, ~~PWA-Manifest~~, ~~Mobile-Feinschliff~~, ~~Dark-Mode~~, Tastatur-Shortcuts (Übersicht fehlt), Thumbnails, Kopfzeile nach Mockup | Optisch fertig |
+| **M8** | ~~App-Icon & Favicon-Set~~, ~~PWA-Manifest~~, ~~Mobile-Feinschliff~~, ~~Dark-Mode~~, ~~Tastatur-Shortcuts samt Übersicht~~, Thumbnails, Kopfzeile nach Mockup | Optisch fertig |
 | **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, ~~Limits~~, ~~Fehlerseiten~~, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |
 
 ---

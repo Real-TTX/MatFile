@@ -294,6 +294,55 @@ export function showFacts(title, facts, options) {
     return dialog;
 }
 
+/**
+ * Zeigt mehrere Abschnitte aus Bezeichnung und Wert.
+ * `sections` ist eine Liste aus [Überschrift, [[links, rechts], ...]].
+ */
+export function showSections(title, sections, iconName) {
+    const { dialog, body } = build(title, iconName || 'info');
+
+    sections.forEach(([heading, rows]) => {
+        const caption = document.createElement('h3');
+        caption.className = 'mfx-manage-heading';
+        caption.textContent = heading;
+        body.appendChild(caption);
+
+        const list = document.createElement('dl');
+        list.className = 'mf-facts mfx-keys';
+
+        rows.forEach(([left, right]) => {
+            const dt = document.createElement('dt');
+            dt.className = 'mfx-key';
+            dt.textContent = left;
+
+            const dd = document.createElement('dd');
+            dd.textContent = right;
+
+            list.append(dt, dd);
+        });
+
+        body.appendChild(list);
+    });
+
+    const row = document.createElement('div');
+    row.className = 'mf-actions mfx-dialog-foot';
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'mf-btn mf-btn-primary';
+    close.textContent = t('Close');
+    close.autofocus = true;
+    close.addEventListener('click', () => dialog.close());
+    row.appendChild(close);
+    dialog.appendChild(row);
+
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    return dialog;
+}
+
 /** Kurze Rückmeldung unten rechts. */
 export function flash(message, isError) {
     const note = document.createElement('div');

@@ -1,6 +1,6 @@
 // MatFile Explorer - Tabs, Navigation, Auswahl, Kontextmenü und Dateioperationen.
 import { api, t, formatSize, formatDate, fileType, icon, rootIcon, errorKey } from './api.js';
-import { askName, askFileName, askConfirm, showFacts, flash } from './dialogs.js';
+import { askName, askFileName, askConfirm, showFacts, showSections, flash } from './dialogs.js';
 import { uploadFiles, trackJob, onTransfersFinished } from './transfers.js';
 import { openPreview, isPreviewOpen } from './preview.js';
 import { openRootDialog, deleteRoot } from './rootdialog.js';
@@ -2579,6 +2579,14 @@ document.addEventListener('keydown', event => {
         return;
     }
 
+    // Die Übersicht der Tastenkürzel liegt dort, wo man Hilfe erwartet.
+    if (event.key === 'F1') {
+        event.preventDefault();
+        closeMenu();
+        showShortcuts();
+        return;
+    }
+
     // Bei Eingaben nicht eingreifen. Ohne Fokus ist das Ziel das Dokument selbst.
     if (event.target instanceof Element && event.target.matches('input, textarea, select')) {
         return;
@@ -3039,6 +3047,7 @@ function menuItems(name) {
         { label: t('ThemeLight') + (theme === 'light' ? ' ✓' : ''), icon: 'sun', action: () => setTheme('light') },
         { label: t('ThemeDark') + (theme === 'dark' ? ' ✓' : ''), icon: 'moon', action: () => setTheme('dark') },
         '-',
+        { label: t('Keys.Title'), icon: 'monitor', action: () => showShortcuts() },
         { label: t('ChangePassword'), icon: 'lock', action: () => { window.location.href = '/Account/ChangePassword'; } },
         {
             label: t('Logout'), icon: 'log-out',
@@ -3048,6 +3057,44 @@ function menuItems(name) {
 
     // Die Verwaltung hat einen eigenen Bereich - hier steht nur noch die Wahl der Ansicht.
     return settings;
+}
+
+/**
+ * Übersicht der Tastenkürzel. Steht so im Einstellungsmenü und liegt auf F1 -
+ * die Liste bildet ab, was die Tastenbehandlung wirklich kennt.
+ */
+function showShortcuts() {
+    const strg = t('Keys.Ctrl');
+
+    showSections(t('Keys.Title'), [
+        [t('Keys.Navigation'), [
+            ['Enter', t('Open')],
+            ['↑ ↓', t('Keys.MoveSelection')],
+            [`${t('Keys.Shift')} + ↑ ↓`, t('Keys.ExtendSelection')],
+            [t('Keys.Backspace'), t('Up')],
+            ['F5', t('Refresh')]
+        ]],
+        [t('MenuEdit'), [
+            [`${strg} + A`, `${t('SelectAll')} / ${t('ClearSelection')}`],
+            [`${strg} + C`, t('Copy')],
+            [`${strg} + X`, t('Cut')],
+            [`${strg} + V`, t('Paste')],
+            ['F2', t('Rename')],
+            [t('Keys.Delete'), t('Delete')]
+        ]],
+        [t('Keys.Finding'), [
+            [`${strg} + F`, t('SearchRecursive')]
+        ]],
+        [t('Keys.Viewing'), [
+            ['← →', t('Keys.PreviewNavigate')],
+            [`${strg} + S`, t('Save')],
+            ['Tab', t('Keys.Indent')],
+            ['Esc', t('Close')]
+        ]],
+        [t('Keys.Help'), [
+            ['F1', t('Keys.Title')]
+        ]]
+    ], 'monitor');
 }
 
 /** Öffnet den Administrationsbereich, wahlweise direkt in einem Abschnitt. */

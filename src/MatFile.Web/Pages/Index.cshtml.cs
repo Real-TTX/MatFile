@@ -44,6 +44,13 @@ public class IndexModel : PageModel
             "Explorer.Path", "Explorer.Sidebar", "Explorer.SidebarTree", "Explorer.SidebarWidth",
             "Explorer.Expand",
 
+            // Übersicht der Tastenkürzel
+            "Explorer.Keys.Title", "Explorer.Keys.MoveSelection", "Explorer.Keys.ExtendSelection",
+            "Explorer.Keys.PreviewNavigate", "Explorer.Keys.Indent", "Explorer.Keys.Shift",
+            "Explorer.Keys.Backspace", "Explorer.Keys.Delete", "Explorer.Keys.Ctrl",
+            "Explorer.Keys.Navigation", "Explorer.Keys.Finding", "Explorer.Keys.Viewing",
+            "Explorer.Keys.Help",
+
             // Zugriffsrechte im Eigenschaftenblatt
             "Explorer.PermTitle", "Explorer.PermOwner", "Explorer.PermGroup", "Explorer.PermOthers",
             "Explorer.PermRead", "Explorer.PermWrite", "Explorer.PermExecute", "Explorer.PermMode",
