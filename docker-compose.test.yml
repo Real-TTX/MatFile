@@ -50,6 +50,7 @@ services:
       ADDRESS: ftp
     restart: unless-stopped
 
+  # Zwei Freigaben, damit sich auch der Speicherort ohne feste Freigabe testen lässt.
   smb:
     image: dperson/samba
     container_name: matfile-test-smb
@@ -57,6 +58,7 @@ services:
     command: >
       -u "matfile;Smb-Geheim-2026"
       -s "daten;/share;yes;no;no;matfile;matfile;matfile"
+      -s "zweite;/share2;yes;no;no;matfile;matfile;matfile"
       -p
     restart: unless-stopped
 

@@ -258,9 +258,12 @@ public sealed class FileOperationService
         var plan = new List<Func<CancellationToken, Task>>();
         var sameRoot = source.Root.Id == target.Root.Id;
 
+        // Was kopiert statt verschoben wurde, muss danach an der Quelle weg.
+        var kopiert = new List<StorageEntry>();
+
         foreach (var (entry, destination) in items)
         {
-            if (move && sameRoot)
+            if (move && sameRoot && source.Provider.CanMove(entry.Path, destination))
             {
                 var from = entry.Path;
                 var to = destination;
@@ -269,6 +272,7 @@ public sealed class FileOperationService
             }
 
             await BuildCopyPlanAsync(source.Provider, target.Provider, entry, destination, payload.Overwrite, plan, ct);
+            kopiert.Add(entry);
         }
 
         var total = Math.Max(1, plan.Count);
@@ -286,10 +290,11 @@ public sealed class FileOperationService
             }
         }
 
-        // Beim Verschieben über Speicherorte hinweg wird die Quelle erst nach dem Kopieren entfernt.
-        if (move && !sameRoot)
+        // Was kopiert wurde - über Speicherorte hinweg oder über Freigabegrenzen -
+        // verschwindet an der Quelle erst, wenn das Kopieren durch ist.
+        if (move)
         {
-            foreach (var (entry, _) in items)
+            foreach (var entry in kopiert)
             {
                 await source.Provider.DeleteAsync(entry.Path, ct);
             }

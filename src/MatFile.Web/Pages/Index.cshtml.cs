@@ -96,7 +96,7 @@ public class IndexModel : PageModel
             "Explorer.EditLocation", "Explorer.RemoveLocation", "Explorer.RemoveLocationQuestion",
             "Explorer.LocationSaved", "Explorer.LocationRemoved", "Explorer.LocationHint",
             "Explorer.TypeLocal", "Explorer.Server", "Explorer.Port", "Explorer.PortHint",
-            "Explorer.Address", "Explorer.Share", "Explorer.User", "Explorer.Password",
+            "Explorer.Address", "Explorer.Share", "Explorer.ShareHint", "Explorer.User", "Explorer.Password",
             "Explorer.PasswordStored", "Explorer.UseTls", "Explorer.Passive",
             "Explorer.TestConnection", "Explorer.TestOk", "Explorer.NameRequired",
             "Explorer.PathHint", "Explorer.PathHintRemote",
@@ -105,6 +105,7 @@ public class IndexModel : PageModel
             "Explorer.Browse", "Explorer.ChooseFolder", "Explorer.ChooseShare", "Explorer.Apply",
             "Explorer.Advanced", "Explorer.SortOrder", "Explorer.SortOrderHint", "Explorer.Enabled",
             "Explorer.ErrorNotReachable", "Explorer.ErrorConnectionFailed", "Explorer.ErrorShareMissing",
+            "Explorer.ErrorShareLevel",
 
             // Rekursive Suche
             "Explorer.SearchRecursive", "Explorer.SearchContent",

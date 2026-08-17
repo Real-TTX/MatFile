@@ -209,6 +209,12 @@ Der Dialog für Speicherorte selbst:
 - **Ordnerauswahl**: Der Knopf am Pfadfeld öffnet einen Browser der Gegenstelle – mit den
   gerade eingetragenen Zugangsdaten, also bevor der Speicherort gespeichert ist. Bei SMB
   ohne Freigabe erscheinen zuerst die **Freigaben** des Servers.
+- **SMB ohne Freigabe**: Bleibt das Feld leer, steht der **ganze Server** als Speicherort da –
+  die oberste Ebene zeigt dann seine Freigaben als Ordner, der erste Abschnitt eines Pfades
+  ist die Freigabe. Innerhalb einer Freigabe funktioniert alles wie gewohnt; über
+  Freigabegrenzen hinweg wird kopiert und gelöscht statt umbenannt (`CanMove` sagt dem
+  Auftrag, dass ein Zug nicht geht). Auf der Ebene der Freigaben selbst lässt sich nichts
+  anlegen, umbenennen oder löschen – darüber entscheidet die Freigabeverwaltung des Servers.
 - **Erweitert** (aufklappbar) für Port, Sortierung, TLS, passiven Modus und „aktiv".
 
 Verbindungsdaten eines Speicherorts bearbeitet weiterhin der eigene, plakative Dialog;

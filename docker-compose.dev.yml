@@ -53,6 +53,7 @@ services:
     command: >
       -u "matfile;Smb-Geheim-2026"
       -s "daten;/share;yes;no;no;matfile;matfile;matfile"
+      -s "zweite;/share2;yes;no;no;matfile;matfile;matfile"
       -p
     restart: unless-stopped
 

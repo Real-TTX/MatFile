@@ -292,6 +292,7 @@
   <data name="Explorer.Enabled"><value>Storage location is enabled</value></data>
   <data name="Explorer.ErrorNotReachable"><value>The connection could not be established.</value></data>
   <data name="Explorer.ErrorConnectionFailed"><value>No connection. Please check server and credentials.</value></data>
+  <data name="Explorer.ErrorShareLevel"><value>This level lists the shares of the server. Open a share first.</value></data>
   <data name="Explorer.ErrorShareMissing"><value>Please choose a share first.</value></data>
   <data name="Explorer.More"><value>Manage storage locations</value></data>
   <data name="Explorer.Manage"><value>Open administration</value></data>
@@ -323,6 +324,7 @@
   <data name="Explorer.PortHint"><value>0 uses the default port.</value></data>
   <data name="Explorer.Address"><value>Address</value></data>
   <data name="Explorer.Share"><value>Share</value></data>
+  <data name="Explorer.ShareHint"><value>Leave empty to see all shares of the server as folders.</value></data>
   <data name="Explorer.User"><value>Username</value></data>
   <data name="Explorer.Password"><value>Password</value></data>
   <data name="Explorer.PasswordStored"><value>A password is stored. Leave empty to keep it.</value></data>

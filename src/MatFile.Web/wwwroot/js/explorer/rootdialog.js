@@ -334,7 +334,8 @@ export function openRootDialog(root, preferRemote) {
         const blocks = {
             host: field(t('Server'), host),
             url: field(t('Address'), url),
-            share: field(t('Share'), share),
+            // Ohne Freigabe steht der ganze Server da - die Freigaben sind dann die obersten Ordner.
+            share: field(t('Share'), share, t('ShareHint')),
             path: field(t('Path'), pathRow)
         };
 

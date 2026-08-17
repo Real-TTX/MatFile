@@ -63,15 +63,68 @@ public sealed class SmbStorageProvider : IStorageProvider
         }
     }
 
-    private Session Connect()
+    /// <summary>
+    /// Ohne eingetragene Freigabe steht der ganze Server als Speicherort da:
+    /// die oberste Ebene zeigt dann die Freigaben als Ordner, und der erste
+    /// Abschnitt eines Pfades ist die Freigabe.
+    /// </summary>
+    private bool ServerMode => string.IsNullOrWhiteSpace(_settings.Share);
+
+    /// <summary>Zerlegt einen Pfad in Freigabe und den Rest innerhalb der Freigabe.</summary>
+    private (string Share, string Path) Split(string? relativePath)
     {
-        if (string.IsNullOrWhiteSpace(_settings.Share))
+        var normalized = PathGuard.Normalize(relativePath);
+
+        if (normalized.Split('/').Any(segment => segment is ".." or "."))
         {
+            throw StorageException.InvalidPath(normalized);
+        }
+
+        if (!ServerMode)
+        {
+            return (_settings.Share!, normalized);
+        }
+
+        var cut = normalized.IndexOf('/');
+
+        return cut < 0
+            ? (normalized, string.Empty)
+            : (normalized[..cut], normalized[(cut + 1)..]);
+    }
+
+    /// <summary>
+    /// Auf der obersten Ebene stehen im Servermodus die Freigaben des Servers.
+    /// Dort lässt sich nichts anlegen, umbenennen oder löschen - das entscheidet
+    /// die Freigabeverwaltung des Servers, nicht MatFile.
+    /// </summary>
+    private void RequireInsideShare(string? relativePath)
+    {
+        if (!ServerMode)
+        {
+            return;
+        }
+
+        var (share, path) = Split(relativePath);
+
+        if (share.Length == 0 || path.Length == 0)
+        {
+            throw new StorageException("share_level",
+                "This level lists the shares of the server; entries can only be changed inside a share.");
+        }
+    }
+
+    private Session Connect(string? relativePath = null)
+    {
+        var (share, _) = Split(relativePath);
+
+        if (string.IsNullOrWhiteSpace(share))
+        {
+            // Auf der Ebene der Freigaben selbst gibt es nichts anzubinden.
             throw new StorageException("share_missing", "No share name configured.");
         }
 
         var client = Login();
-        var store = client.TreeConnect(_settings.Share, out var status);
+        var store = client.TreeConnect(share, out var status);
 
         if (status != NTStatus.STATUS_SUCCESS || store is null)
         {
@@ -153,19 +206,20 @@ public sealed class SmbStorageProvider : IStorageProvider
         }
     }
 
-    /// <summary>Interner Pfad in die Schreibweise der Freigabe übersetzen.</summary>
+    /// <summary>
+    /// Interner Pfad in die Schreibweise innerhalb der Freigabe übersetzen.
+    /// Im Servermodus ist die Freigabe schon abgeschnitten, sonst gilt der Basispfad.
+    /// </summary>
     private string Resolve(string? relativePath)
     {
-        var normalized = PathGuard.Normalize(relativePath);
+        var (_, path) = Split(relativePath);
 
-        if (normalized.Split('/').Any(segment => segment is ".." or "."))
-        {
-            throw StorageException.InvalidPath(normalized);
-        }
+        // Im Servermodus steht jede Freigabe für sich - ein gemeinsamer Basispfad ergäbe dort keinen Sinn.
+        var basePath = ServerMode ? string.Empty : _basePath;
 
-        var combined = _basePath.Length == 0
-            ? normalized
-            : normalized.Length == 0 ? _basePath : $"{_basePath}/{normalized}";
+        var combined = basePath.Length == 0
+            ? path
+            : path.Length == 0 ? basePath : $"{basePath}/{path}";
 
         return combined.Replace('/', '\\');
     }
@@ -202,7 +256,16 @@ public sealed class SmbStorageProvider : IStorageProvider
     {
         try
         {
-            using var session = Connect();
+            // Ohne feste Freigabe reicht die Anmeldung: erreichbar ist der Server.
+            if (ServerMode)
+            {
+                var client = Login();
+                client.Logoff();
+                client.Disconnect();
+                return Task.FromResult(true);
+            }
+
+            using var session = Connect(string.Empty);
             return Task.FromResult(Exists(session, Resolve(string.Empty), out _));
         }
         catch (StorageException)
@@ -243,9 +306,23 @@ public sealed class SmbStorageProvider : IStorageProvider
     public Task<StorageListing> ListAsync(string? relativePath, CancellationToken cancellationToken = default)
     {
         var normalized = PathGuard.Normalize(relativePath);
+
+        // Oberste Ebene ohne feste Freigabe: die Freigaben selbst sind die Ordner.
+        if (ServerMode && normalized.Length == 0)
+        {
+            return ListSharesAsync().ContinueWith(task =>
+            {
+                var entries = task.Result
+                    .Select(share => new StorageEntry(share, share, true, 0, DateTime.UtcNow))
+                    .ToList();
+
+                return new StorageListing(string.Empty, null, entries);
+            }, cancellationToken, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
+
         var remote = Resolve(normalized);
 
-        using var session = Connect();
+        using var session = Connect(normalized);
 
         var status = session.Store.CreateFile(out var handle, out _, remote,
             AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE, FileAttributes.Directory, ShareAccess.Read | ShareAccess.Write,
@@ -306,8 +383,19 @@ public sealed class SmbStorageProvider : IStorageProvider
             return Task.FromResult<StorageEntry?>(new StorageEntry(string.Empty, string.Empty, true, 0, DateTime.UtcNow));
         }
 
+        // Eine Freigabe selbst ist ein Ordner - nachsehen lässt sie sich nur in der Liste.
+        if (ServerMode && !normalized.Contains('/'))
+        {
+            var vorhanden = ListSharesAsync().GetAwaiter().GetResult()
+                .Any(share => string.Equals(share, normalized, StringComparison.OrdinalIgnoreCase));
+
+            return Task.FromResult<StorageEntry?>(vorhanden
+                ? new StorageEntry(normalized, normalized, true, 0, DateTime.UtcNow)
+                : null);
+        }
+
         var remote = Resolve(normalized);
-        using var session = Connect();
+        using var session = Connect(normalized);
 
         var status = session.Store.CreateFile(out var handle, out _, remote,
             AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE, FileAttributes.Normal, ShareAccess.Read | ShareAccess.Write,
@@ -344,7 +432,7 @@ public sealed class SmbStorageProvider : IStorageProvider
         var normalized = PathGuard.Normalize(relativePath);
         var remote = Resolve(normalized);
 
-        var session = Connect();
+        var session = Connect(normalized);
 
         try
         {
@@ -371,9 +459,10 @@ public sealed class SmbStorageProvider : IStorageProvider
     public Task<Stream> OpenWriteAsync(string relativePath, bool overwrite, CancellationToken cancellationToken = default)
     {
         var normalized = PathGuard.Normalize(relativePath);
+        RequireInsideShare(normalized);
         var remote = Resolve(normalized);
 
-        var session = Connect();
+        var session = Connect(normalized);
 
         try
         {
@@ -403,7 +492,9 @@ public sealed class SmbStorageProvider : IStorageProvider
     public Task<StorageEntry> CreateDirectoryAsync(string relativePath, CancellationToken cancellationToken = default)
     {
         var normalized = PathGuard.Normalize(relativePath);
-        using var session = Connect();
+        RequireInsideShare(normalized);
+
+        using var session = Connect(normalized);
 
         if (Exists(session, Resolve(normalized), out _))
         {
@@ -472,9 +563,26 @@ public sealed class SmbStorageProvider : IStorageProvider
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Verschieben in einem Zug klappt nur innerhalb einer Freigabe - ein Server
+    /// kennt keinen Weg, eine Datei von einer Freigabe in die andere umzuhängen.
+    /// </summary>
+    public bool CanMove(string sourcePath, string targetPath)
+        => !ServerMode || string.Equals(Split(sourcePath).Share, Split(targetPath).Share, StringComparison.OrdinalIgnoreCase);
+
     private void Move(string sourcePath, string targetPath, bool overwrite)
     {
-        using var session = Connect();
+        RequireInsideShare(sourcePath);
+        RequireInsideShare(targetPath);
+
+        // Umbenennen geht nur innerhalb derselben Freigabe; über Freigaben hinweg
+        // kopiert und löscht der Auftrag stattdessen (siehe CanMove).
+        if (!CanMove(sourcePath, targetPath))
+        {
+            throw StorageException.InvalidPath(targetPath);
+        }
+
+        using var session = Connect(sourcePath);
 
         var source = Resolve(sourcePath);
 
@@ -522,7 +630,9 @@ public sealed class SmbStorageProvider : IStorageProvider
             throw StorageException.InvalidPath(normalized);
         }
 
-        using var session = Connect();
+        RequireInsideShare(normalized);
+
+        using var session = Connect(normalized);
         Remove(session, normalized);
 
         return Task.CompletedTask;

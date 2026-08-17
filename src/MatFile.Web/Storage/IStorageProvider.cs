@@ -35,5 +35,12 @@ public interface IStorageProvider
     /// <summary>Verschiebt innerhalb desselben Speicherorts.</summary>
     Task MoveAsync(string sourcePath, string targetPath, bool overwrite, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Lässt sich zwischen diesen beiden Pfaden in einem Zug verschieben?
+    /// Normalerweise ja; ein SMB-Server ohne feste Freigabe kann das aber nicht
+    /// über Freigabegrenzen hinweg - dort wird stattdessen kopiert und gelöscht.
+    /// </summary>
+    bool CanMove(string sourcePath, string targetPath) => true;
+
     Task DeleteAsync(string relativePath, CancellationToken cancellationToken = default);
 }

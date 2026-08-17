@@ -292,6 +292,7 @@
   <data name="Explorer.Enabled"><value>Speicherort ist aktiv</value></data>
   <data name="Explorer.ErrorNotReachable"><value>Die Verbindung konnte nicht hergestellt werden.</value></data>
   <data name="Explorer.ErrorConnectionFailed"><value>Keine Verbindung. Bitte Server und Zugangsdaten prüfen.</value></data>
+  <data name="Explorer.ErrorShareLevel"><value>Auf dieser Ebene stehen die Freigaben des Servers. Bitte zuerst eine Freigabe öffnen.</value></data>
   <data name="Explorer.ErrorShareMissing"><value>Bitte zuerst eine Freigabe auswählen.</value></data>
   <data name="Explorer.More"><value>Speicherorte verwalten</value></data>
   <data name="Explorer.Manage"><value>Verwaltung öffnen</value></data>
@@ -323,6 +324,7 @@
   <data name="Explorer.PortHint"><value>0 verwendet den Standardport.</value></data>
   <data name="Explorer.Address"><value>Adresse</value></data>
   <data name="Explorer.Share"><value>Freigabe</value></data>
+  <data name="Explorer.ShareHint"><value>Leer lassen, um alle Freigaben des Servers als Ordner zu sehen.</value></data>
   <data name="Explorer.User"><value>Benutzername</value></data>
   <data name="Explorer.Password"><value>Kennwort</value></data>
   <data name="Explorer.PasswordStored"><value>Ein Kennwort ist hinterlegt. Leer lassen, um es zu behalten.</value></data>

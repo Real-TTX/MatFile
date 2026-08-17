@@ -367,6 +367,62 @@ Add-Result "Inhalt auf SMB korrekt" ($smbBack.Content -match 'lokale Datei') ""
 $smbRen = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $smbRoot.id; path = 'Ablage/lokal.txt'; newName = 'neu.txt' }
 Add-Result "SMB-Datei umbenannt" ($smbRen.Status -eq 200 -and (Names $admin $smbRoot.id 'Ablage') -contains 'neu.txt') "status=$($smbRen.Status)"
 
+# --- SMB ohne feste Freigabe: der ganze Server als Speicherort ----------
+Invoke-Docker exec "$RemotePrefix-smb" sh -c "mkdir -p /share2 && echo zwei > /share2/zweite.txt && chown -R matfile /share2" | Out-Null
+
+$serverBase = @{
+    name = 'Ganzer Server'; type = 'Smb'; path = ''; host = 'smb'; port = 445
+    share = ''; username = 'matfile'; sortOrder = 6
+}
+
+Save-Root $admin ($serverBase + @{ password = $SmbPassword }) | Out-Null
+$serverRoot = ((Api GET "$BaseUrl/api/fs/roots" $admin).Data | Where-Object { $_.name -eq 'Ganzer Server' })
+Add-Result "Speicherort ohne Freigabe angelegt" ($null -ne $serverRoot) "id=$($serverRoot.id)"
+
+$freigaben = Names $admin $serverRoot.id ''
+Add-Result "Freigaben stehen als Ordner" (
+    $freigaben -contains 'daten' -and $freigaben -contains 'zweite') ($freigaben -join ', ')
+
+$oben = Api GET "$BaseUrl/api/fs/list?rootId=$($serverRoot.id)" $admin
+$alleOrdner = @($oben.Data.entries | Where-Object { -not $_.isDirectory }).Count
+Add-Result "Freigaben sind Ordner" ($alleOrdner -eq 0) "Dateien auf oberster Ebene=$alleOrdner"
+
+$inFreigabe = Names $admin $serverRoot.id 'daten'
+Add-Result "In die Freigabe gewechselt" ($inFreigabe -contains 'smb.txt') ($inFreigabe -join ', ')
+
+$serverDownload = Invoke-WebRequest "$BaseUrl/api/fs/download?rootId=$($serverRoot.id)&path=$(Enc 'daten/smb.txt')" -WebSession $admin -UseBasicParsing
+Add-Result "Datei ueber den Server gelesen" ($serverDownload.Content -match 'Datei per SMB') ""
+
+$serverOrdner = Api POST "$BaseUrl/api/fs/folder" $admin @{ rootId = $serverRoot.id; path = 'daten'; name = 'Serverordner' }
+Add-Result "Ordner in einer Freigabe angelegt" (
+    $serverOrdner.Status -eq 200 -and (Names $admin $serverRoot.id 'daten') -contains 'Serverordner') "status=$($serverOrdner.Status)"
+
+# Ueber Freigabegrenzen wird kopiert und geloescht, nicht umbenannt
+$ueber = Api POST "$BaseUrl/api/fs/transfer" $admin @{
+    sourceRootId = $serverRoot.id; paths = @('daten/smb.txt'); targetRootId = $serverRoot.id
+    targetPath = 'zweite'; move = $false; overwrite = $true
+}
+$job = Wait-Job $admin $ueber.Data.token
+Add-Result "Kopie zwischen Freigaben" (
+    $job.status -eq 'Completed' -and (Names $admin $serverRoot.id 'zweite') -contains 'smb.txt') "status=$($job.status)"
+
+# Auf der Ebene der Freigaben laesst sich nichts anlegen oder loeschen
+$aufEbene = Api POST "$BaseUrl/api/fs/folder" $admin @{ rootId = $serverRoot.id; path = ''; name = 'KeineFreigabe' }
+Add-Result "Kein Ordner auf Freigabenebene" (
+    $aufEbene.Status -eq 400 -and $aufEbene.Data.error -eq 'share_level') "status=$($aufEbene.Status) error=$($aufEbene.Data.error)"
+
+$freigabeUm = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $serverRoot.id; path = 'daten'; newName = 'andere' }
+Add-Result "Freigabe nicht umbenennbar" (
+    $freigabeUm.Status -eq 400 -and $freigabeUm.Data.error -eq 'share_level') "status=$($freigabeUm.Status)"
+
+$freigabeWeg = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $serverRoot.id; paths = @('daten') }
+$job = Wait-Job $admin $freigabeWeg.Data.token
+Add-Result "Freigabe nicht loeschbar" ($job.status -eq 'Failed' -and $job.error -eq 'share_level') "status=$($job.status)"
+Add-Result "Freigaben unveraendert" ((Names $admin $serverRoot.id '') -contains 'daten') ((Names $admin $serverRoot.id '') -join ', ')
+
+$serverAufraeumen = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $serverRoot.id; paths = @('daten/Serverordner', 'zweite/smb.txt') }
+Wait-Job $admin $serverAufraeumen.Data.token | Out-Null
+
 $smbPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($smbRoot.id)&path=$(Enc 'Ablage')" $admin
 Add-Result "SMB ohne Rechteverwaltung" (
     $smbPerm.Status -eq 200 -and $smbPerm.Data.supported -eq $false) "supported=$($smbPerm.Data.supported)"
