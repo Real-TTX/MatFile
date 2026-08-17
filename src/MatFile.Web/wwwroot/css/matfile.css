@@ -41,11 +41,17 @@
     /* Layout */
     --mf-topbar-height: 52px;
     --mf-sidebar-width: 260px;
+
+    /* Bildlaufleiste: nur der Griff, und der auch nur beim Scrollen. */
+    --mf-scrollbar: rgba(15, 23, 42, 0.28);
+    --mf-scrollbar-hover: rgba(15, 23, 42, 0.45);
 }
 
 /* Dunkles Design: fest gewählt ... */
 :root[data-theme="dark"] {
     color-scheme: dark;
+    --mf-scrollbar: rgba(231, 236, 245, 0.22);
+    --mf-scrollbar-hover: rgba(231, 236, 245, 0.4);
     --mf-accent-soft: rgba(59, 130, 246, 0.2);
     --mf-bg: #12161f;
     --mf-surface: #1a2030;
@@ -60,6 +66,8 @@
 @media (prefers-color-scheme: dark) {
     :root[data-theme="auto"] {
         color-scheme: dark;
+        --mf-scrollbar: rgba(231, 236, 245, 0.22);
+        --mf-scrollbar-hover: rgba(231, 236, 245, 0.4);
         --mf-accent-soft: rgba(59, 130, 246, 0.2);
         --mf-bg: #12161f;
         --mf-surface: #1a2030;
@@ -79,6 +87,49 @@
 *::before,
 *::after {
     box-sizing: border-box;
+}
+
+/* --- Bildlaufleisten ---
+   Standardmäßig ist nur der Platz da, gezeichnet wird nichts. Der Griff
+   erscheint beim Scrollen (matfile.js setzt dafür kurz "is-scrolling") und
+   wenn der Zeiger direkt darauf liegt - so bleibt die Fläche ruhig. */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    /* Rand aus durchsichtiger Farbe: der Griff wirkt schmaler als seine Spur. */
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-color: transparent;
+    background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.is-scrolling {
+    scrollbar-color: var(--mf-scrollbar) transparent;
+}
+
+.is-scrolling::-webkit-scrollbar-thumb {
+    background-color: var(--mf-scrollbar);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: var(--mf-scrollbar-hover);
 }
 
 /* Eigene display-Regeln (z. B. flex) wuerden das hidden-Attribut sonst aushebeln. */

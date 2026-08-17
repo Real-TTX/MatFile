@@ -2,6 +2,23 @@
 (function () {
     'use strict';
 
+    // Bildlaufleisten zeigen sich nur beim Scrollen: waehrend des Scrollens und
+    // eine knappe Sekunde danach traegt das Element "is-scrolling", der Rest der
+    // Zeit ist nur der Platz da. Das Ereignis blubbert nicht, deshalb capture.
+    var scrollTimers = new WeakMap();
+
+    document.addEventListener('scroll', function (event) {
+        var element = event.target instanceof Element ? event.target : document.documentElement;
+
+        element.classList.add('is-scrolling');
+        clearTimeout(scrollTimers.get(element));
+
+        scrollTimers.set(element, setTimeout(function () {
+            element.classList.remove('is-scrolling');
+            scrollTimers.delete(element);
+        }, 900));
+    }, true);
+
     // Sicherheitsabfrage vor Aktionen mit data-confirm.
     document.addEventListener('click', function (event) {
         var trigger = event.target.closest('[data-confirm]');

@@ -222,6 +222,13 @@ die **Rechtematrix je Rolle** sitzt im Bereich *Speicherorte*. Alles spricht die
 JSON-API (`/api/users`, `/api/roles`, `/api/roots`, `/api/system`), gegen die auch die
 Tests laufen.
 
+**Bildlaufleisten** halten sich zurück: Der Platz ist immer reserviert (sonst rutschen die
+Spalten, sobald eine Liste lang genug wird), gezeichnet wird aber nur beim Scrollen und
+wenn der Zeiger auf dem Griff liegt. `matfile.js` setzt dafür kurz `is-scrolling`; nach
+900 ms ist die Fläche wieder ruhig. Der Griff ist schmal (11 px Spur, 5 px sichtbar) und
+liegt bei 22 % Deckkraft – die Standardleiste des Browsers war dagegen 15 px breit und
+dauerhaft sichtbar.
+
 Gestaltung der Dialoge - **für jeden Dialog gleich**, vom Umbenennen bis zur
 Administration:
 
