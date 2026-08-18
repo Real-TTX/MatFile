@@ -9,6 +9,8 @@ keinen komfortablen Zugriff auf Dateien bieten.
 - **SMB auch ohne Freigabe**: Feld leer lassen, dann stehen alle Freigaben des Servers
   als Ordner in der obersten Ebene
 - Explorer-Bedienung: Sidebar, **Tabs**, Menüleiste, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
+- **„Dieser PC"**: alle Speicherorte als Kacheln mit **freiem Platz** und Zustand,
+  Teil des Pfades wie der Arbeitsplatz im Windows-Explorer
 - Seitenleiste mit **Ordnerbaum zum Aufklappen** (je Benutzer zuschaltbar, standardmäßig aus)
   und **ziehbarer Breite**
 - Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**

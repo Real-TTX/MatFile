@@ -107,6 +107,20 @@ Add-Result "Absoluter Pfad blockiert" ($absolute.Status -eq 404) "status=$($abso
 $unknown = Get-Api "$BaseUrl/api/fs/list?rootId=999999" $admin
 Add-Result "Unbekannter Root" ($unknown.Status -eq 404) "status=$($unknown.Status)"
 
+# --- Belegung fuer die Uebersicht "Dieser PC" -----------------------------
+$space = Get-Api "$BaseUrl/api/fs/space?rootId=$($sample.id)" $admin
+Add-Result "Belegung eines lokalen Speicherorts" (
+    $space.Status -eq 200 -and $space.Data.supported -eq $true -and
+    $space.Data.total -gt 0 -and $space.Data.free -gt 0 -and
+    $space.Data.free -le $space.Data.total) "total=$($space.Data.total) free=$($space.Data.free)"
+
+Add-Result "Belegung rechnet stimmig" (
+    $space.Data.used -eq ($space.Data.total - $space.Data.free) -and
+    $space.Data.percent -ge 0 -and $space.Data.percent -le 100) "used=$($space.Data.used) percent=$($space.Data.percent)"
+
+$spaceUnknown = Get-Api "$BaseUrl/api/fs/space?rootId=999999" $admin
+Add-Result "Belegung eines unbekannten Speicherorts" ($spaceUnknown.Status -eq 404) "status=$($spaceUnknown.Status)"
+
 # --- Rechte eines normalen Benutzers -------------------------------------
 $userRoleId = (Get-MatJson "$BaseUrl/api/users" $admin).Data.roles | Where-Object { $_.name -eq 'User' }
 $created = New-MatUser $BaseUrl $admin @{
@@ -130,6 +144,9 @@ Add-Result "Testbenutzer darf lesen" ($list.Status -eq 200) "status=$($list.Stat
 
 $denied = Get-Api "$BaseUrl/api/fs/list?rootId=$($intern.id)" $tester
 Add-Result "Gesperrter Root nicht lesbar" ($denied.Status -eq 404) "status=$($denied.Status)"
+
+$spaceDenied = Get-Api "$BaseUrl/api/fs/space?rootId=$($intern.id)" $tester
+Add-Result "Keine Belegung eines gesperrten Speicherorts" ($spaceDenied.Status -eq 404) "status=$($spaceDenied.Status)"
 
 $noManage = New-MatRoot $BaseUrl $tester @{ name = 'Verboten'; path = '/storage/sample' }
 Add-Result "Ohne Recht kein Speicherort" ($noManage.Status -eq 403) "status=$($noManage.Status)"

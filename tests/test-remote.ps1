@@ -185,6 +185,16 @@ Add-Result "Ungueltiger Rechtewert abgelehnt" (
 $missingPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($sftpRoot.id)&path=$(Enc 'gibtsnicht')" $admin
 Add-Result "Rechte eines fehlenden Eintrags" ($missingPerm.Status -eq 404) "status=$($missingPerm.Status)"
 
+# --- Belegung ueber SFTP --------------------------------------------------
+# Nicht jeder SSH-Server beantwortet statvfs - dann bleibt die Kachel ohne Balken.
+$sftpSpace = Api GET "$BaseUrl/api/fs/space?rootId=$($sftpRoot.id)" $admin
+Add-Result "SFTP-Belegung abgefragt" (
+    $sftpSpace.Status -eq 200 -and (
+        $sftpSpace.Data.supported -eq $false -or
+        ($sftpSpace.Data.total -gt 0 -and $sftpSpace.Data.free -ge 0 -and
+         $sftpSpace.Data.free -le $sftpSpace.Data.total))
+) "supported=$($sftpSpace.Data.supported) total=$($sftpSpace.Data.total) free=$($sftpSpace.Data.free)"
+
 # --- Pfadausbruch ---------------------------------------------------------
 $escape = Api GET "$BaseUrl/api/fs/list?rootId=$($sftpRoot.id)&path=$(Enc '../..')" $admin
 Add-Result "Pfadausbruch auf der Gegenstelle blockiert" ($escape.Status -eq 400) "status=$($escape.Status)"
@@ -242,6 +252,11 @@ $davSet = Api PUT "$BaseUrl/api/fs/permissions" $admin @{ rootId = $davRoot.id; 
 Add-Result "WebDAV-Rechte nicht setzbar" (
     $davSet.Status -eq 501 -and $davSet.Data.error -eq 'permissions_unsupported') "status=$($davSet.Status)"
 
+# WebDAV kennt keine Belegung - die Kachel zeigt dann "Belegung unbekannt"
+$davSpace = Api GET "$BaseUrl/api/fs/space?rootId=$($davRoot.id)" $admin
+Add-Result "WebDAV ohne Belegungsauskunft" (
+    $davSpace.Status -eq 200 -and $davSpace.Data.supported -eq $false) "supported=$($davSpace.Data.supported)"
+
 $davDel = Api POST "$BaseUrl/api/fs/delete" $admin @{ rootId = $davRoot.id; paths = @('Ablage') }
 $job = Wait-Job $admin $davDel.Data.token
 Add-Result "WebDAV Ordner geloescht" ($job.status -eq 'Completed' -and (Names $admin $davRoot.id '') -notcontains 'Ablage') "status=$($job.status)"
@@ -289,6 +304,10 @@ Add-Result "Kopie lokal nach FTP" ($job.status -eq 'Completed' -and (Names $admi
 
 $ftpRen = Api POST "$BaseUrl/api/fs/rename" $admin @{ rootId = $ftpRoot.id; path = 'Eingang/lokal.txt'; newName = 'neu.txt' }
 Add-Result "FTP-Datei umbenannt" ($ftpRen.Status -eq 200 -and (Names $admin $ftpRoot.id 'Eingang') -contains 'neu.txt') "status=$($ftpRen.Status)"
+
+$ftpSpace = Api GET "$BaseUrl/api/fs/space?rootId=$($ftpRoot.id)" $admin
+Add-Result "FTP ohne Belegungsauskunft" (
+    $ftpSpace.Status -eq 200 -and $ftpSpace.Data.supported -eq $false) "supported=$($ftpSpace.Data.supported)"
 
 # Rechte ueber SITE CHMOD - der Server muss sie auch im Listing mitschicken
 $ftpPerm = Api GET "$BaseUrl/api/fs/permissions?rootId=$($ftpRoot.id)&path=$(Enc 'Eingang')" $admin

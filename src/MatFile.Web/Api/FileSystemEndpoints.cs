@@ -64,6 +64,46 @@ public static class FileSystemEndpoints
             }
         });
 
+        // Belegung eines Speicherorts - für die Übersicht "Dieser PC".
+        group.MapGet("/space", async (
+            long rootId,
+            StorageRootService roots,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var opened = await roots.OpenAsync(user, rootId);
+            if (opened is not { } access)
+            {
+                return Results.Json(new { error = "root_not_found" }, statusCode: StatusCodes.Status404NotFound);
+            }
+
+            if (access.Provider is not IStorageSpace provider)
+            {
+                return Results.Ok(new { supported = false });
+            }
+
+            try
+            {
+                var space = await provider.GetSpaceAsync(cancellationToken);
+
+                return space is null
+                    ? Results.Ok(new { supported = false })
+                    : Results.Ok(new
+                    {
+                        supported = true,
+                        space.Total,
+                        space.Free,
+                        space.Used,
+                        percent = space.UsedPercent
+                    });
+            }
+            catch (StorageException)
+            {
+                // Eine Gegenstelle, die gerade nicht antwortet, ist kein Fehler der Übersicht.
+                return Results.Ok(new { supported = false });
+            }
+        });
+
         group.MapGet("/list", async (
             long rootId,
             string? path,

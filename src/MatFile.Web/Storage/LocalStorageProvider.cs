@@ -6,7 +6,7 @@ namespace MatFile.Web.Storage;
 /// Zugriff auf einen lokalen Pfad im Container - der Normalfall für ein per
 /// Bind-Mount eingehängtes NAS-Volume.
 /// </summary>
-public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage
+public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage, IStorageSpace
 {
     private readonly string _basePath;
     private readonly string? _protectedPath;
@@ -238,6 +238,25 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage
         }
 
         throw StorageException.NotFound(normalized);
+    }
+
+    // ---------------------------------------------------------------- Platz
+
+    public Task<StorageSpace?> GetSpaceAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(_basePath)) ?? _basePath);
+
+            return Task.FromResult<StorageSpace?>(drive.IsReady
+                ? new StorageSpace(drive.TotalSize, drive.AvailableFreeSpace)
+                : null);
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            // Ohne Auskunft bleibt die Spalte einfach leer.
+            return Task.FromResult<StorageSpace?>(null);
+        }
     }
 
     // ---------------------------------------------------------------- Rechte

@@ -141,6 +141,19 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   durchgestrichen, der Titel nennt den Grund. Erreichbare lokale Ordner bleiben ohne Zeichen,
   damit die Leiste ruhig bleibt. Gefragt wird `/api/fs/status` je Speicherort, sobald die
   Leiste gezeichnet wird.
+- **„Dieser PC"** als Wurzel über allen Speicherorten – wie der Arbeitsplatz im
+  Windows-Explorer. Erreichbar über den obersten Knopf der Seitenleiste, über die erste
+  Brotkrume jedes Pfades (dort nur als Symbol, mit Titel) und als eigener Tab über das
+  `+` in der Tab-Leiste. Der Tab ist eine eigene Tab-Art (`overview`) neben Ordner und
+  Suche: Werkzeuge, die einen Ordner brauchen (Upload, Neu, Suche), sind darin aus.
+  Jeder Speicherort steht als **Kachel** mit Symbol nach Typ, Name, Art, **Belegung**
+  (Balken, ab 90 % rot, dazu „x frei von y") und Zustand – dieselben Zeichen wie in der
+  Seitenleiste. Ein Klick öffnet den Speicherort im selben Tab.
+  Die Belegung kommt je Speicherort von `/api/fs/space` und wird nachgeladen, damit die
+  Kacheln nicht auf eine langsame Gegenstelle warten. Sie beantwortet nur, wer
+  `IStorageSpace` kann: lokale Pfade (`DriveInfo`), SFTP (`statvfs`) und SMB mit
+  Freigabe. WebDAV, FTP und SMB im Servermodus melden `supported: false` – dort steht
+  „Belegung unbekannt" statt eines Balkens.
 - **Rechtsklick in der Seitenleiste**: Öffnen, in neuem Tab öffnen und **als Favorit setzen** -
   bei einem Speicherort wie bei einem Ordner im Baum. Favoriten haben ihr eigenes Menü mit
   Öffnen und Entfernen. Ein zweites Setzen desselben Ordners legt keinen doppelten Eintrag an.

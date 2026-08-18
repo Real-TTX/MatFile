@@ -281,6 +281,9 @@
   <data name="Access.CanDownload"><value>Herunterladen</value></data>
   <data name="Access.CanShare"><value>Freigeben</value></data>
 
+  <data name="Explorer.ThisPc"><value>Dieser PC</value></data>
+  <data name="Explorer.SpaceFree"><value>{0} frei von {1}</value></data>
+  <data name="Explorer.SpaceUnknown"><value>Belegung unbekannt</value></data>
   <data name="Explorer.Roots"><value>Speicherorte</value></data>
   <data name="Explorer.Browse"><value>Durchsuchen…</value></data>
   <data name="Explorer.ChooseFolder"><value>Ordner auswählen</value></data>

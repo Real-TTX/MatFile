@@ -22,6 +22,133 @@
     min-height: 0;
 }
 
+/* --- Übersicht "Dieser PC": alle Speicherorte als Kacheln --- */
+
+.mfx-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--mf-space-3);
+    padding: var(--mf-space-4);
+}
+
+.mfx-place {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mf-space-2);
+    padding: var(--mf-space-3);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-lg);
+    background: var(--mf-surface);
+    color: var(--mf-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mfx-place:hover {
+    border-color: var(--mf-accent);
+}
+
+.mfx-place.is-unavailable {
+    border-style: dashed;
+}
+
+.mfx-place.is-unavailable .mfx-place-name {
+    color: var(--mf-text-muted);
+}
+
+.mfx-place-head {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-3);
+    min-width: 0;
+}
+
+/* Symbol in der Farbe des Typs - dieselbe Zuordnung wie im Dialog. */
+.mfx-place-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--mf-radius);
+    background: var(--mf-surface-alt);
+    color: var(--mf-tile, var(--mf-accent));
+}
+
+.mfx-place-titles {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.mfx-place-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mfx-place-type {
+    color: var(--mf-text-muted);
+    font-size: 12px;
+}
+
+/* Balken wie im Datei-Explorer: blau, ab 90 Prozent rot. */
+.mfx-place-bar {
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--mf-surface-alt);
+    overflow: hidden;
+}
+
+.mfx-place-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--mf-accent);
+}
+
+.mfx-place-bar.is-full .mfx-place-fill {
+    background: var(--mf-danger);
+}
+
+.mfx-place-space {
+    color: var(--mf-text-muted);
+    font-size: 12px;
+}
+
+.mfx-place-state {
+    display: flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+    min-height: 16px;
+    color: var(--mf-text-muted);
+    font-size: 12px;
+}
+
+.mfx-place-state.is-offline {
+    color: var(--mf-danger);
+}
+
+/* "Dieser PC" in der Seitenleiste und als erste Brotkrume. */
+.mfx-side-overview {
+    width: 100%;
+    margin-bottom: var(--mf-space-3);
+}
+
+.mfx-crumb-overview {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mf-space-2);
+}
+
+.mfx-crumb-overview.is-active {
+    font-weight: 600;
+}
+
 /* --- Seitenleiste --- */
 
 .mfx-sidebar {

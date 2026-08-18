@@ -63,6 +63,9 @@ export const api = {
 
     status: rootId => request(`/api/fs/status?rootId=${encodeURIComponent(rootId)}`),
 
+    /** Belegung eines Speicherorts - fuer die Uebersicht. */
+    space: rootId => request(`/api/fs/space?rootId=${encodeURIComponent(rootId)}`),
+
     text: (rootId, path) =>
         request(`/api/fs/text?rootId=${encodeURIComponent(rootId)}&path=${encodeURIComponent(path || '')}`),
 

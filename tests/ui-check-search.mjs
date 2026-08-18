@@ -276,7 +276,7 @@ await evaluate(`(() => {
 await sleep(1600);
 
 const revealed = await evaluate(`(() => ({
-    breadcrumb: [...document.querySelectorAll('#mfx-breadcrumb .mfx-crumb')].map(c => c.textContent),
+    breadcrumb: [...document.querySelectorAll('#mfx-breadcrumb .mfx-crumb:not(.mfx-crumb-overview)')].map(c => c.textContent),
     selected: [...document.querySelectorAll('.mfx-row.is-selected .mfx-name')].map(e => e.textContent),
     rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
     tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent),

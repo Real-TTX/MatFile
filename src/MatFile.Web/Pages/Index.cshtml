@@ -25,6 +25,12 @@
              aria-orientation="vertical" aria-label="@L["Explorer.SidebarWidth"]" tabindex="0"></div>
 
         <div class="mfx-side-scroll">
+        @* Alle Speicherorte auf einen Blick - so wie "Dieser PC" im Windows-Explorer. *@
+        <button type="button" class="mfx-side-item mfx-side-overview" id="mfx-overview">
+            <span class="mfx-side-icon"><mf-icon name="monitor" size="16" /></span>
+            <span class="mfx-side-label">@L["Explorer.ThisPc"]</span>
+        </button>
+
         @* Ordner und Verbindungen stehen zusammen - der Typ steckt im Symbol. *@
         <section class="mfx-side-group" id="mfx-roots-group" hidden>
             <h2>@L["Explorer.Roots"]</h2>

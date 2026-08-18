@@ -37,7 +37,8 @@ const el = {
     detailsToggle: document.getElementById('mfx-details-toggle'),
     more: document.getElementById('mfx-more'),
     sidebarToggle: document.getElementById('mfx-sidebar-toggle'),
-    sidebarResizer: document.getElementById('mfx-sidebar-resizer')
+    sidebarResizer: document.getElementById('mfx-sidebar-resizer'),
+    overview: document.getElementById('mfx-overview')
 };
 
 const state = {
@@ -50,6 +51,8 @@ const state = {
     },
     // Aufgeklappte Knoten des Ordnerbaums als "rootId:pfad".
     expanded: new Set(),
+    // Belegung je Speicherort für die Übersicht, sobald sie eintrifft.
+    space: {},
     tabs: [],
     active: 0,
     filter: '',
@@ -148,8 +151,8 @@ async function activate(index, push) {
     state.active = index;
     const tab = activeTab();
 
-    // Ein Suchtab holt nichts nach - seine Treffer stehen schon im Zustand.
-    if (tab.kind === 'search') {
+    // Suche und Übersicht holen nichts nach - ihr Inhalt steht schon im Zustand.
+    if (!isFolderTab(tab)) {
         renderAll();
         return;
     }
@@ -356,6 +359,10 @@ function syncSearchField() {
 }
 
 function tabTitle(tab) {
+    if (tab.kind === 'overview') {
+        return t('ThisPc');
+    }
+
     if (tab.kind === 'search') {
         return tab.search.term ? `${t('SearchTab')}: ${tab.search.term}` : t('SearchTab');
     }
@@ -618,8 +625,8 @@ async function reloadRoots() {
 
     const tab = activeTab();
 
-    // Ein Suchtab hängt an keinem Ordner - er bleibt, wie er ist.
-    if (tab.kind === 'search') {
+    // Suche und Übersicht hängen an keinem Ordner - sie bleiben, wie sie sind.
+    if (!isFolderTab(tab)) {
         renderAll();
         return;
     }
@@ -635,9 +642,15 @@ async function reloadRoots() {
 async function openRoot(rootId) {
     const tab = activeTab();
 
-    if (!tab || tab.kind === 'search') {
+    // Aus Suche oder Übersicht heraus wird der Tab zum Ordnertab.
+    if (!tab) {
         await openTab(rootId, '');
         return;
+    }
+
+    if (!isFolderTab(tab)) {
+        tab.kind = 'folder';
+        tab.search = null;
     }
 
     await navigate(tab, rootId, '');
@@ -860,7 +873,7 @@ function renderTabs() {
         item.setAttribute('role', 'tab');
         item.setAttribute('aria-selected', index === state.active ? 'true' : 'false');
 
-        item.appendChild(icon(tab.kind === 'search' ? 'search-deep' : 'folder', 14));
+        item.appendChild(icon(tabIcon(tab), 14));
 
         const label = document.createElement('span');
         label.className = 'mfx-tab-title';
@@ -909,6 +922,15 @@ function renderTabs() {
     el.tabs.appendChild(add);
 }
 
+/** Symbol der Tabart. */
+function tabIcon(tab) {
+    if (tab.kind === 'overview') {
+        return 'monitor';
+    }
+
+    return tab.kind === 'search' ? 'search-deep' : 'folder';
+}
+
 function renderBreadcrumb() {
     el.breadcrumb.replaceChildren();
 
@@ -916,6 +938,25 @@ function renderBreadcrumb() {
     if (!tab) {
         return;
     }
+
+    // "Dieser PC" steht am Anfang jedes Pfades und führt zurück in die Übersicht.
+    const overview = document.createElement('button');
+    overview.type = 'button';
+    overview.className = 'mfx-crumb mfx-crumb-overview';
+    overview.title = t('ThisPc');
+    overview.setAttribute('aria-label', t('ThisPc'));
+    overview.appendChild(icon('monitor', 14));
+    overview.addEventListener('click', () => showOverview());
+
+    if (tab.kind === 'overview') {
+        overview.classList.add('is-active');
+        overview.appendChild(document.createTextNode(t('ThisPc')));
+        el.breadcrumb.appendChild(overview);
+        return;
+    }
+
+    el.breadcrumb.appendChild(overview);
+    el.breadcrumb.appendChild(icon('chevron', 12));
 
     if (tab.kind === 'search') {
         const label = document.createElement('span');
@@ -984,6 +1025,11 @@ function visibleEntries(tab) {
 
 function renderListing() {
     const tab = activeTab();
+
+    if (tab && tab.kind === 'overview') {
+        renderOverview();
+        return;
+    }
 
     if (tab && tab.kind === 'search') {
         renderSearchView(tab);
@@ -1174,6 +1220,13 @@ function renderStatus() {
         return;
     }
 
+    if (tab.kind === 'overview') {
+        const info = document.createElement('span');
+        info.textContent = t('Items').replace('{0}', state.roots.length);
+        el.status.appendChild(info);
+        return;
+    }
+
     if (tab.kind === 'search') {
         const info = document.createElement('span');
         info.textContent = tab.search.state === 'idle'
@@ -1232,7 +1285,7 @@ function renderDetails() {
     const tab = activeTab();
 
     // Im Suchtab gibt es keine Auswahl, zu der ein Detailbereich passen würde.
-    const show = state.settings.showDetails && (!tab || tab.kind !== 'search');
+    const show = state.settings.showDetails && (!tab || isFolderTab(tab));
     el.details.hidden = !show;
 
     if (!show) {
@@ -1391,7 +1444,7 @@ function renderDetails() {
 
 function renderToolbarState() {
     const tab = activeTab();
-    const isSearch = !!tab && tab.kind === 'search';
+    const isSearch = !!tab && !isFolderTab(tab);
 
     el.back.disabled = isSearch || !tab || tab.historyIndex <= 0;
     el.forward.disabled = isSearch || !tab || tab.historyIndex >= tab.history.length - 1;
@@ -1761,6 +1814,15 @@ async function reload() {
         return;
     }
 
+    // In der Übersicht heißt aktualisieren: Speicherorte und Belegung neu holen.
+    if (tab.kind === 'overview') {
+        state.space = {};
+        await reloadRoots();
+        loadSpaces();
+        renderAll();
+        return;
+    }
+
     // Im Suchtab heißt aktualisieren: noch einmal suchen.
     if (tab.kind === 'search') {
         if (tab.search.term.trim().length >= 2) {
@@ -1983,7 +2045,7 @@ function newTab() {
         return;
     }
 
-    openTab(tab.rootId, tab.kind === 'search' ? '' : tab.path);
+    openTab(tab.rootId, isFolderTab(tab) ? tab.path : '');
 }
 
 /**
@@ -1993,8 +2055,69 @@ function newTab() {
 function tabKindMenu() {
     return [
         { label: t('NewTab'), icon: 'folder', action: () => newTab() },
+        { label: t('ThisPc'), icon: 'monitor', action: () => openOverviewTab() },
         { label: t('SearchTab'), icon: 'search-deep', action: () => openSearchTab('', false) }
     ];
+}
+
+/**
+ * Ein Tab, der alle Speicherorte zeigt - so wie "Dieser PC" im Windows-Explorer.
+ * Er hängt an keinem Speicherort und ist der Anfang jedes Pfades.
+ */
+function createOverviewTab() {
+    const tab = createTab(null, '', false);
+    tab.kind = 'overview';
+    return tab;
+}
+
+/** Übersicht im aktuellen Tab zeigen. */
+function showOverview() {
+    const tab = activeTab();
+
+    if (!tab) {
+        state.tabs.push(createOverviewTab());
+        state.active = state.tabs.length - 1;
+    } else {
+        tab.kind = 'overview';
+        tab.entries = [];
+        tab.selection.clear();
+    }
+
+    loadSpaces();
+    renderAll();
+    persistTabs();
+}
+
+/** Übersicht in einem neuen Tab. */
+function openOverviewTab() {
+    state.tabs.push(createOverviewTab());
+    state.active = state.tabs.length - 1;
+    loadSpaces();
+    renderAll();
+    persistTabs();
+}
+
+/**
+ * Belegung der Speicherorte nachladen - je Speicherort eine Anfrage, die
+ * Ansicht füllt sich nach und nach. Antworten bleiben im Zustand stehen.
+ */
+function loadSpaces() {
+    state.roots.forEach(root => {
+        if (state.space[root.id] !== undefined) {
+            return;
+        }
+
+        state.space[root.id] = null;
+
+        api.space(root.id)
+            .then(result => {
+                state.space[root.id] = result.supported ? result : null;
+                if (activeTab()?.kind === 'overview') {
+                    renderListing();
+                }
+            })
+            .catch(() => { });
+    });
 }
 
 /** Ein Tab, der nicht einen Ordner zeigt, sondern eine Suche. */
@@ -2150,6 +2273,136 @@ function searchStateText(search) {
     }
 
     return t('SearchNothingYet');
+}
+
+/**
+ * Alle Speicherorte als Kacheln: Name, Art, Belegung, Zustand.
+ * Ein Klick öffnet den Speicherort im selben Tab.
+ */
+function renderOverview() {
+    el.listing.replaceChildren();
+
+    if (state.roots.length === 0) {
+        el.listing.appendChild(message(can.manageRoots ? t('NoRootsAdmin') : t('NoRoots')));
+        return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'mfx-overview';
+
+    state.roots.forEach(root => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'mfx-place';
+        card.dataset.rootId = root.id;
+        card.addEventListener('click', () => openRoot(root.id));
+
+        const head = document.createElement('span');
+        head.className = 'mfx-place-head';
+
+        const symbol = document.createElement('span');
+        symbol.className = 'mfx-place-icon';
+        symbol.dataset.type = root.type;
+        symbol.appendChild(icon(iconForRoot(root), 22));
+        head.appendChild(symbol);
+
+        const titles = document.createElement('span');
+        titles.className = 'mfx-place-titles';
+
+        const name = document.createElement('span');
+        name.className = 'mfx-place-name';
+        name.textContent = root.name;
+        titles.appendChild(name);
+
+        const type = document.createElement('span');
+        type.className = 'mfx-place-type';
+        type.textContent = root.type === 'Local' ? t('TypeLocal') : root.type;
+        titles.appendChild(type);
+
+        head.appendChild(titles);
+        card.appendChild(head);
+
+        // Belegung, sobald sie eintrifft - sonst steht dort, dass es keine Auskunft gibt.
+        const space = state.space[root.id];
+
+        if (space) {
+            const bar = document.createElement('span');
+            bar.className = 'mfx-place-bar';
+
+            if (space.percent >= 90) {
+                bar.classList.add('is-full');
+            }
+
+            const fill = document.createElement('span');
+            fill.className = 'mfx-place-fill';
+            fill.style.width = Math.min(100, Math.max(2, space.percent)) + '%';
+            bar.appendChild(fill);
+            card.appendChild(bar);
+
+            const text = document.createElement('span');
+            text.className = 'mfx-place-space';
+            text.textContent = t('SpaceFree')
+                .replace('{0}', formatSize(space.free))
+                .replace('{1}', formatSize(space.total));
+            card.appendChild(text);
+        } else {
+            const text = document.createElement('span');
+            text.className = 'mfx-place-space mf-muted';
+            text.textContent = t('SpaceUnknown');
+            card.appendChild(text);
+        }
+
+        // Zustand: dieselben Zeichen wie in der Seitenleiste.
+        const slot = document.createElement('span');
+        slot.className = 'mfx-place-state';
+        slot.dataset.rootId = root.id;
+        card.appendChild(slot);
+
+        list.appendChild(card);
+    });
+
+    el.listing.appendChild(list);
+
+    // Erreichbarkeit nachziehen - dieselbe Abfrage wie in der Seitenleiste.
+    state.roots.forEach(root => {
+        api.status(root.id)
+            .then(result => showPlaceState(root, result.available))
+            .catch(() => showPlaceState(root, false));
+    });
+}
+
+/** Zustand einer Kachel in der Übersicht. */
+function showPlaceState(root, available) {
+    const slot = el.listing.querySelector(
+        `.mfx-place-state[data-root-id="${root.id}"]`);
+
+    if (!slot) {
+        return;
+    }
+
+    slot.replaceChildren();
+    slot.classList.toggle('is-offline', !available);
+    slot.closest('.mfx-place')?.classList.toggle('is-unavailable', !available);
+
+    const label = text => {
+        const span = document.createElement('span');
+        span.textContent = text;
+        return span;
+    };
+
+    if (!available) {
+        slot.appendChild(icon('x-circle', 14));
+        slot.appendChild(label(t('NotAvailable')));
+        return;
+    }
+
+    // Nur Gegenstellen bekommen den grünen Punkt; lokal bleibt es ruhig.
+    if (root.type !== 'Local') {
+        const dot = document.createElement('span');
+        dot.className = 'mfx-side-dot is-online';
+        slot.appendChild(dot);
+        slot.appendChild(label(t('Online')));
+    }
 }
 
 function renderSearchView(tab) {
@@ -2530,10 +2783,18 @@ function entryFromRow(row) {
     return (tab.entries || []).find(entry => entry.path === row.dataset.path);
 }
 
-/** Die Liste reagiert nur im Ordnertab - der Suchtab hat seine eigenen Zeilen. */
+/**
+ * Die Liste reagiert nur im Ordnertab. Suche und Übersicht bringen eigene Zeilen
+ * mit, für die Auswahl, Kontextmenü und Tasten der Dateiliste nicht gelten.
+ */
 function isSearchTab() {
     const tab = activeTab();
-    return !!tab && tab.kind === 'search';
+    return !!tab && tab.kind !== 'folder';
+}
+
+/** Zeigt der Tab einen Ordner - oder eine der eigenen Ansichten? */
+function isFolderTab(tab) {
+    return !!tab && tab.kind === 'folder';
 }
 
 el.listing.addEventListener('mousedown', event => {
@@ -2685,8 +2946,8 @@ document.addEventListener('keydown', event => {
         }
     }
 
-    // Im Suchtab gibt es keine Dateiliste, auf die sich die Tasten beziehen könnten.
-    if (tab.kind === 'search') {
+    // Ohne Dateiliste gibt es nichts, worauf sich die Tasten beziehen könnten.
+    if (!isFolderTab(tab)) {
         if (event.key === 'F5') {
             event.preventDefault();
             reload();
@@ -2950,6 +3211,10 @@ if (el.sidebarResizer) {
 
 if (el.sideFirst) {
     el.sideFirst.addEventListener('click', () => addLocation(false));
+}
+
+if (el.overview) {
+    el.overview.addEventListener('click', () => showOverview());
 }
 
 el.backdrop.addEventListener('click', () => {

@@ -10,7 +10,7 @@ namespace MatFile.Web.Storage;
 /// Anmelden kostet bei SSH mehrere hundert Millisekunden, und jede Anfrage des
 /// Explorers wäre sonst genau so lange unterwegs.
 /// </summary>
-public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
+public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage, IStorageSpace
 {
     private readonly ConnectionSettings _settings;
     private readonly string _basePath;
@@ -284,6 +284,28 @@ public sealed class SftpStorageProvider : IStorageProvider, IPermissionStorage
 
         Remove(client, remote);
         return Task.CompletedTask;
+    }
+
+    // ---------------------------------------------------------------- Platz
+
+    public Task<StorageSpace?> GetSpaceAsync(CancellationToken cancellationToken = default)
+    {
+        using var lease = Connect();
+
+        try
+        {
+            var info = lease.Client.GetStatus(_basePath.Length == 0 ? "/" : _basePath);
+            var block = (long)info.BlockSize;
+
+            return Task.FromResult<StorageSpace?>(new StorageSpace(
+                (long)info.TotalBlocks * block,
+                (long)info.AvailableBlocks * block));
+        }
+        catch (Exception exception) when (exception is SshException or NotSupportedException)
+        {
+            // Nicht jeder Server beantwortet statvfs.
+            return Task.FromResult<StorageSpace?>(null);
+        }
     }
 
     // ---------------------------------------------------------------- Rechte

@@ -32,6 +32,7 @@ public class IndexModel : PageModel
         string[] keys =
         [
             "Explorer.Roots", "Explorer.Bookmarks", "Explorer.NoRoots",
+            "Explorer.ThisPc", "Explorer.SpaceFree", "Explorer.SpaceUnknown",
             "Explorer.EmptyFolder", "Explorer.Loading", "Explorer.Name", "Explorer.Size",
             "Explorer.Modified", "Explorer.Type", "Explorer.Folder", "Explorer.File",
             "Explorer.Items", "Explorer.Selected", "Explorer.NewTab", "Explorer.OpenInNewTab",

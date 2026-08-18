@@ -52,6 +52,7 @@ let nextId = 1;
 const pending = new Map();
 const consoleErrors = [];
 const failedRequests = [];
+const scriptErrors = [];
 let loads = 0;
 
 socket.addEventListener('message', event => {
@@ -86,6 +87,14 @@ function send(method, params = {}) {
 
 async function evaluate(expression) {
     const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+
+    // Fiel ein Schnipsel auf die Nase, lieferte der Schritt früher einfach nichts
+    // und der Check galt trotzdem als grün. Das wird jetzt gezählt.
+    if (result.exceptionDetails) {
+        scriptErrors.push(result.exceptionDetails.exception?.description
+            || result.exceptionDetails.text);
+    }
+
     return result.result?.value;
 }
 
@@ -109,15 +118,30 @@ await evaluate(`
     document.querySelector('form.mf-form').submit();
     true;
 `);
-await sleep(1200);
-
-await navigate(`${BASE}/`);
-
-// Auf das erste gerenderte Listing warten
+// Warten, bis die Anmeldung wirklich durch ist: eine feste Wartezeit hat die
+// Navigation danach gelegentlich abgebrochen - dann stand eine Fehlerseite da,
+// auf der jeder folgende Schritt ins Leere lief.
 for (let i = 0; i < 40; i++) {
-    const rows = await evaluate(`document.querySelectorAll('.mfx-row').length`);
-    if (rows > 0) break;
-    await sleep(200);
+    if (await evaluate('location.pathname') === '/') break;
+    await sleep(250);
+}
+
+// Der Explorer muss auch gezeichnet haben - ein abgebrochener Modulaufruf
+// hinterliess sonst eine leere Seite ohne jeden Fehler im Protokoll.
+let bereit = false;
+
+for (let versuch = 0; versuch < 3 && !bereit; versuch++) {
+    await navigate(`${BASE}/`);
+
+    for (let i = 0; i < 40 && !bereit; i++) {
+        bereit = await evaluate("document.querySelectorAll('.mfx-row').length > 0"
+            + " || document.querySelectorAll('#mfx-roots li').length > 0");
+        if (!bereit) await sleep(250);
+    }
+}
+
+if (!bereit) {
+    scriptErrors.push('Der Explorer hat nichts gezeichnet.');
 }
 
 const report = await evaluate(`(() => {
@@ -126,7 +150,7 @@ const report = await evaluate(`(() => {
         url: location.pathname,
         roots: [...document.querySelectorAll('#mfx-roots .mfx-side-label')].map(e => e.textContent),
         tabs: [...document.querySelectorAll('.mfx-tab .mfx-tab-title')].map(e => e.textContent),
-        crumbs: [...document.querySelectorAll('.mfx-crumb')].map(e => e.textContent),
+        crumbs: [...document.querySelectorAll('.mfx-crumb:not(.mfx-crumb-overview)')].map(e => e.textContent),
         rows,
         status: document.querySelector('#mfx-status')?.textContent?.trim(),
         message: document.querySelector('.mfx-message')?.textContent?.trim() || null
@@ -143,7 +167,7 @@ await evaluate(`(() => {
 await sleep(900);
 
 const afterOpen = await evaluate(`(() => ({
-    crumbs: [...document.querySelectorAll('.mfx-crumb')].map(e => e.textContent),
+    crumbs: [...document.querySelectorAll('.mfx-crumb:not(.mfx-crumb-overview)')].map(e => e.textContent),
     rows: [...document.querySelectorAll('.mfx-row .mfx-name')].map(e => e.textContent),
     status: document.querySelector('#mfx-status')?.textContent?.trim()
 }))()`);
@@ -161,6 +185,13 @@ await evaluate(`(() => {
     return true;
 })()`);
 await sleep(400);
+
+// Ist der geöffnete Ordner leer, fehlt allen folgenden Schritten die Grundlage -
+// dann wieder eine Ebene höher, wo Einträge stehen.
+if (afterOpen.rows.length === 0) {
+    await evaluate("document.querySelector('#mfx-up').click(); true;");
+    await sleep(1000);
+}
 
 const menu = await evaluate(`(() => ({
     open: !document.querySelector('#mfx-menu').hidden,
@@ -213,7 +244,7 @@ const operations = {
 };
 
 // Zurueck auf die oberste Ebene des Roots
-await evaluate(`document.querySelector('.mfx-crumb').click(); true;`);
+await evaluate(`document.querySelector('.mfx-crumb:not(.mfx-crumb-overview)').click(); true;`);
 await sleep(900);
 
 // Detailbereich einblenden (der Zustand kommt aus den gespeicherten Einstellungen)
@@ -402,28 +433,55 @@ await sleep(500);
 
 // Alles auswählen und auf demselben Weg wieder aufheben
 const auswahl = await evaluate(`(() => {
+    const warte = ms => new Promise(r => setTimeout(r, ms));
     const status = () => document.querySelector('#mfx-status').textContent.trim();
-    const eintrag = () => {
-        document.querySelector('.mfx-menubar-item[data-menu="edit"]').click();
-        return [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
-            .find(b => /Alles auswählen|Select all|Auswahl aufheben|Clear selection/.test(b.textContent));
+    const suche = () => [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+        .find(b => /Alles auswählen|Select all|Auswahl aufheben|Clear selection/.test(b.textContent));
+
+    // Das Menü füllt sich nicht im selben Zug wie der Klick - erst warten,
+    // dann suchen. Und stand noch eines offen, schließt der erste Klick es nur.
+    const eintrag = async () => {
+        const leiste = document.querySelector('.mfx-menubar-item[data-menu="edit"]');
+        leiste.click();
+        await warte(300);
+        if (suche()) { return suche(); }
+        leiste.click();
+        await warte(300);
+        return suche();
     };
 
-    const zuerst = eintrag();
-    const beschriftungVorher = zuerst.textContent.trim();
-    zuerst.click();
+    return (async () => {
+        const zuerst = await eintrag();
 
-    return new Promise(r => setTimeout(() => {
+        // Fehlt der Eintrag, soll die Ausgabe sagen, was stattdessen im Menü stand.
+        if (!zuerst) {
+            return {
+                fehler: 'Menueintrag "Alles auswaehlen" nicht gefunden',
+                menue: [...document.querySelectorAll('#mfx-menu .mfx-menu-item')].map(b => b.textContent.trim()),
+                zeilen: document.querySelectorAll('.mfx-row').length
+            };
+        }
+
+        const beschriftungVorher = zuerst.textContent.trim();
+        zuerst.click();
+        await warte(500);
+
         const gewaehlt = status();
-        const danach = eintrag();
-        const beschriftungNachher = danach.textContent.trim();
-        danach.click();
+        const markiertNachAuswahl = document.querySelectorAll('.mfx-row.is-selected').length;
 
-        setTimeout(() => r({
-            beschriftungVorher, beschriftungNachher,
-            gewaehlt, wiederFrei: status()
-        }), 400);
-    }, 400));
+        const danach = await eintrag();
+        const beschriftungNachher = danach ? danach.textContent.trim() : null;
+        danach?.click();
+        await warte(500);
+
+        return {
+            beschriftungVorher, beschriftungNachher, gewaehlt,
+            wiederFrei: status(),
+            markiertNachAuswahl,
+            markiertDanach: document.querySelectorAll('.mfx-row.is-selected').length,
+            zeilen: document.querySelectorAll('.mfx-row').length
+        };
+    })();
 })()`);
 await sleep(300);
 
@@ -516,13 +574,62 @@ const reopened = await evaluate(`(() => {
 })()`);
 await sleep(1000);
 
+// "Dieser PC": alle Speicherorte als Kacheln, und der Pfad beginnt dort
+const uebersicht = await evaluate(`(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    document.getElementById('mfx-overview').click();
+    await warte(2500);
+
+    const roots = await (await fetch('/api/fs/roots')).json();
+    const kacheln = [...document.querySelectorAll('.mfx-place')].map(k => ({
+        name: k.querySelector('.mfx-place-name')?.textContent,
+        platz: k.querySelector('.mfx-place-space')?.textContent,
+        balken: k.querySelector('.mfx-place-fill')?.style.width || null
+    }));
+
+    // In der Übersicht gibt es nichts hochzuladen und nichts anzulegen.
+    const werkzeugeAus = ['mfx-upload', 'mfx-newfolder', 'mfx-newfile']
+        .every(id => document.getElementById(id).disabled);
+    const ersteKrumeIstPc = !!document.querySelector('#mfx-breadcrumb > .mfx-crumb-overview');
+
+    const ziel = document.querySelector('.mfx-place');
+    const name = ziel.querySelector('.mfx-place-name').textContent;
+    ziel.click();
+    await warte(1800);
+
+    const imOrdner = {
+        geoeffnet: name,
+        tab: document.querySelector('.mfx-tab.is-active .mfx-tab-title')?.textContent,
+        pcKrumeBleibt: !!document.querySelector('#mfx-breadcrumb > .mfx-crumb-overview'),
+        listeDa: document.querySelectorAll('.mfx-row').length >= 0
+    };
+
+    document.querySelector('.mfx-crumb-overview').click();
+    await warte(1500);
+
+    return {
+        kacheln,
+        alleSpeicherorte: kacheln.length === roots.length,
+        mitBelegung: kacheln.filter(k => k.balken).length,
+        ersteKrumeIstPc,
+        werkzeugeAus,
+        imOrdner,
+        tabWechseltZumOrdner: imOrdner.tab === name,
+        zurueckInUebersicht: document.querySelectorAll('.mfx-place').length === roots.length
+    };
+})()`);
+
+const shotUebersicht = await send('Page.captureScreenshot', { format: 'png' });
+writeFileSync(OUT.replace('.png', '-dieser-pc.png'), Buffer.from(shotUebersicht.data, 'base64'));
+
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
     zustaende, favorit, tastenkuerzel, baum, breite, auswahl, properties, modeChange, afterSave, reopened,
-    consoleErrors, failedRequests
+    uebersicht,
+    consoleErrors, failedRequests, scriptErrors
 }, null, 2));
 
 socket.close();
 edge.kill();
-process.exit(consoleErrors.length > 0 ? 1 : 0);
+process.exit(consoleErrors.length > 0 || scriptErrors.length > 0 ? 1 : 0);

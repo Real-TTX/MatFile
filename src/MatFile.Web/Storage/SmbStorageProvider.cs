@@ -11,7 +11,7 @@ namespace MatFile.Web.Storage;
 /// ohne zusätzliche Rechte im Container.
 /// Pfade innerhalb der Freigabe verwenden Backslashes ohne führenden Trenner.
 /// </summary>
-public sealed class SmbStorageProvider : IStorageProvider
+public sealed class SmbStorageProvider : IStorageProvider, IStorageSpace
 {
     private readonly ConnectionSettings _settings;
     private readonly string _basePath;
@@ -249,6 +249,33 @@ public sealed class SmbStorageProvider : IStorageProvider
         => status is NTStatus.STATUS_OBJECT_NAME_NOT_FOUND
             or NTStatus.STATUS_OBJECT_PATH_NOT_FOUND
             or NTStatus.STATUS_NO_SUCH_FILE;
+
+    // ---------------------------------------------------------------- Platz
+
+    public Task<StorageSpace?> GetSpaceAsync(CancellationToken cancellationToken = default)
+    {
+        // Im Servermodus gehört der Platz zu einer Freigabe, nicht zum Server.
+        if (ServerMode)
+        {
+            return Task.FromResult<StorageSpace?>(null);
+        }
+
+        using var session = Connect(string.Empty);
+
+        var status = session.Store.GetFileSystemInformation(out var info,
+            FileSystemInformationClass.FileFsFullSizeInformation);
+
+        if (status != NTStatus.STATUS_SUCCESS || info is not FileFsFullSizeInformation size)
+        {
+            return Task.FromResult<StorageSpace?>(null);
+        }
+
+        var unit = (long)size.SectorsPerAllocationUnit * size.BytesPerSector;
+
+        return Task.FromResult<StorageSpace?>(new StorageSpace(
+            size.TotalAllocationUnits * unit,
+            size.CallerAvailableAllocationUnits * unit));
+    }
 
     // ---------------------------------------------------------------- Lesen
 
