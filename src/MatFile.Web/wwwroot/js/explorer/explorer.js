@@ -360,7 +360,7 @@ function syncSearchField() {
 
 function tabTitle(tab) {
     if (tab.kind === 'overview') {
-        return t('ThisPc');
+        return t('AllLocations');
     }
 
     if (tab.kind === 'search') {
@@ -925,7 +925,7 @@ function renderTabs() {
 /** Symbol der Tabart. */
 function tabIcon(tab) {
     if (tab.kind === 'overview') {
-        return 'monitor';
+        return 'hard';
     }
 
     return tab.kind === 'search' ? 'search-deep' : 'folder';
@@ -943,14 +943,14 @@ function renderBreadcrumb() {
     const overview = document.createElement('button');
     overview.type = 'button';
     overview.className = 'mfx-crumb mfx-crumb-overview';
-    overview.title = t('ThisPc');
-    overview.setAttribute('aria-label', t('ThisPc'));
-    overview.appendChild(icon('monitor', 14));
+    overview.title = t('AllLocations');
+    overview.setAttribute('aria-label', t('AllLocations'));
+    overview.appendChild(icon('hard', 14));
     overview.addEventListener('click', () => showOverview());
 
     if (tab.kind === 'overview') {
         overview.classList.add('is-active');
-        overview.appendChild(document.createTextNode(t('ThisPc')));
+        overview.appendChild(document.createTextNode(t('AllLocations')));
         el.breadcrumb.appendChild(overview);
         return;
     }
@@ -2055,7 +2055,7 @@ function newTab() {
 function tabKindMenu() {
     return [
         { label: t('NewTab'), icon: 'folder', action: () => newTab() },
-        { label: t('ThisPc'), icon: 'monitor', action: () => openOverviewTab() },
+        { label: t('AllLocations'), icon: 'hard', action: () => openOverviewTab() },
         { label: t('SearchTab'), icon: 'search-deep', action: () => openSearchTab('', false) }
     ];
 }

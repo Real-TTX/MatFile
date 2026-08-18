@@ -4,237 +4,238 @@
 
 # MatFile
 
-**Der Datei-Explorer fürs NAS – im Browser.**
+**A file explorer for your NAS – in the browser.**
 
-Mehrere Speicherorte, SMB/SFTP/FTP/WebDAV, Tabs, Vorschau, Suche, Benutzer und Rechte.
-Ein Container, keine Cloud, keine Fremddienste.
+Several storage locations, SMB/SFTP/FTP/WebDAV, tabs, preview, search, users and permissions.
+One container, no cloud, no third-party services.
 
 </div>
 
-![Der Explorer mit Seitenleiste, Ordnerbaum und Detailbereich](docs/bilder/explorer.png)
+![The explorer with sidebar, folder tree and details pane](docs/images/explorer.png)
 
 ---
 
-## Worum es geht
+## What this is about
 
-TrueNAS, Synology & Co. speichern zuverlässig – aber der Weg zu einer einzelnen Datei führt
-über Freigaben, Laufwerksbuchstaben oder SSH. MatFile legt einen Datei-Explorer darüber, der
-im Browser läuft: lokale Pfade und Netzfreigaben nebeneinander, mit Tabs, Vorschau, Suche
-und einer Benutzerverwaltung, die festlegt, wer was sehen und ändern darf.
+TrueNAS, Synology and the like store your data reliably – but getting to a single file means
+going through shares, drive letters or SSH. MatFile puts a file explorer on top of them that
+runs in the browser: local paths and network shares side by side, with tabs, preview, search
+and a user management that decides who may see and change what.
 
-## Auf einen Blick
+## At a glance
 
-**Speicherorte**
-- Mehrere frei konfigurierbare **Home-/Root-Pfade** – nur diese sind sichtbar
-- Freigaben per **SMB, SFTP, FTP und WebDAV**, ohne Zusatzrechte im Container
-  (NFS folgt über einen OS-Mount)
-- **SMB auch ohne Freigabe**: Feld leer lassen, dann stehen alle Freigaben des Servers als
-  Ordner in der obersten Ebene
-- Zugangsdaten liegen **verschlüsselt** in der Datenbank, Verbindungstest vor dem Speichern
-- **Erreichbarkeit** je Speicherort direkt in der Seitenleiste: grüner Punkt oder rotes Kreuz
+**Storage locations**
+- Several freely configurable **home/root paths** – only these are visible
+- Shares via **SMB, SFTP, FTP and WebDAV**, without extra privileges in the container
+  (NFS will follow through an OS mount)
+- **SMB without a share as well**: leave the field empty and every share of the server shows
+  up as a folder on the top level
+- Credentials are stored **encrypted**, with a connection test before saving
+- **Reachability** per location right in the sidebar: a green dot or a red cross
 
-**Bedienung**
-- **„Dieser PC"** als Wurzel über allen Speicherorten – mit freiem Platz je Ort
-- **Tabs** wie im Windows-Explorer: anheften, verschieben, Mittelklick zum Schließen
-- Seitenleiste mit **Ordnerbaum zum Aufklappen** (je Benutzer zuschaltbar) und ziehbarer Breite
-- Menüleiste, Rechtsklick-Menü, Mehrfachauswahl, Rubber-Band, Drag & Drop
-- **Tastenkürzel** für alles Wichtige – **F1** zeigt die Übersicht
-- **Hell und dunkel**, Deutsch und Englisch, auf schmalen Schirmen als Off-Canvas-Layout
+**Using it**
+- **"All Locations"** as the root above every storage location – including free space
+- **Tabs** like in Windows Explorer: pin, reorder, middle-click to close
+- Sidebar with an **expandable folder tree** (per user, off by default) and a draggable width
+- Menu bar, right-click menu, multi-select, rubber-band selection, drag & drop
+- **Keyboard shortcuts** for everything that matters – **F1** shows the list
+- **Light and dark**, English and German, off-canvas layout on narrow screens
 
-**Dateien**
-- Upload (auch große Dateien in Blöcken), Download, **ZIP packen und entpacken**
-- Kopieren und Verschieben, auch **über Speicherorte hinweg**, mit Fortschritt und Abbruch
-- **Vorschau mit echtem Streaming** für Bilder, Video, Audio, PDF und Text
-- **Dateien anlegen** und **Texteditor mit Syntaxhervorhebung**
-- **Erweiterte Suche als eigener Tab**: rekursiv, auf Wunsch im Dateiinhalt, mit Fundstelle
-- **Zugriffsrechte** (rwx) über *Eigenschaften* – lokal, SFTP und FTP
+**Files**
+- Upload (large files in chunks), download, **zip and unzip**
+- Copy and move, **across storage locations** too, with progress and cancel
+- **Preview with real streaming** for images, video, audio, PDF and text
+- **Create files** and a **text editor with syntax highlighting**
+- **Advanced search in its own tab**: recursive, optionally inside file contents, with the
+  matching line
+- **Access rights** (rwx) through *Properties* – local, SFTP and FTP
 
-**Benutzer und Betrieb**
-- Lokale Benutzerverwaltung mit **Rollensystem** und Rechtematrix je Speicherort
-- **Administrationsbereich**: Benutzer, Rollen, Speicherorte, Systemeinstellungen, Protokoll
-- Kontosperre und **Rate-Limit** für Anmeldeversuche, erzwungener Kennwortwechsel
-- Sessions überleben den Container-Neustart, **Protokoll** über alle Aktionen
+**Users and operations**
+- Local user management with **roles** and a permission matrix per storage location
+- **Administration area**: users, roles, storage locations, system settings, activity log
+- Account lockout and a **rate limit** on sign-in attempts, forced password change
+- Sessions survive a container restart, **activity log** across all actions
 
-## Bilder
+## Screenshots
 
-### „Dieser PC" – alle Speicherorte mit freiem Platz
+### "All Locations" – every storage location with free space
 
-![Übersicht aller Speicherorte als Kacheln](docs/bilder/dieser-pc.png)
+![Overview of all storage locations as cards](docs/images/all-locations.png)
 
-Jeder Speicherort als Kachel mit Typ, Belegung und Zustand. Ein Klick öffnet ihn im selben
-Tab, die erste Brotkrume führt zurück – wie der Arbeitsplatz im Windows-Explorer.
+Every location as a card with type, usage and state. One click opens it in the same tab, the
+first breadcrumb leads back – the way "This PC" works in Windows Explorer.
 
-### Suche in einem eigenen Tab
+### Search in its own tab
 
-![Suchtab mit Treffern](docs/bilder/suche.png)
+![Search tab with results](docs/images/search.png)
 
-Tippen filtert den Ordner, Enter öffnet die rekursive Suche – auf Wunsch im Dateiinhalt,
-mit Fortschritt, Abbruch und Sprung in den Trefferordner.
+Typing filters the current folder, Enter opens the recursive search – optionally inside file
+contents, with progress, cancel and a jump into the folder of a hit.
 
-### Vorschau und Texteditor
+### Preview and text editor
 
-| Vorschau | Editor |
+| Preview | Editor |
 |---|---|
-| ![Bildvorschau](docs/bilder/vorschau.png) | ![Texteditor mit Syntaxhervorhebung](docs/bilder/editor.png) |
+| ![Image preview](docs/images/preview.png) | ![Text editor with syntax highlighting](docs/images/editor.png) |
 
-Bilder, Video, Audio, PDF und Text werden gestreamt, nicht heruntergeladen. Textdateien
-lassen sich direkt bearbeiten und speichern.
+Images, video, audio, PDF and text are streamed, not downloaded first. Text files can be
+edited and saved right away.
 
-### Zugriffsrechte in den Eigenschaften
+### Access rights in the properties sheet
 
-![Eigenschaften mit rwx-Matrix](docs/bilder/eigenschaften.png)
+![Properties with the rwx matrix](docs/images/properties.png)
 
-Lesen, Schreiben, Ausführen für Besitzer, Gruppe und Andere – bei lokalen Pfaden, SFTP und
-FTP. Speicherorte ohne POSIX-Rechte blenden den Abschnitt aus.
+Read, write and execute for owner, group and others – on local paths, SFTP and FTP. Storage
+types without POSIX permissions simply hide the section.
 
-### Administration an einer Stelle
+### Administration in one place
 
-| Benutzer | Speicherorte | Protokoll |
+| Users | Storage locations | Activity log |
 |---|---|---|
-| ![Benutzerverwaltung](docs/bilder/administration.png) | ![Speicherorte](docs/bilder/speicherorte.png) | ![Protokoll](docs/bilder/protokoll.png) |
+| ![User management](docs/images/users.png) | ![Storage locations](docs/images/storage-locations.png) | ![Activity log](docs/images/activity-log.png) |
 
-Benutzer, Rollen, Speicherorte, Systemeinstellungen und das Protokoll in einem Fenster.
-Sichtbar ist nur, wofür das Recht da ist.
+Users, roles, storage locations, system settings and the activity log in a single window.
+Only the sections you hold a permission for are shown.
 
-### Helles Erscheinungsbild und schmale Schirme
+### Light theme and narrow screens
 
-| Hell | Telefon | Seitenleiste |
+| Light | Phone | Sidebar |
 |---|---|---|
-| ![Helles Design](docs/bilder/hell.png) | ![Dateiliste auf dem Telefon](docs/bilder/mobil.png) | ![Seitenleiste als Überlagerung](docs/bilder/mobil-seitenleiste.png) |
+| ![Light theme](docs/images/light-theme.png) | ![File list on a phone](docs/images/mobile.png) | ![Sidebar as an overlay](docs/images/mobile-sidebar.png) |
 
-## Schnellstart
+## Quick start
 
 ```bash
 docker compose up -d --build
 ```
 
-Danach erreichbar unter **http://localhost:2222** (Health-Check: `/healthz`).
-Beim ersten Start wird das Konto **`admin` / `admin`** angelegt.
+Then available at **http://localhost:2222** (health check: `/healthz`).
+On first start the account **`admin` / `admin`** is created.
 
-NAS-Volumes werden per Bind-Mount in den Container gelegt und danach im UI als Speicherort
-angelegt:
+NAS volumes are bind-mounted into the container and then added as a storage location in the UI:
 
 ```yaml
 services:
   matfile:
     volumes:
       - matfile-data:/data
-      - /mnt/tank:/storage/tank      # <- eigene Freigabe
+      - /mnt/tank:/storage/tank      # <- your own share
 ```
 
-Für die Entwicklung gibt es einen eigenen Stack:
+There is a separate stack for development:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-### Wichtige Einstellungen
+### Settings that matter
 
-| Variable | Standard | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `ASPNETCORE_HTTP_PORTS` | `2222` | Port im Container |
-| `MATFILE_DATA` | `/data` | Datenverzeichnis (SQLite, Config, Keys, Thumbnails) |
-| `PUID` / `PGID` | – | Optional: als unprivilegierter Benutzer laufen |
-| `MATFILE_ADMIN_PASSWORD` | `admin` | Startkennwort für `admin` beim ersten Start |
-| `TZ` | `Europe/Berlin` | Zeitzone |
+| `ASPNETCORE_HTTP_PORTS` | `2222` | Port inside the container |
+| `MATFILE_DATA` | `/data` | Data directory (SQLite, config, keys, thumbnails) |
+| `PUID` / `PGID` | – | Optional: run as an unprivileged user |
+| `MATFILE_ADMIN_PASSWORD` | `admin` | Initial password for `admin` on first start |
+| `TZ` | `Europe/Berlin` | Time zone |
 
-### Nach der ersten Anmeldung
+### After the first sign-in
 
-*Verwaltung* in der Menüleiste öffnet den Administrationsbereich mit **Benutzern, Rollen,
-Speicherorten, Systemeinstellungen und Protokoll**. Für den produktiven Betrieb dort
-**Kennwortwechsel beim ersten Start** einschalten – dann verlangt MatFile bei der ersten
-Anmeldung ein eigenes Kennwort.
+*Administration* in the menu bar opens the admin area with **users, roles, storage locations,
+system settings and the activity log**. For production, turn on **password change on first
+sign-in** there – MatFile will then ask for a password of your own the first time.
 
-Die **Systemeinstellungen** gelten für alle: Mindestlänge für Kennwörter, Sitzungsdauer,
-Fehlversuche bis zur Sperre, Sperrdauer, Anmeldeversuche je Minute, Höchstgröße beim
-Hochladen (0 = keine Grenze), HTTPS-Cookie und der Kennwortwechsel beim ersten Start. Sie
-landen in `/data/config/matfile.json`; Mindestlänge und Kontosperre wirken sofort, Cookie,
-Sitzungsdauer und Rate-Limit nach einem Neustart des Containers.
+The **system settings** apply to everyone: minimum password length, session lifetime, failed
+attempts until lockout, lockout duration, sign-in attempts per minute, maximum upload size
+(0 = no limit), the HTTPS cookie and the password change on first sign-in. They end up in
+`/data/config/matfile.json`; minimum length and lockout take effect immediately, cookie,
+session lifetime and rate limit after a container restart.
 
-Die Oberfläche startet auf Englisch; über den Weltkugel-Knopf unten links (oder
-*Einstellungen → Sprache…*) lässt sich Deutsch wählen – die Auswahl bleibt am Benutzerkonto.
+The interface starts in English; the globe button at the bottom left (or *Settings →
+Language…*) switches to German – the choice stays with the user account.
 
-### Das Volume `/data`
+### The `/data` volume
 
 ```
 /data
-├─ matfile.db      SQLite-Datenbank
-├─ config/         JSON-Konfiguration
-├─ keys/           DataProtection-Keys (Sessions überleben Neustarts)
-├─ thumbs/         Thumbnail-Cache
-└─ temp/           Chunk-Uploads, ZIP-Staging
+├─ matfile.db      SQLite database
+├─ config/         JSON configuration
+├─ keys/           DataProtection keys (sessions survive restarts)
+├─ thumbs/         thumbnail cache
+└─ temp/           chunked uploads, zip staging
 ```
 
-Für OS-Level-Mounts (NFS, alternativ SMB) braucht der Container `cap_add: [SYS_ADMIN]`; die
-In-Process-Provider für SMB, SFTP, FTP und WebDAV kommen ohne Zusatzrechte aus.
+OS-level mounts (NFS, or SMB as an alternative) need `cap_add: [SYS_ADMIN]`; the in-process
+providers for SMB, SFTP, FTP and WebDAV work without extra privileges.
 
-## Stand
+## Status
 
-| Meilenstein | Inhalt | Status |
+| Milestone | Content | Status |
 |---|---|---|
-| M0 | Grundgerüst, Docker, CI, Versionierung | ✅ |
-| M1 | Datenbank, Anmeldung, Rollen, Sessions, Mehrsprachigkeit | ✅ |
-| M2 | Designsystem, Controls, Verwaltung (Benutzer, Rollen, Speicherorte) | ✅ |
-| M3 | Storage-Abstraktion, PathGuard, Root-Verwaltung, Listing-API | ✅ |
-| M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
-| M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
-| M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
-| M7 | Remote-Verbindungen: **SMB, SFTP, FTP, WebDAV** inkl. Verbindungstest | ✅ |
-| M7c | Rekursive Suche mit Inhaltssuche, Verwaltung in Dialogen | ✅ |
-| M7d | Systemeinstellungen, Zugriffsrechte über *Eigenschaften*, eigener Teststack | ✅ |
-| M7e | Administrationsbereich, „Dieser PC" mit freiem Platz, Ordnerbaum, Verbindungspool | ✅ |
-| M7b | NFS über OS-Mount, Mounts nur für die Sitzung | offen |
-| M8–M9 | Thumbnails, Icon-Feinschliff, Härtung | offen |
+| M0 | Skeleton, Docker, CI, versioning | ✅ |
+| M1 | Database, sign-in, roles, sessions, localisation | ✅ |
+| M2 | Design system, controls, management (users, roles, storage locations) | ✅ |
+| M3 | Storage abstraction, PathGuard, root management, listing API | ✅ |
+| M4 | Explorer: sidebar, tabs, navigation, multi-select, favourites, download | ✅ |
+| M5 | File operations, upload, zip/unzip, job queue with progress | ✅ |
+| M6 | Preview and streaming, details pane with activity | ✅ |
+| M7 | Remote connections: **SMB, SFTP, FTP, WebDAV** incl. connection test | ✅ |
+| M7c | Recursive search with content search, management in dialogs | ✅ |
+| M7d | System settings, access rights in *Properties*, separate test stack | ✅ |
+| M7e | Administration area, **"All Locations"** with free space, folder tree, connection pool | ✅ |
+| M7b | NFS through an OS mount, mounts for the session only | open |
+| M8–M9 | Thumbnails, icon polish, hardening | open |
 
-Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
+The full implementation plan lives in [docs/PLAN.md](docs/PLAN.md) (German).
 
-## Entwicklung
+## Development
 
-Gebaut und getestet wird über den Container:
+Building and testing happens through the container:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
 docker compose -f docker-compose.dev.yml logs -f
 ```
 
-Lokal ohne Docker:
+Locally without Docker:
 
 ```bash
 dotnet run --project src/MatFile.Web
 ```
 
-Unit-Tests brauchen keinen Container:
+The unit tests need no container:
 
 ```powershell
 dotnet test MatFile.slnx
 ```
 
-Die Integrationstests laufen auf einem **eigenen Stack** (Port 2223, eigenes Volume), damit
-der Entwicklungsstack mit seinen Speicherorten stehen bleibt:
+The integration tests run against a **separate stack** (port 2223, its own volume) so the
+development stack keeps its storage locations:
 
 ```powershell
 .\tests\run-all.ps1
 ```
 
-Dazu kommen Browser-Prüfungen über headless Edge (ohne npm) – Einzelheiten in
-[`tests/README.md`](tests/README.md).
+On top of that there are browser checks driving headless Edge (no npm involved) – details in
+[`tests/README.md`](tests/README.md) (German).
 
-## Technik
+## How it is built
 
-- **ASP.NET Core 10** (Razor Pages + Minimal-API), **EF Core** mit SQLite
-- Oberfläche in **reinem JavaScript** (ES-Module), kein Framework, kein Build-Schritt
-- Speicher-Provider hinter einer Schnittstelle: `Local`, `Smb` (SMBLibrary), `Sftp` (SSH.NET),
+- **ASP.NET Core 10** (Razor Pages + minimal API), **EF Core** with SQLite
+- The interface is **plain JavaScript** (ES modules) – no framework, no build step
+- Storage providers behind one interface: `Local`, `Smb` (SMBLibrary), `Sftp` (SSH.NET),
   `Ftp` (FluentFTP), `WebDav`
-- Verbindungen zu Gegenstellen laufen über einen **Pool** – wiederverwendet statt je Abfrage neu
-- Zugangsdaten über **DataProtection** verschlüsselt, Pfade über `PathGuard` gegen Ausbrüche gesichert
+- Connections to remote servers go through a **pool** – reused instead of dialled per request
+- Credentials encrypted via **DataProtection**, paths guarded against escapes by `PathGuard`
 
-## Branches & Versionierung
+Source comments, the plan and the test documentation are written in German.
 
-| Branch | Zweck | Version |
+## Branches & versioning
+
+| Branch | Purpose | Version |
 |---|---|---|
-| `main` | Release | `<major>.<minor>.<buildnummer>-<yyyyMMdd>` |
-| `dev` | Development | `nightly-<buildnummer>-<yyyyMMdd>` |
-| lokal | – | `local-<yyyyMMdd>` |
+| `main` | Release | `<major>.<minor>.<build>-<yyyyMMdd>` |
+| `dev` | Development | `nightly-<build>-<yyyyMMdd>` |
+| local | – | `local-<yyyyMMdd>` |
 
-`Major`/`Minor` stehen in [`version.props`](version.props), die Buildnummer liefert die
-GitHub Action (`github.run_number`). Images landen in der GitHub Container Registry.
+`Major`/`Minor` live in [`version.props`](version.props), the build number comes from the
+GitHub action (`github.run_number`). Images are published to the GitHub Container Registry.

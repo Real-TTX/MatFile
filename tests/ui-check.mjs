@@ -574,7 +574,7 @@ const reopened = await evaluate(`(() => {
 })()`);
 await sleep(1000);
 
-// "Dieser PC": alle Speicherorte als Kacheln, und der Pfad beginnt dort
+// "Alle Speicherorte": jeder Ort als Kachel, und der Pfad beginnt dort
 const uebersicht = await evaluate(`(async () => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     document.getElementById('mfx-overview').click();
@@ -590,7 +590,7 @@ const uebersicht = await evaluate(`(async () => {
     // In der Übersicht gibt es nichts hochzuladen und nichts anzulegen.
     const werkzeugeAus = ['mfx-upload', 'mfx-newfolder', 'mfx-newfile']
         .every(id => document.getElementById(id).disabled);
-    const ersteKrumeIstPc = !!document.querySelector('#mfx-breadcrumb > .mfx-crumb-overview');
+    const ersteKrumeIstWurzel = !!document.querySelector('#mfx-breadcrumb > .mfx-crumb-overview');
 
     const ziel = document.querySelector('.mfx-place');
     const name = ziel.querySelector('.mfx-place-name').textContent;
@@ -600,7 +600,7 @@ const uebersicht = await evaluate(`(async () => {
     const imOrdner = {
         geoeffnet: name,
         tab: document.querySelector('.mfx-tab.is-active .mfx-tab-title')?.textContent,
-        pcKrumeBleibt: !!document.querySelector('#mfx-breadcrumb > .mfx-crumb-overview'),
+        wurzelKrumeBleibt: !!document.querySelector('#mfx-breadcrumb > .mfx-crumb-overview'),
         listeDa: document.querySelectorAll('.mfx-row').length >= 0
     };
 
@@ -611,7 +611,7 @@ const uebersicht = await evaluate(`(async () => {
         kacheln,
         alleSpeicherorte: kacheln.length === roots.length,
         mitBelegung: kacheln.filter(k => k.balken).length,
-        ersteKrumeIstPc,
+        ersteKrumeIstWurzel,
         werkzeugeAus,
         imOrdner,
         tabWechseltZumOrdner: imOrdner.tab === name,
@@ -620,7 +620,7 @@ const uebersicht = await evaluate(`(async () => {
 })()`);
 
 const shotUebersicht = await send('Page.captureScreenshot', { format: 'png' });
-writeFileSync(OUT.replace('.png', '-dieser-pc.png'), Buffer.from(shotUebersicht.data, 'base64'));
+writeFileSync(OUT.replace('.png', '-alle-speicherorte.png'), Buffer.from(shotUebersicht.data, 'base64'));
 
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,

@@ -141,7 +141,7 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   durchgestrichen, der Titel nennt den Grund. Erreichbare lokale Ordner bleiben ohne Zeichen,
   damit die Leiste ruhig bleibt. Gefragt wird `/api/fs/status` je Speicherort, sobald die
   Leiste gezeichnet wird.
-- **„Dieser PC"** als Wurzel über allen Speicherorten – wie der Arbeitsplatz im
+- **„Alle Speicherorte"** als Wurzel über allen Orten – wie der Arbeitsplatz im
   Windows-Explorer. Erreichbar über den obersten Knopf der Seitenleiste, über die erste
   Brotkrume jedes Pfades (dort nur als Symbol, mit Titel) und als eigener Tab über das
   `+` in der Tab-Leiste. Der Tab ist eine eigene Tab-Art (`overview`) neben Ordner und
@@ -398,7 +398,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7** | Remote-Provider **SMB, SFTP, FTP und WebDAV**, Verbindungsdaten im UI, Verbindungstest, Credential-Verschlüsselung, Abschnitt „Verbindungen" in der Seitenleiste mit Statuspunkt | Externe Freigaben eingebunden |
 | **M7c** | Menüleiste über den Tabs, Sprachauswahl als Dialog, **erweiterte Suche als eigener Tab** (rekursiv, mit Inhaltssuche), Verwaltung als Dialoge (Adminseiten entfernt), Version in der Seitenleiste, starre Hülle gegen Layoutsprünge | Bedienung aus einer Fläche |
 | **M7d** | **Administrationsbereich** (Benutzer, Rollen, Speicherorte, Systemeinstellungen in einem Fenster, `ManageSettings`), **Zugriffsrechte im Eigenschaftenblatt** (lokal, SFTP, FTP), Icon-Set und PWA-Manifest, eigener Teststack | Verwaltung vollständig |
-| **M7e** | **Ordnerbaum und ziehbare Breite** in der Seitenleiste, Erreichbarkeit je Speicherort, Favorit über Rechtsklick, dezente Bildlaufleisten, **SMB ohne feste Freigabe**, **Verbindungspool** für SFTP/FTP, Protokoll-Ansicht, Tastenkürzel auf F1, Rate-Limit für Anmeldungen, **„Dieser PC" mit freiem Platz je Speicherort** | Explorer rund |
+| **M7e** | **Ordnerbaum und ziehbare Breite** in der Seitenleiste, Erreichbarkeit je Speicherort, Favorit über Rechtsklick, dezente Bildlaufleisten, **SMB ohne feste Freigabe**, **Verbindungspool** für SFTP/FTP, Protokoll-Ansicht, Tastenkürzel auf F1, Rate-Limit für Anmeldungen, **„Alle Speicherorte" mit freiem Platz je Ort** | Explorer rund |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | ~~App-Icon & Favicon-Set~~, ~~PWA-Manifest~~, ~~Mobile-Feinschliff~~, ~~Dark-Mode~~, ~~Tastatur-Shortcuts samt Übersicht~~, Thumbnails, Kopfzeile nach Mockup | Optisch fertig |
 | **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, ~~Limits~~, ~~Fehlerseiten~~, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |

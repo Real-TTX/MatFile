@@ -281,7 +281,7 @@
   <data name="Access.CanDownload"><value>Download</value></data>
   <data name="Access.CanShare"><value>Share</value></data>
 
-  <data name="Explorer.ThisPc"><value>This PC</value></data>
+  <data name="Explorer.AllLocations"><value>All Locations</value></data>
   <data name="Explorer.SpaceFree"><value>{0} free of {1}</value></data>
   <data name="Explorer.SpaceUnknown"><value>Space unknown</value></data>
   <data name="Explorer.Roots"><value>Storage locations</value></data>
