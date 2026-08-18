@@ -501,4 +501,5 @@
   <data name="Explorer.ActionEdit"><value>Bearbeitet</value></data>
   <data name="Explorer.Online"><value>erreichbar</value></data>
   <data name="Explorer.Offline"><value>nicht erreichbar</value></data>
+  <data name="Explorer.NotAvailable"><value>Nicht erreichbar</value></data>
 </root>

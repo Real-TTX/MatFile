@@ -101,6 +101,10 @@ node .\tests\ui-check-editor.mjs http://localhost:2222 admin Demo .\editor.png
 node .\tests\ui-check-mobile.mjs http://localhost:2222 admin .\mobile.png
 ```
 
+`ui-check.mjs` vergleicht außerdem den **Zustand jedes Speicherorts** mit `/api/fs/status`:
+was die API als nicht erreichbar meldet, muss in der Leiste ein rotes Kreuz und einen
+gedämpften Namen haben - und umgekehrt.
+
 `ui-check-mobile.mjs` prüft bei fünf Breiten, dass die Seite nicht waagerecht scrollt,
 die Dateiliste sichtbar bleibt, die Menüleiste nicht umbricht (sondern schiebt) und dass
 man auf dem Telefon aus den Details wieder zur Liste kommt. Der Exitcode ist 1, sobald

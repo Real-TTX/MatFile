@@ -15,8 +15,6 @@ const el = {
     bookmarksGroup: document.getElementById('mfx-bookmarks-group'),
     sideFirst: document.getElementById('mfx-side-first'),
     rootsGroup: document.getElementById('mfx-roots-group'),
-    connections: document.getElementById('mfx-connections'),
-    connectionsGroup: document.getElementById('mfx-connections-group'),
     tabs: document.getElementById('mfx-tabs'),
     breadcrumb: document.getElementById('mfx-breadcrumb'),
     listing: document.getElementById('mfx-listing'),
@@ -546,13 +544,13 @@ function rootItem(root, withStatus) {
     label.textContent = root.name;
     link.appendChild(label);
 
-    if (withStatus) {
-        const dot = document.createElement('span');
-        dot.className = 'mfx-side-dot';
-        dot.dataset.rootId = root.id;
-        dot.title = root.type;
-        link.appendChild(dot);
-    }
+    // Platz für den Zustand: leer, solange nichts bekannt ist. Was hineinkommt,
+    // entscheidet refreshConnectionStatus - ein Punkt oder ein rotes Kreuz.
+    const state_ = document.createElement('span');
+    state_.className = 'mfx-side-state';
+    state_.dataset.rootId = root.id;
+    state_.dataset.remote = withStatus ? 'true' : 'false';
+    link.appendChild(state_);
 
     link.addEventListener('click', () => openRoot(root.id));
 
@@ -714,9 +712,7 @@ function renderSidebar() {
     el.roots.replaceChildren();
 
     // Ordner und Verbindungen stehen in einer Liste; der Typ steckt im Symbol,
-    // der Punkt daneben zeigt die Erreichbarkeit einer Gegenstelle.
-    const remote = state.roots.filter(root => root.type !== 'Local');
-
+    // rechts daneben der Zustand.
     state.roots.forEach(root => el.roots.appendChild(rootItem(root, root.type !== 'Local')));
 
     // Ein Abschnitt ohne Einträge verschwindet ganz - samt Überschrift.
@@ -730,20 +726,53 @@ function renderSidebar() {
 
     renderBookmarks();
     highlightSidebar();
-    refreshConnectionStatus(remote);
+    refreshConnectionStatus(state.roots);
 }
 
-/** Erreichbarkeit der Freigaben nachladen und als Punkt anzeigen. */
-function refreshConnectionStatus(remote) {
-    remote.forEach(root => {
-        api.status(root.id).then(result => {
-            const dot = el.connections.querySelector(`.mfx-side-dot[data-root-id="${root.id}"]`);
-            if (dot) {
-                dot.classList.add(result.available ? 'is-online' : 'is-offline');
-                dot.title = `${root.type} · ${result.available ? t('Online') : t('Offline')}`;
-            }
-        }).catch(() => { });
+/**
+ * Erreichbarkeit aller Speicherorte nachladen. Ein fehlender lokaler Pfad zählt
+ * genauso wie eine Gegenstelle, die nicht antwortet: beides ist nicht benutzbar.
+ */
+function refreshConnectionStatus(roots) {
+    roots.forEach(root => {
+        api.status(root.id)
+            .then(result => showRootState(root, result.available))
+            .catch(() => showRootState(root, false));
     });
+}
+
+/** Zeigt den Zustand am Eintrag in der Seitenleiste. */
+function showRootState(root, available) {
+    const slot = el.roots.querySelector(`.mfx-side-state[data-root-id="${root.id}"]`);
+
+    if (!slot) {
+        return;
+    }
+
+    const item = slot.closest('.mfx-side-item');
+    const remote = slot.dataset.remote === 'true';
+
+    slot.replaceChildren();
+    slot.classList.toggle('is-offline', !available);
+    item?.classList.toggle('is-unavailable', !available);
+
+    if (!available) {
+        // Rotes Kreuz statt Punkt: das sieht man auch aus dem Augenwinkel.
+        slot.appendChild(icon('x-circle', 14));
+        slot.title = t('NotAvailable');
+        item?.setAttribute('title', `${root.name} · ${t('NotAvailable')}`);
+        return;
+    }
+
+    slot.title = remote ? `${root.type} · ${t('Online')}` : root.type;
+    item?.setAttribute('title', `${root.name} · ${root.type}`);
+
+    // Bei einer Gegenstelle bleibt der grüne Punkt, lokal bleibt es ruhig.
+    if (remote) {
+        const dot = document.createElement('span');
+        dot.className = 'mfx-side-dot is-online';
+        slot.appendChild(dot);
+    }
 }
 
 function renderBookmarks() {

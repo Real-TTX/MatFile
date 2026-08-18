@@ -18,6 +18,7 @@ public class MfIconTagHelper : TagHelper
         ["search-deep"] = "<circle cx='11' cy='11' r='7'/><line x1='20' y1='20' x2='16' y2='16'/><line x1='11' y1='8' x2='11' y2='14'/><line x1='8' y1='11' x2='14' y2='11'/>",
         ["filter"] = "<polygon points='22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'/>",
         ["x"] = "<line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/>",
+        ["x-circle"] = "<circle cx='12' cy='12' r='10'/><line x1='15' y1='9' x2='9' y2='15'/><line x1='9' y1='9' x2='15' y2='15'/>",
         ["check"] = "<polyline points='20 6 9 17 4 12'/>",
         ["chevron-left"] = "<polyline points='15 18 9 12 15 6'/>",
         ["chevron-right"] = "<polyline points='9 18 15 12 9 6'/>",

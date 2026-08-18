@@ -90,7 +90,7 @@ public class IndexModel : PageModel
             "Explorer.ErrorModifiedElsewhere",
 
             // Verbindungen
-            "Explorer.Online", "Explorer.Offline",
+            "Explorer.Online", "Explorer.Offline", "Explorer.NotAvailable",
 
             // Speicherorte anlegen und pflegen
             "Explorer.More", "Explorer.Manage", "Explorer.AddFolder", "Explorer.AddConnection",

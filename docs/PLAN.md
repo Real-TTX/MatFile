@@ -135,6 +135,12 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   F2, Entf, Strg+F, in Vorschau und Editor Pfeiltasten, Strg+S, Tab und Esc. **F1** zeigt die
   Übersicht dazu – dieselbe steht unter *Einstellungen → Tastenkürzel*. Die Übersicht bildet
   ab, was die Tastenbehandlung wirklich kennt.
+- **Zustand jedes Speicherorts** steht rechts im Eintrag: ein grüner Punkt bei einer
+  erreichbaren Gegenstelle, ein **rotes Kreuz** bei allem, was gerade nicht benutzbar ist -
+  auch bei einem lokalen Pfad, den es nicht (mehr) gibt. Der Name wird dann gedämpft und
+  durchgestrichen, der Titel nennt den Grund. Erreichbare lokale Ordner bleiben ohne Zeichen,
+  damit die Leiste ruhig bleibt. Gefragt wird `/api/fs/status` je Speicherort, sobald die
+  Leiste gezeichnet wird.
 - **Rechtsklick in der Seitenleiste**: Öffnen, in neuem Tab öffnen und **als Favorit setzen** -
   bei einem Speicherort wie bei einem Ordner im Baum. Favoriten haben ihr eigenes Menü mit
   Öffnen und Entfernen. Ein zweites Setzen desselben Ordners legt keinen doppelten Eintrag an.

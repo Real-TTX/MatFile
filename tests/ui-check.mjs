@@ -268,6 +268,35 @@ await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Esca
 await sleep(300);
 const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
 
+// Zustand der Speicherorte: was die API sagt, muss auch in der Leiste stehen
+await sleep(2500);
+
+const zustaende = await evaluate(`(async () => {
+    const roots = await (await fetch('/api/fs/roots')).json();
+    const zeilen = [];
+
+    for (const root of roots) {
+        const status = await (await fetch('/api/fs/status?rootId=' + root.id)).json();
+        const slot = document.querySelector('.mfx-side-state[data-root-id="' + root.id + '"]');
+        const item = slot?.closest('.mfx-side-item');
+
+        zeilen.push({
+            name: root.name,
+            typ: root.type,
+            erreichbar: status.available,
+            kreuz: !!slot?.classList.contains('is-offline'),
+            durchgestrichen: !!item?.classList.contains('is-unavailable'),
+            punkt: !!slot?.querySelector('.mfx-side-dot.is-online')
+        });
+    }
+
+    return {
+        zeilen,
+        stimmig: zeilen.every(z => z.erreichbar ? (!z.kreuz && !z.durchgestrichen) : (z.kreuz && z.durchgestrichen)),
+        punktNurBeiGegenstellen: zeilen.every(z => !z.punkt || z.typ !== 'Local')
+    };
+})()`);
+
 // Favorit über das Kontextmenü der Seitenleiste setzen und wieder entfernen
 const favorit = await evaluate(`(() => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
@@ -490,7 +519,7 @@ await sleep(1000);
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
-    favorit, tastenkuerzel, baum, breite, auswahl, properties, modeChange, afterSave, reopened,
+    zustaende, favorit, tastenkuerzel, baum, breite, auswahl, properties, modeChange, afterSave, reopened,
     consoleErrors, failedRequests
 }, null, 2));
 

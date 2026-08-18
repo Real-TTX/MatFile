@@ -637,6 +637,33 @@ body.is-resizing {
     font-weight: 600;
 }
 
+/* Zustand eines Speicherorts: rechts im Eintrag, leer solange nichts bekannt ist. */
+.mfx-side-state {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+}
+
+.mfx-side-state.is-offline {
+    color: var(--mf-danger);
+}
+
+/* Ein Speicherort, der nicht erreichbar ist, tritt zurück - lesbar bleibt er. */
+.mfx-side-item.is-unavailable .mfx-side-label {
+    color: var(--mf-text-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--mf-danger);
+    text-decoration-thickness: 1px;
+}
+
+.mfx-side-item.is-unavailable .mfx-side-icon {
+    opacity: .5;
+}
+
 .mfx-side-dot {
     flex: 0 0 auto;
     width: 8px;
