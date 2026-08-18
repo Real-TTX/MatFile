@@ -511,7 +511,11 @@ function folderItem(rootId, entry) {
 
         openMenu(event.clientX, event.clientY, [
             { label: t('Open'), icon: 'folder', action: () => navigate(activeTab(), rootId, entry.path) },
-            { label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(rootId, entry.path) }
+            { label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(rootId, entry.path) },
+            {
+                label: t('AddBookmark'), icon: 'star',
+                action: () => addBookmarkFor(rootId, entry.path, entry.name)
+            }
         ]);
     });
 
@@ -558,7 +562,11 @@ function rootItem(root, withStatus) {
 
         const items = [
             { label: t('Open'), icon: 'folder', action: () => openRoot(root.id) },
-            { label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(root.id, '') }
+            { label: t('OpenInNewTab'), icon: 'plus', action: () => openTab(root.id, '') },
+            {
+                label: t('AddBookmark'), icon: 'star',
+                action: () => addBookmarkFor(root.id, '', root.name)
+            }
         ];
 
         if (can.manageRoots) {
@@ -1906,17 +1914,28 @@ function chooseUpload() {
 
 async function addBookmark(entry) {
     const tab = activeTab();
-    const path = entry ? entry.path : tab.path;
-    const name = entry ? entry.name : tabTitle(tab);
 
-    const bookmark = await api.addBookmark(tab.rootId, path, name);
+    await addBookmarkFor(
+        tab.rootId,
+        entry ? entry.path : tab.path,
+        entry ? entry.name : tabTitle(tab));
+}
 
-    if (!state.bookmarks.some(b => b.id === bookmark.id)) {
-        state.bookmarks.push(bookmark);
+/** Favorit für einen bestimmten Ordner - unabhängig davon, was gerade offen ist. */
+async function addBookmarkFor(rootId, path, name) {
+    try {
+        const bookmark = await api.addBookmark(rootId, path, name);
+
+        if (!state.bookmarks.some(b => b.id === bookmark.id)) {
+            state.bookmarks.push(bookmark);
+        }
+
+        renderBookmarks();
+        highlightSidebar();
+        flash(t('BookmarkAdded').replace('{0}', name));
+    } catch (error) {
+        handleError(error);
     }
-
-    renderBookmarks();
-    highlightSidebar();
 }
 
 // ---------------------------------------------------------------- Erweiterte Suche

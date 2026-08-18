@@ -39,6 +39,7 @@ public class IndexModel : PageModel
             "Explorer.Pin", "Explorer.Unpin", "Explorer.Back", "Explorer.Forward", "Explorer.Up",
             "Explorer.Refresh", "Explorer.Search", "Explorer.ViewList", "Explorer.ViewGrid",
             "Explorer.ShowHidden", "Explorer.AddBookmark", "Explorer.RemoveBookmark",
+            "Explorer.BookmarkAdded",
             "Explorer.Download", "Explorer.Open", "Explorer.CopyPath", "Explorer.Copied",
             "Explorer.Properties", "Explorer.SelectAll", "Explorer.ClearSelection",
             "Explorer.Path", "Explorer.Sidebar", "Explorer.SidebarTree", "Explorer.SidebarWidth",

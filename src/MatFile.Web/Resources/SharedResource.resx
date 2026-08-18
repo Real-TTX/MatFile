@@ -362,6 +362,7 @@
   <data name="Explorer.ViewList"><value>List view</value></data>
   <data name="Explorer.ViewGrid"><value>Tile view</value></data>
   <data name="Explorer.ShowHidden"><value>Show hidden files</value></data>
+  <data name="Explorer.BookmarkAdded"><value>„{0}“ was added to the favourites.</value></data>
   <data name="Explorer.AddBookmark"><value>Add to favorites</value></data>
   <data name="Explorer.RemoveBookmark"><value>Remove favorite</value></data>
   <data name="Explorer.Download"><value>Download</value></data>

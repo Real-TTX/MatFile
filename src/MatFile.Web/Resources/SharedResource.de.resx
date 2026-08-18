@@ -362,6 +362,7 @@
   <data name="Explorer.ViewList"><value>Listenansicht</value></data>
   <data name="Explorer.ViewGrid"><value>Kachelansicht</value></data>
   <data name="Explorer.ShowHidden"><value>Versteckte Dateien anzeigen</value></data>
+  <data name="Explorer.BookmarkAdded"><value>„{0}“ steht jetzt in den Favoriten.</value></data>
   <data name="Explorer.AddBookmark"><value>Zu Favoriten hinzufügen</value></data>
   <data name="Explorer.RemoveBookmark"><value>Favorit entfernen</value></data>
   <data name="Explorer.Download"><value>Herunterladen</value></data>

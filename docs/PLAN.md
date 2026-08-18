@@ -135,6 +135,9 @@ Thumbnail-Einstellungen, Session-Lebensdauer, Feature-Toggles, erlaubte Archivfo
   F2, Entf, Strg+F, in Vorschau und Editor Pfeiltasten, Strg+S, Tab und Esc. **F1** zeigt die
   Übersicht dazu – dieselbe steht unter *Einstellungen → Tastenkürzel*. Die Übersicht bildet
   ab, was die Tastenbehandlung wirklich kennt.
+- **Rechtsklick in der Seitenleiste**: Öffnen, in neuem Tab öffnen und **als Favorit setzen** -
+  bei einem Speicherort wie bei einem Ordner im Baum. Favoriten haben ihr eigenes Menü mit
+  Öffnen und Entfernen. Ein zweites Setzen desselben Ordners legt keinen doppelten Eintrag an.
 - **Ordnerbaum in der Seitenleiste** (wie im Windows-Explorer): jeder Speicherort und jeder
   Ordner lässt sich aufklappen, die Kinder werden erst beim Öffnen geholt. **Standardmäßig
   aus** – bei einer langsamen Gegenstelle kostet jedes Aufklappen eine Abfrage. Ein- und

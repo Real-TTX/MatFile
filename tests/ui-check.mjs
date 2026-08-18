@@ -268,6 +268,44 @@ await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Esca
 await sleep(300);
 const previewClosed = await evaluate(`document.querySelector('.mfx-preview').hidden`);
 
+// Favorit über das Kontextmenü der Seitenleiste setzen und wieder entfernen
+const favorit = await evaluate(`(() => {
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const namen = () => [...document.querySelectorAll('#mfx-bookmarks .mfx-side-item')]
+        .map(b => b.textContent.trim());
+
+    return (async () => {
+        const vorher = namen();
+
+        const ort = document.querySelector('#mfx-roots .mfx-side-item');
+        ort.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 100, clientY: 200 }));
+        await warte(400);
+
+        const menue = [...document.querySelectorAll('#mfx-menu .mfx-menu-item')].map(b => b.textContent.trim());
+        [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+            .find(b => /Favorit|favorite|favourite/i.test(b.textContent)).click();
+        await warte(1200);
+
+        const nachher = namen();
+        const meldung = document.querySelector('.mfx-flash')?.textContent || null;
+        const neuerName = nachher.find(name => !vorher.includes(name));
+
+        // Zustand wiederherstellen: der neue Favorit fliegt wieder raus.
+        if (neuerName) {
+            const fav = [...document.querySelectorAll('#mfx-bookmarks .mfx-side-item')]
+                .find(b => b.textContent.trim() === neuerName);
+            fav.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 100, clientY: 300 }));
+            await warte(350);
+            [...document.querySelectorAll('#mfx-menu .mfx-menu-item')]
+                .find(b => /Remove favorite|Favorit entfernen/i.test(b.textContent)).click();
+            await warte(900);
+        }
+
+        return { menue, neuerName, meldung, wiederFrei: namen().length === vorher.length };
+    })();
+})()`);
+await sleep(300);
+
 // Übersicht der Tastenkürzel über F1
 await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1', bubbles: true })); true;`);
 await sleep(700);
@@ -452,7 +490,7 @@ await sleep(1000);
 console.log(JSON.stringify({
     report, afterOpen, menu, operations,
     detailsPanel, preview: { ...previewState, closedByEscape: previewClosed },
-    tastenkuerzel, baum, breite, auswahl, properties, modeChange, afterSave, reopened,
+    favorit, tastenkuerzel, baum, breite, auswahl, properties, modeChange, afterSave, reopened,
     consoleErrors, failedRequests
 }, null, 2));
 
