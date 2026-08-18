@@ -1,32 +1,172 @@
+<div align="center">
+
+<img src="src/MatFile.Web/wwwroot/icons/matfile-192.png" width="96" alt="MatFile" />
+
 # MatFile
 
-Web-basierter Datei-Explorer / File-Manager für NAS-Systeme (TrueNAS & Co.), die von Haus aus
-keinen komfortablen Zugriff auf Dateien bieten.
+**Der Datei-Explorer fürs NAS – im Browser.**
 
-- Mehrere frei konfigurierbare **Home-/Root-Pfade** (nur diese sind sichtbar)
-- Zusätzliche Freigaben per **SMB, SFTP, FTP und WebDAV** – ohne Zusatzrechte im Container
+Mehrere Speicherorte, SMB/SFTP/FTP/WebDAV, Tabs, Vorschau, Suche, Benutzer und Rechte.
+Ein Container, keine Cloud, keine Fremddienste.
+
+</div>
+
+![Der Explorer mit Seitenleiste, Ordnerbaum und Detailbereich](docs/bilder/explorer.png)
+
+---
+
+## Worum es geht
+
+TrueNAS, Synology & Co. speichern zuverlässig – aber der Weg zu einer einzelnen Datei führt
+über Freigaben, Laufwerksbuchstaben oder SSH. MatFile legt einen Datei-Explorer darüber, der
+im Browser läuft: lokale Pfade und Netzfreigaben nebeneinander, mit Tabs, Vorschau, Suche
+und einer Benutzerverwaltung, die festlegt, wer was sehen und ändern darf.
+
+## Auf einen Blick
+
+**Speicherorte**
+- Mehrere frei konfigurierbare **Home-/Root-Pfade** – nur diese sind sichtbar
+- Freigaben per **SMB, SFTP, FTP und WebDAV**, ohne Zusatzrechte im Container
   (NFS folgt über einen OS-Mount)
-- **SMB auch ohne Freigabe**: Feld leer lassen, dann stehen alle Freigaben des Servers
-  als Ordner in der obersten Ebene
-- Explorer-Bedienung: Sidebar, **Tabs**, Menüleiste, Favoriten, Mehrfachauswahl, **Rechtsklick-Menü**
-- **„Dieser PC"**: alle Speicherorte als Kacheln mit **freiem Platz** und Zustand,
-  Teil des Pfades wie der Arbeitsplatz im Windows-Explorer
-- Seitenleiste mit **Ordnerbaum zum Aufklappen** (je Benutzer zuschaltbar, standardmäßig aus)
-  und **ziehbarer Breite**
-- Upload, Download, ZIP/Entpacken, Kopieren/Verschieben, **Preview mit echtem Streaming**
-- **Dateien anlegen** (.txt, .json, .md, .xml …) und **Texteditor mit Syntaxhervorhebung** –
-  ansehen und direkt bearbeiten
-- **Erweiterte Suche als eigener Tab** (über das `+` in der Tab-Leiste): rekursiv über alle
-  Unterordner, auf Wunsch im Dateiinhalt, mit Fortschritt und Sprung in den Trefferordner
-- **Zugriffsrechte** (rwx für Besitzer, Gruppe, Andere) über *Eigenschaften* setzen –
-  bei lokalen Pfaden, SFTP und FTP; SMB und WebDAV kennen sie nicht
-- Lokale Benutzerverwaltung mit **Rollensystem**, Sessions überleben den Container-Neustart
-- **Administrationsbereich** im Explorer: Benutzer, Rollen, Speicherorte,
-  Systemeinstellungen und **Protokoll** in einem Fenster, erreichbar über die Menüleiste
-- **Rate-Limit** für Anmeldeversuche zusätzlich zur Kontosperre
-- Oberfläche in **Englisch (Standard)** und **Deutsch**, im UI umschaltbar
+- **SMB auch ohne Freigabe**: Feld leer lassen, dann stehen alle Freigaben des Servers als
+  Ordner in der obersten Ebene
+- Zugangsdaten liegen **verschlüsselt** in der Datenbank, Verbindungstest vor dem Speichern
+- **Erreichbarkeit** je Speicherort direkt in der Seitenleiste: grüner Punkt oder rotes Kreuz
 
-Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
+**Bedienung**
+- **„Dieser PC"** als Wurzel über allen Speicherorten – mit freiem Platz je Ort
+- **Tabs** wie im Windows-Explorer: anheften, verschieben, Mittelklick zum Schließen
+- Seitenleiste mit **Ordnerbaum zum Aufklappen** (je Benutzer zuschaltbar) und ziehbarer Breite
+- Menüleiste, Rechtsklick-Menü, Mehrfachauswahl, Rubber-Band, Drag & Drop
+- **Tastenkürzel** für alles Wichtige – **F1** zeigt die Übersicht
+- **Hell und dunkel**, Deutsch und Englisch, auf schmalen Schirmen als Off-Canvas-Layout
+
+**Dateien**
+- Upload (auch große Dateien in Blöcken), Download, **ZIP packen und entpacken**
+- Kopieren und Verschieben, auch **über Speicherorte hinweg**, mit Fortschritt und Abbruch
+- **Vorschau mit echtem Streaming** für Bilder, Video, Audio, PDF und Text
+- **Dateien anlegen** und **Texteditor mit Syntaxhervorhebung**
+- **Erweiterte Suche als eigener Tab**: rekursiv, auf Wunsch im Dateiinhalt, mit Fundstelle
+- **Zugriffsrechte** (rwx) über *Eigenschaften* – lokal, SFTP und FTP
+
+**Benutzer und Betrieb**
+- Lokale Benutzerverwaltung mit **Rollensystem** und Rechtematrix je Speicherort
+- **Administrationsbereich**: Benutzer, Rollen, Speicherorte, Systemeinstellungen, Protokoll
+- Kontosperre und **Rate-Limit** für Anmeldeversuche, erzwungener Kennwortwechsel
+- Sessions überleben den Container-Neustart, **Protokoll** über alle Aktionen
+
+## Bilder
+
+### „Dieser PC" – alle Speicherorte mit freiem Platz
+
+![Übersicht aller Speicherorte als Kacheln](docs/bilder/dieser-pc.png)
+
+Jeder Speicherort als Kachel mit Typ, Belegung und Zustand. Ein Klick öffnet ihn im selben
+Tab, die erste Brotkrume führt zurück – wie der Arbeitsplatz im Windows-Explorer.
+
+### Suche in einem eigenen Tab
+
+![Suchtab mit Treffern](docs/bilder/suche.png)
+
+Tippen filtert den Ordner, Enter öffnet die rekursive Suche – auf Wunsch im Dateiinhalt,
+mit Fortschritt, Abbruch und Sprung in den Trefferordner.
+
+### Vorschau und Texteditor
+
+| Vorschau | Editor |
+|---|---|
+| ![Bildvorschau](docs/bilder/vorschau.png) | ![Texteditor mit Syntaxhervorhebung](docs/bilder/editor.png) |
+
+Bilder, Video, Audio, PDF und Text werden gestreamt, nicht heruntergeladen. Textdateien
+lassen sich direkt bearbeiten und speichern.
+
+### Zugriffsrechte in den Eigenschaften
+
+![Eigenschaften mit rwx-Matrix](docs/bilder/eigenschaften.png)
+
+Lesen, Schreiben, Ausführen für Besitzer, Gruppe und Andere – bei lokalen Pfaden, SFTP und
+FTP. Speicherorte ohne POSIX-Rechte blenden den Abschnitt aus.
+
+### Administration an einer Stelle
+
+| Benutzer | Speicherorte | Protokoll |
+|---|---|---|
+| ![Benutzerverwaltung](docs/bilder/administration.png) | ![Speicherorte](docs/bilder/speicherorte.png) | ![Protokoll](docs/bilder/protokoll.png) |
+
+Benutzer, Rollen, Speicherorte, Systemeinstellungen und das Protokoll in einem Fenster.
+Sichtbar ist nur, wofür das Recht da ist.
+
+### Helles Erscheinungsbild und schmale Schirme
+
+| Hell | Telefon | Seitenleiste |
+|---|---|---|
+| ![Helles Design](docs/bilder/hell.png) | ![Dateiliste auf dem Telefon](docs/bilder/mobil.png) | ![Seitenleiste als Überlagerung](docs/bilder/mobil-seitenleiste.png) |
+
+## Schnellstart
+
+```bash
+docker compose up -d --build
+```
+
+Danach erreichbar unter **http://localhost:2222** (Health-Check: `/healthz`).
+Beim ersten Start wird das Konto **`admin` / `admin`** angelegt.
+
+NAS-Volumes werden per Bind-Mount in den Container gelegt und danach im UI als Speicherort
+angelegt:
+
+```yaml
+services:
+  matfile:
+    volumes:
+      - matfile-data:/data
+      - /mnt/tank:/storage/tank      # <- eigene Freigabe
+```
+
+Für die Entwicklung gibt es einen eigenen Stack:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+### Wichtige Einstellungen
+
+| Variable | Standard | Bedeutung |
+|---|---|---|
+| `ASPNETCORE_HTTP_PORTS` | `2222` | Port im Container |
+| `MATFILE_DATA` | `/data` | Datenverzeichnis (SQLite, Config, Keys, Thumbnails) |
+| `PUID` / `PGID` | – | Optional: als unprivilegierter Benutzer laufen |
+| `MATFILE_ADMIN_PASSWORD` | `admin` | Startkennwort für `admin` beim ersten Start |
+| `TZ` | `Europe/Berlin` | Zeitzone |
+
+### Nach der ersten Anmeldung
+
+*Verwaltung* in der Menüleiste öffnet den Administrationsbereich mit **Benutzern, Rollen,
+Speicherorten, Systemeinstellungen und Protokoll**. Für den produktiven Betrieb dort
+**Kennwortwechsel beim ersten Start** einschalten – dann verlangt MatFile bei der ersten
+Anmeldung ein eigenes Kennwort.
+
+Die **Systemeinstellungen** gelten für alle: Mindestlänge für Kennwörter, Sitzungsdauer,
+Fehlversuche bis zur Sperre, Sperrdauer, Anmeldeversuche je Minute, Höchstgröße beim
+Hochladen (0 = keine Grenze), HTTPS-Cookie und der Kennwortwechsel beim ersten Start. Sie
+landen in `/data/config/matfile.json`; Mindestlänge und Kontosperre wirken sofort, Cookie,
+Sitzungsdauer und Rate-Limit nach einem Neustart des Containers.
+
+Die Oberfläche startet auf Englisch; über den Weltkugel-Knopf unten links (oder
+*Einstellungen → Sprache…*) lässt sich Deutsch wählen – die Auswahl bleibt am Benutzerkonto.
+
+### Das Volume `/data`
+
+```
+/data
+├─ matfile.db      SQLite-Datenbank
+├─ config/         JSON-Konfiguration
+├─ keys/           DataProtection-Keys (Sessions überleben Neustarts)
+├─ thumbs/         Thumbnail-Cache
+└─ temp/           Chunk-Uploads, ZIP-Staging
+```
+
+Für OS-Level-Mounts (NFS, alternativ SMB) braucht der Container `cap_add: [SYS_ADMIN]`; die
+In-Process-Provider für SMB, SFTP, FTP und WebDAV kommen ohne Zusatzrechte aus.
 
 ## Stand
 
@@ -39,86 +179,18 @@ Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 | M4 | Explorer: Sidebar, Tabs, Navigation, Mehrfachauswahl, Favoriten, Download | ✅ |
 | M5 | Dateioperationen, Upload, ZIP/Unzip, Job-Queue mit Fortschritt | ✅ |
 | M6 | Vorschau und Streaming, Detailbereich mit Protokoll | ✅ |
-| M7 | Remote-Verbindungen: **SMB, SFTP, FTP, WebDAV** inkl. Verbindungstest, Seitenleiste mit Statuspunkt | ✅ |
-| M7c | Rekursive Suche mit Inhaltssuche, Verwaltung in Dialogen, Version in der Seitenleiste | ✅ |
-| M7d | Systemeinstellungen als Dialog, Zugriffsrechte über *Eigenschaften*, eigener Teststack | ✅ |
+| M7 | Remote-Verbindungen: **SMB, SFTP, FTP, WebDAV** inkl. Verbindungstest | ✅ |
+| M7c | Rekursive Suche mit Inhaltssuche, Verwaltung in Dialogen | ✅ |
+| M7d | Systemeinstellungen, Zugriffsrechte über *Eigenschaften*, eigener Teststack | ✅ |
+| M7e | Administrationsbereich, „Dieser PC" mit freiem Platz, Ordnerbaum, Verbindungspool | ✅ |
 | M7b | NFS über OS-Mount, Mounts nur für die Sitzung | offen |
-| M8–M9 | Icon-Feinschliff, Thumbnails, Härtung | offen |
+| M8–M9 | Thumbnails, Icon-Feinschliff, Härtung | offen |
 
-Unit-Tests (`dotnet test MatFile.slnx`) und Integrationstests gegen den laufenden Container:
-siehe [tests/README.md](tests/README.md).
-
-## Schnellstart
-
-```bash
-# Entwicklung: bauen und deployen
-docker compose -f docker-compose.dev.yml up -d --build
-
-# Release
-docker compose up -d --build
-```
-
-Anschließend erreichbar unter **http://localhost:2222** (Health-Check: `/healthz`).
-
-### Wichtige Einstellungen
-
-| Variable | Standard | Bedeutung |
-|---|---|---|
-| `ASPNETCORE_HTTP_PORTS` | `2222` | Port im Container |
-| `MATFILE_DATA` | `/data` | Datenverzeichnis (SQLite, Config, Keys, Thumbnails) |
-| `PUID` / `PGID` | – | Optional: als unprivilegierter Benutzer laufen |
-| `MATFILE_ADMIN_PASSWORD` | `admin` | Startkennwort für `admin` beim ersten Start |
-| `TZ` | `Europe/Berlin` | Zeitzone |
-
-### Erste Anmeldung
-
-Beim ersten Start wird das Konto **`admin` / `admin`** angelegt. Ein anderes Startkennwort
-lässt sich über `MATFILE_ADMIN_PASSWORD` vorgeben.
-
-Für den produktiven Betrieb *Einstellungen → Systemeinstellungen* öffnen und
-**Kennwortwechsel beim ersten Start** einschalten (schreibt
-`"RequirePasswordChangeOnFirstLogin": true` nach `/data/config/matfile.json`).
-
-Dann verlangt MatFile bei der ersten Anmeldung ein eigenes Kennwort. Die Oberfläche startet
-auf Englisch; über den Weltkugel-Knopf unten links in der Seitenleiste (oder *Einstellungen →
-Sprache…* in der Menüleiste) lässt sich Deutsch wählen – die Auswahl wird am Benutzerkonto
-gespeichert. Direkt darunter steht die laufende Version.
-
-Verwaltet wird alles im **Administrationsbereich**: *Administration* in der Menüleiste über
-den Tabs öffnet ein Fenster mit den Bereichen **Benutzer, Rollen, Speicherorte,
-Systemeinstellungen und Protokoll**. Der Punkt erscheint nur mit mindestens einem
-Verwaltungsrecht, und die Spalte zeigt genau die Bereiche, für die das Recht da ist.
-
-Die **Systemeinstellungen** (Recht `ManageSettings`) gelten für alle: Mindestlänge für
-Kennwörter, Sitzungsdauer, Fehlversuche bis zur Sperre, Sperrdauer, Anmeldeversuche je Minute,
-Höchstgröße beim Hochladen (0 = keine Grenze), HTTPS-Cookie und der Kennwortwechsel beim
-ersten Start. Sie landen in
-`/data/config/matfile.json`; Mindestlänge und Kontosperre wirken sofort, Cookie, Sitzungsdauer
-und Rate-Limit nach einem Neustart des Containers.
-
-Das **Protokoll** (Recht `ViewActivityLog`) zeigt, wer wann was gemacht hat – über alle
-Speicherorte, mit Suche und Filtern nach Aktion und Speicherort.
-
-Das Volume `/data` enthält:
-
-```
-/data
-├─ matfile.db      SQLite-Datenbank
-├─ config/         JSON-Konfiguration
-├─ keys/           DataProtection-Keys (Sessions überleben Neustarts)
-├─ thumbs/         Thumbnail-Cache
-└─ temp/           Chunk-Uploads, ZIP-Staging
-```
-
-NAS-Volumes werden per Bind-Mount in den Container gelegt (z. B. `/mnt/tank:/storage/tank`)
-und danach im UI als Root-Pfad angelegt.
-
-Für OS-Level-Mounts (NFS, alternativ SMB) benötigt der Container `cap_add: [SYS_ADMIN]`;
-die In-Process-Provider für SFTP/FTP/WebDAV/SMB kommen ohne Zusatzrechte aus.
+Der vollständige Umsetzungsplan liegt in [docs/PLAN.md](docs/PLAN.md).
 
 ## Entwicklung
 
-Getestet wird immer über den Container – neu bauen und den Stack neu deployen:
+Gebaut und getestet wird über den Container:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
@@ -131,7 +203,7 @@ Lokal ohne Docker:
 dotnet run --project src/MatFile.Web
 ```
 
-Die Unit-Tests brauchen keinen Container:
+Unit-Tests brauchen keinen Container:
 
 ```powershell
 dotnet test MatFile.slnx
@@ -144,7 +216,17 @@ der Entwicklungsstack mit seinen Speicherorten stehen bleibt:
 .\tests\run-all.ps1
 ```
 
-Einzelheiten dazu in [`tests/README.md`](tests/README.md).
+Dazu kommen Browser-Prüfungen über headless Edge (ohne npm) – Einzelheiten in
+[`tests/README.md`](tests/README.md).
+
+## Technik
+
+- **ASP.NET Core 10** (Razor Pages + Minimal-API), **EF Core** mit SQLite
+- Oberfläche in **reinem JavaScript** (ES-Module), kein Framework, kein Build-Schritt
+- Speicher-Provider hinter einer Schnittstelle: `Local`, `Smb` (SMBLibrary), `Sftp` (SSH.NET),
+  `Ftp` (FluentFTP), `WebDav`
+- Verbindungen zu Gegenstellen laufen über einen **Pool** – wiederverwendet statt je Abfrage neu
+- Zugangsdaten über **DataProtection** verschlüsselt, Pfade über `PathGuard` gegen Ausbrüche gesichert
 
 ## Branches & Versionierung
 
