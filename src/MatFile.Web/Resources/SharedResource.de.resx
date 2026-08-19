@@ -407,6 +407,7 @@
   <data name="Explorer.Close"><value>Schließen</value></data>
   <data name="Explorer.Error"><value>Der Ordner konnte nicht geladen werden.</value></data>
   <data name="Explorer.ErrorNotFound"><value>Diesen Ordner gibt es nicht mehr.</value></data>
+  <data name="Explorer.ErrorReadOnly"><value>Dieser Speicherort ist nur lesbar.</value></data>
   <data name="Explorer.ErrorAccess"><value>Für diesen Ordner fehlt die Berechtigung.</value></data>
   <data name="Explorer.ErrorUnavailable"><value>Der Speicherort ist derzeit nicht erreichbar.</value></data>
 

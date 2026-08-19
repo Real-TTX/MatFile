@@ -105,27 +105,114 @@ Only the sections you hold a permission for are shown.
 
 ## Quick start
 
-```bash
-docker compose up -d --build
-```
+Ready-made images are published to the GitHub Container Registry:
 
-Then available at **http://localhost:2222** (health check: `/healthz`).
-On first start the account **`admin` / `admin`** is created.
+| Tag | Built from | Use it for |
+|---|---|---|
+| `ghcr.io/real-ttx/matfile:latest` | `main` | releases |
+| `ghcr.io/real-ttx/matfile:nightly` | `dev` | the newest features |
 
-NAS volumes are bind-mounted into the container and then added as a storage location in the UI:
+### 1. Just run it
+
+Copy this into `docker-compose.yml` and start it – nothing else needed:
 
 ```yaml
 services:
   matfile:
+    image: ghcr.io/real-ttx/matfile:latest
+    container_name: matfile
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
     volumes:
       - matfile-data:/data
-      - /mnt/tank:/storage/tank      # <- your own share
+
+volumes:
+  matfile-data:
 ```
 
-There is a separate stack for development:
+```bash
+docker compose up -d
+```
+
+Open **http://localhost:2222** and sign in with **`admin` / `admin`**
+(health check: `/healthz`). The `matfile-data` volume keeps the database, the
+configuration and the session keys, so an update is just `docker compose pull &&
+docker compose up -d`.
+
+Without Compose:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build
+docker run -d --name matfile -p 2222:2222 -v matfile-data:/data \
+  ghcr.io/real-ttx/matfile:latest
+```
+
+At this point MatFile has no storage location yet – the sidebar says so and offers to add one.
+Which brings us to the interesting case.
+
+### 2. With the shares of your NAS
+
+MatFile only ever shows what you hand to the container. Every share is bind-mounted below
+`/storage` and then added once in the UI. This example is a Synology (shares live under
+`/volume1`):
+
+```yaml
+services:
+  matfile:
+    image: ghcr.io/real-ttx/matfile:latest
+    container_name: matfile
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
+    environment:
+      TZ: Europe/Berlin
+      # Own the files as your NAS user instead of root: run "id <user>" over SSH
+      PUID: "1026"
+      PGID: "100"
+    volumes:
+      # MatFile's own data - keep this one
+      - matfile-data:/data
+      # Your shares. Left of the colon is the NAS, right of it what MatFile sees.
+      - /volume1/documents:/storage/documents
+      - /volume1/photo:/storage/photo
+      - /volume1/music:/storage/music:ro     # ":ro" = visible, but read-only
+
+volumes:
+  matfile-data:
+```
+
+Then in the UI: *Administration → Storage locations → Add folder*, and enter the path
+**inside the container** – so `/storage/documents`, not `/volume1/documents`. Repeat per
+share, give each one a name, and assign the roles that may see it.
+
+Other systems keep their shares elsewhere; only the left side of the colon changes:
+
+| System | Shares are usually under | Example line |
+|---|---|---|
+| Synology | `/volume1` | `- /volume1/photo:/storage/photo` |
+| TrueNAS SCALE | `/mnt/<pool>` | `- /mnt/tank/media:/storage/media` |
+| Unraid | `/mnt/user` | `- /mnt/user/documents:/storage/documents` |
+| QNAP | `/share` | `- /share/Public:/storage/public` |
+| plain Linux | anywhere | `- /srv/files:/storage/files` |
+
+Worth knowing:
+
+- **A share that is not mounted stays invisible.** That is the point – MatFile can only reach
+  what the container can reach.
+- **Permissions are the NAS's.** With `PUID`/`PGID` MatFile acts as that user; without them
+  it runs as root inside the container. If a folder shows up empty or read-only, that is the
+  file system talking, not MatFile.
+- **A `:ro` mount stays browsable.** Listing, preview and download work; anything that would
+  write answers with "This storage location is read-only" instead of a server error.
+
+Remote shares (SMB, SFTP, FTP, WebDAV) need no mount at all: they are added in the UI under
+*Administration → Storage locations → Add connection*, with a connection test before saving.
+
+### 3. From source
+
+```bash
+docker compose up -d --build                              # release build
+docker compose -f docker-compose.dev.yml up -d --build    # development stack
 ```
 
 ### Settings that matter

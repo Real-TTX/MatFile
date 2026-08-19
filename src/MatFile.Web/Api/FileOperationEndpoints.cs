@@ -371,7 +371,7 @@ public static class FileOperationEndpoints
         var status = exception.Code switch
         {
             "not_found" or "root_not_found" or "upload_not_found" => StatusCodes.Status404NotFound,
-            "access_denied" => StatusCodes.Status403Forbidden,
+            "access_denied" or "read_only" => StatusCodes.Status403Forbidden,
             "conflict" => StatusCodes.Status409Conflict,
             "permissions_unsupported" => StatusCodes.Status501NotImplemented,
             "upload_too_large" => StatusCodes.Status413PayloadTooLarge,

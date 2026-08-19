@@ -73,7 +73,7 @@ public class IndexModel : PageModel
             "Explorer.JobCopy", "Explorer.JobMove", "Explorer.JobDelete", "Explorer.JobZip",
             "Explorer.JobUnzip", "Explorer.JobUpload",
             "Explorer.StateCompleted", "Explorer.StateFailed", "Explorer.StateCancelled",
-            "Explorer.ErrorConflict", "Explorer.ErrorAccessDenied", "Explorer.ErrorInvalidName",
+            "Explorer.ErrorConflict", "Explorer.ErrorAccessDenied", "Explorer.ErrorReadOnly", "Explorer.ErrorInvalidName",
             "Explorer.ErrorInvalidPath", "Explorer.ErrorTargetInsideSource", "Explorer.ErrorRootNotFound",
 
             // Vorschau und Detailbereich

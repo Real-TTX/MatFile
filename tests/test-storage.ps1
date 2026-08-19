@@ -121,6 +121,28 @@ Add-Result "Belegung rechnet stimmig" (
 $spaceUnknown = Get-Api "$BaseUrl/api/fs/space?rootId=999999" $admin
 Add-Result "Belegung eines unbekannten Speicherorts" ($spaceUnknown.Status -eq 404) "status=$($spaceUnknown.Status)"
 
+# --- Nur lesbarer Bind-Mount (":ro") -------------------------------------
+# Lesen muss gehen, Schreiben muss eine Erklaerung liefern statt eines 500.
+$nurLesbar = New-MatRoot $BaseUrl $admin @{ name = 'NurLesbar'; path = '/storage/readonly' }
+Add-Result "Nur lesbarer Speicherort angelegt" ($nurLesbar.Status -eq 200) "status=$($nurLesbar.Status) id=$($nurLesbar.Data.id)"
+
+$roList = Get-Api "$BaseUrl/api/fs/list?rootId=$($nurLesbar.Data.id)" $admin
+Add-Result "Nur lesbarer Speicherort ist lesbar" (
+    $roList.Status -eq 200 -and ($roList.Data.entries | ForEach-Object { $_.name }) -contains 'liesmich.txt'
+) "status=$($roList.Status)"
+
+$roFolder = Send-MatJson 'Post' "$BaseUrl/api/fs/folder" $admin @{ rootId = $nurLesbar.Data.id; path = ''; name = 'Neu' }
+Add-Result "Ordner anlegen scheitert mit Erklaerung" (
+    $roFolder.Status -eq 403 -and $roFolder.Data.error -eq 'read_only'
+) "status=$($roFolder.Status) error=$($roFolder.Data.error)"
+
+$roRename = Send-MatJson 'Post' "$BaseUrl/api/fs/rename" $admin @{ rootId = $nurLesbar.Data.id; path = 'liesmich.txt'; newName = 'anders.txt' }
+Add-Result "Umbenennen scheitert mit Erklaerung" (
+    $roRename.Status -eq 403 -and $roRename.Data.error -eq 'read_only'
+) "status=$($roRename.Status) error=$($roRename.Data.error)"
+
+Send-MatJson 'Delete' "$BaseUrl/api/roots/$($nurLesbar.Data.id)" $admin $null | Out-Null
+
 # --- Rechte eines normalen Benutzers -------------------------------------
 $userRoleId = (Get-MatJson "$BaseUrl/api/users" $admin).Data.roles | Where-Object { $_.name -eq 'User' }
 $created = New-MatUser $BaseUrl $admin @{

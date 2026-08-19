@@ -407,6 +407,7 @@
   <data name="Explorer.Close"><value>Close</value></data>
   <data name="Explorer.Error"><value>The folder could not be loaded.</value></data>
   <data name="Explorer.ErrorNotFound"><value>This folder no longer exists.</value></data>
+  <data name="Explorer.ErrorReadOnly"><value>This storage location is read-only.</value></data>
   <data name="Explorer.ErrorAccess"><value>You do not have access to this folder.</value></data>
   <data name="Explorer.ErrorUnavailable"><value>The storage location is currently unavailable.</value></data>
 

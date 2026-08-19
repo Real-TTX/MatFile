@@ -119,16 +119,17 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
             throw StorageException.Conflict(PathGuard.Normalize(relativePath));
         }
 
-        var directory = Path.GetDirectoryName(fullPath);
-        if (!string.IsNullOrEmpty(directory))
+        return Task.FromResult(Schreibend(() =>
         {
-            Directory.CreateDirectory(directory);
-        }
+            var directory = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
 
-        Stream stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None,
-            bufferSize: 64 * 1024, useAsync: true);
-
-        return Task.FromResult(stream);
+            return (Stream)new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 64 * 1024, useAsync: true);
+        }));
     }
 
     public Task<StorageEntry> CreateDirectoryAsync(string relativePath, CancellationToken cancellationToken = default)
@@ -141,7 +142,7 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
             throw StorageException.Conflict(normalized);
         }
 
-        var info = Directory.CreateDirectory(fullPath);
+        var info = Schreibend(() => Directory.CreateDirectory(fullPath));
         return Task.FromResult(ToEntry(info, normalized));
     }
 
@@ -164,13 +165,13 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
 
         if (Directory.Exists(source))
         {
-            Directory.Move(source, target);
+            Schreibend(() => Directory.Move(source, target));
             return Task.FromResult(ToEntry(new DirectoryInfo(target), targetPath));
         }
 
         if (File.Exists(source))
         {
-            File.Move(source, target);
+            Schreibend(() => File.Move(source, target));
             return Task.FromResult(ToEntry(new FileInfo(target), targetPath));
         }
 
@@ -182,11 +183,14 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
         var source = Resolve(sourcePath);
         var target = Resolve(targetPath);
 
-        var directory = Path.GetDirectoryName(target);
-        if (!string.IsNullOrEmpty(directory))
+        Schreibend(() =>
         {
-            Directory.CreateDirectory(directory);
-        }
+            var directory = Path.GetDirectoryName(target);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+        });
 
         if (Directory.Exists(source))
         {
@@ -195,7 +199,7 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
                 throw StorageException.Conflict(PathGuard.Normalize(targetPath));
             }
 
-            Directory.Move(source, target);
+            Schreibend(() => Directory.Move(source, target));
             return Task.CompletedTask;
         }
 
@@ -209,7 +213,7 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
             throw StorageException.Conflict(PathGuard.Normalize(targetPath));
         }
 
-        File.Move(source, target, overwrite);
+        Schreibend(() => File.Move(source, target, overwrite));
         return Task.CompletedTask;
     }
 
@@ -227,13 +231,13 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
 
         if (Directory.Exists(fullPath))
         {
-            Directory.Delete(fullPath, recursive: true);
+            Schreibend(() => Directory.Delete(fullPath, recursive: true));
             return Task.CompletedTask;
         }
 
         if (File.Exists(fullPath))
         {
-            File.Delete(fullPath);
+            Schreibend(() => File.Delete(fullPath));
             return Task.CompletedTask;
         }
 
@@ -310,6 +314,35 @@ public sealed class LocalStorageProvider : IStorageProvider, IPermissionStorage,
 
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Schreibversuche auf einem nur lesbaren Bind-Mount (":ro") oder ohne Rechte enden
+    /// sonst als unbehandelte Ausnahme, also als 500 - obwohl nichts kaputt ist. Hier
+    /// werden sie zu einer Antwort, die die Oberfläche erklären kann.
+    /// </summary>
+    private static T Schreibend<T>(Func<T> aktion)
+    {
+        try
+        {
+            return aktion();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw StorageException.AccessDenied();
+        }
+        catch (IOException exception) when (IstNurLesbar(exception))
+        {
+            throw StorageException.ReadOnly();
+        }
+    }
+
+    private static void Schreibend(Action aktion)
+        => Schreibend<object?>(() => { aktion(); return null; });
+
+    /// <summary>EROFS trägt die Nummer 30; die Meldung nennt es zusätzlich im Klartext.</summary>
+    private static bool IstNurLesbar(IOException exception)
+        => (exception.HResult & 0xFFFF) == 30
+           || exception.Message.Contains("Read-only file system", StringComparison.OrdinalIgnoreCase);
 
     private string Resolve(string? relativePath)
     {

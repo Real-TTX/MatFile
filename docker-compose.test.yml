@@ -32,6 +32,8 @@ services:
       - matfile-test-data:/data
       # Testdaten für den Explorer:
       - ./sample-data:/storage/sample
+      # Derselbe Inhalt nur lesbar - fuer den Fall ":ro" beim Bind-Mount:
+      - ./sample-data:/storage/readonly:ro
 
   # Test-Gegenstellen fuer die Remote-Provider, wie im Entwicklungsstack.
   sftp:

@@ -76,4 +76,11 @@ public class StorageException : Exception
 
     public static StorageException AccessDenied()
         => new("access_denied", "Not allowed for this storage location.");
+
+    /// <summary>
+    /// Der Speicherort ist nur lesbar - typisch für einen Bind-Mount mit ":ro".
+    /// Ohne eigenen Code endete das in einem 500, obwohl nichts kaputt ist.
+    /// </summary>
+    public static StorageException ReadOnly()
+        => new("read_only", "This storage location is read-only.");
 }
