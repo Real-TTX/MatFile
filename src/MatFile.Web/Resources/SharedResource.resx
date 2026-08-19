@@ -279,7 +279,6 @@
   <data name="Access.CanDelete"><value>Delete</value></data>
   <data name="Access.CanUpload"><value>Upload</value></data>
   <data name="Access.CanDownload"><value>Download</value></data>
-  <data name="Access.CanShare"><value>Share</value></data>
 
   <data name="Explorer.AllLocations"><value>All Locations</value></data>
   <data name="Explorer.SpaceFree"><value>{0} free of {1}</value></data>

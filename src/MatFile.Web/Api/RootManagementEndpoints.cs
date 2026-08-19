@@ -38,8 +38,7 @@ public static class RootManagementEndpoints
         bool CanWrite,
         bool CanDelete,
         bool CanUpload,
-        bool CanDownload,
-        bool CanShare);
+        bool CanDownload);
 
     public record RootDetail(
         long Id,
@@ -66,8 +65,7 @@ public static class RootManagementEndpoints
         bool CanWrite,
         bool CanDelete,
         bool CanUpload,
-        bool CanDownload,
-        bool CanShare);
+        bool CanDownload);
 
     public static IEndpointRouteBuilder MapRootManagementEndpoints(this IEndpointRouteBuilder app)
     {
@@ -232,7 +230,7 @@ public static class RootManagementEndpoints
                 {
                     Permissions = new RootPermissions(
                         match.CanRead, match.CanWrite, match.CanDelete,
-                        match.CanUpload, match.CanDownload, match.CanShare)
+                        match.CanUpload, match.CanDownload)
                 };
         }).ToList();
     }
@@ -276,7 +274,6 @@ public static class RootManagementEndpoints
                 entry.Permissions.CanWrite,
                 entry.Permissions.CanDelete,
                 entry.Permissions.CanUpload,
-                entry.Permissions.CanDownload,
-                entry.Permissions.CanShare)).ToList());
+                entry.Permissions.CanDownload)).ToList());
     }
 }

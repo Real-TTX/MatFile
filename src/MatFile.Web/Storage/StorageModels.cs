@@ -24,23 +24,21 @@ public record RootPermissions(
     bool CanWrite,
     bool CanDelete,
     bool CanUpload,
-    bool CanDownload,
-    bool CanShare)
+    bool CanDownload)
 {
-    public static readonly RootPermissions None = new(false, false, false, false, false, false);
-    public static readonly RootPermissions Full = new(true, true, true, true, true, true);
+    public static readonly RootPermissions None = new(false, false, false, false, false);
+    public static readonly RootPermissions Full = new(true, true, true, true, true);
 
     public RootPermissions Merge(RootPermissions other) => new(
         CanRead || other.CanRead,
         CanWrite || other.CanWrite,
         CanDelete || other.CanDelete,
         CanUpload || other.CanUpload,
-        CanDownload || other.CanDownload,
-        CanShare || other.CanShare);
+        CanDownload || other.CanDownload);
 
     public static RootPermissions From(RootAccess access) => new(
         access.CanRead, access.CanWrite, access.CanDelete,
-        access.CanUpload, access.CanDownload, access.CanShare);
+        access.CanUpload, access.CanDownload);
 }
 
 /// <summary>Ein für den Benutzer sichtbarer Root samt seiner effektiven Rechte.</summary>

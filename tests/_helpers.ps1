@@ -102,7 +102,7 @@ function Set-MatRootAccess([string]$baseUrl, $session, [long]$rootId, $access) {
 function New-MatAccess([long]$roleId, [bool]$read, [bool]$download, [bool]$upload, [bool]$write, [bool]$delete) {
     return @{
         roleId = $roleId; canRead = $read; canDownload = $download; canUpload = $upload
-        canWrite = $write; canDelete = $delete; canShare = $false
+        canWrite = $write; canDelete = $delete
     }
 }
 

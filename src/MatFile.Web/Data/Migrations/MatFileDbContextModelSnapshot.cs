@@ -288,9 +288,6 @@ namespace MatFile.Web.Data.Migrations
                     b.Property<bool>("CanRead")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("CanShare")
-                        .HasColumnType("INTEGER");
-
                     b.Property<bool>("CanUpload")
                         .HasColumnType("INTEGER");
 

@@ -86,7 +86,7 @@ Schlüssel zusätzlich als `Token` (UUID).
 | `UserRole` | UserId, RoleId |
 | `UserSession` | **Token (UUID)**, UserId, ExpiresDate, LastActivityDate, IpAddress, UserAgent, IsRevoked |
 | `StorageRoot` | Name, Type (Local/Smb/Nfs/Sftp/Ftp/WebDav), DisplayIcon, BasePath, SortOrder, IsEnabled, Persistence (Persistent/Session), SettingsJson, SecretEncrypted |
-| `RootAccess` | StorageRootId, RoleId, CanRead/CanWrite/CanDelete/CanUpload/CanDownload/CanShare |
+| `RootAccess` | StorageRootId, RoleId, CanRead/CanWrite/CanDelete/CanUpload/CanDownload |
 | `Bookmark` | UserId, Name, StorageRootId, RelativePath, DisplayIcon, SortOrder |
 | `ExplorerTab` | UserId, Title, StorageRootId, RelativePath, SortOrder, IsPersistent, IsActive |
 | `UserSetting` | UserId, SettingKey, SettingValue (View-Modus, Sortierung, Theme, Sidebar-Breite) |
@@ -401,7 +401,7 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
 | **M7e** | **Ordnerbaum und ziehbare Breite** in der Seitenleiste, Erreichbarkeit je Speicherort, Favorit über Rechtsklick, dezente Bildlaufleisten, **SMB ohne feste Freigabe**, **Verbindungspool** für SFTP/FTP, Protokoll-Ansicht, Tastenkürzel auf F1, Rate-Limit für Anmeldungen, **„Alle Speicherorte" mit freiem Platz je Ort** | Explorer rund |
 | **M7b** | NFS über OS-Mount, Mounts nur für die Sitzung | Letzte Protokolle |
 | **M8** | ~~App-Icon & Favicon-Set~~, ~~PWA-Manifest~~, ~~Mobile-Feinschliff~~, ~~Dark-Mode~~, ~~Tastatur-Shortcuts samt Übersicht~~, Thumbnails, Kopfzeile nach Mockup | Optisch fertig |
-| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, ~~Limits~~, ~~Fehlerseiten~~, README/Doku, ~~Tests der Kern-Services~~ | Release-fähig |
+| **M9** | Härtung: ~~Rate-Limit~~, ~~Protokollansicht~~, ~~Limits~~, ~~Fehlerseiten~~, ~~README mit Bildern und Schnellstart~~, ~~Tests der Kern-Services~~ | Release-fähig |
 
 ---
 
@@ -484,5 +484,6 @@ Commits und PRs laufen ausschließlich unter **Matthias Schmoldt** — keine Co-
   damit es auch im Explorer keine fest verdrahteten Texte gibt.
 - SQLite kann `DateTimeOffset` nicht vergleichen — alle Zeitstempel liegen als UTC-`DateTime`
   in der Datenbank (globaler Value-Converter im DbContext).
-- Freigabe-Links (Public Share) sind **nicht** Teil dieses Plans; das Datenmodell lässt sie
-  aber später leicht ergänzen.
+- Freigabe-Links (Public Share) sind **nicht** Teil dieses Plans. Das Recht `CanShare` stand
+  lange in der Rechtematrix, ohne etwas zu tun - ein Haken, der nichts bewirkt, ist
+  schlimmer als keiner. Es ist entfernt; kommen Freigabe-Links, kommt es mit ihnen zurück.

@@ -370,7 +370,7 @@ public sealed class StorageRootService
             var entry = current.FirstOrDefault(a => a.RoleId == item.RoleId);
 
             var hasAnyRight = permissions.CanRead || permissions.CanWrite || permissions.CanDelete
-                              || permissions.CanUpload || permissions.CanDownload || permissions.CanShare;
+                              || permissions.CanUpload || permissions.CanDownload;
 
             if (!hasAnyRight)
             {
@@ -389,7 +389,6 @@ public sealed class StorageRootService
             entry.CanDelete = permissions.CanDelete;
             entry.CanUpload = permissions.CanUpload;
             entry.CanDownload = permissions.CanDownload;
-            entry.CanShare = permissions.CanShare;
         }
 
         await _db.SaveChangesAsync();

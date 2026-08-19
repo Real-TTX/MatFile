@@ -12,8 +12,8 @@ public class RootPermissionsTests
     [Fact]
     public void Merge_addiert_die_rechte_mehrerer_rollen()
     {
-        var lesen = new RootPermissions(true, false, false, false, true, false);
-        var schreiben = new RootPermissions(false, true, false, true, false, false);
+        var lesen = new RootPermissions(true, false, false, false, true);
+        var schreiben = new RootPermissions(false, true, false, true, false);
 
         var zusammen = lesen.Merge(schreiben);
 
@@ -22,13 +22,12 @@ public class RootPermissionsTests
         Assert.True(zusammen.CanUpload);
         Assert.True(zusammen.CanDownload);
         Assert.False(zusammen.CanDelete);
-        Assert.False(zusammen.CanShare);
     }
 
     [Fact]
     public void Merge_mit_None_aendert_nichts()
     {
-        var rechte = new RootPermissions(true, true, false, false, true, false);
+        var rechte = new RootPermissions(true, true, false, false, true);
 
         Assert.Equal(rechte, rechte.Merge(RootPermissions.None));
         Assert.Equal(rechte, RootPermissions.None.Merge(rechte));
@@ -44,7 +43,7 @@ public class RootPermissionsTests
     public void None_und_Full_sind_die_beiden_extreme()
     {
         Assert.False(RootPermissions.None.CanRead);
-        Assert.False(RootPermissions.None.CanShare);
+        Assert.False(RootPermissions.None.CanDelete);
         Assert.True(RootPermissions.Full.CanRead);
         Assert.True(RootPermissions.Full.CanDelete);
     }
@@ -58,8 +57,7 @@ public class RootPermissionsTests
             CanWrite = false,
             CanDelete = true,
             CanUpload = false,
-            CanDownload = true,
-            CanShare = false
+            CanDownload = true
         };
 
         var rechte = RootPermissions.From(access);
@@ -69,6 +67,5 @@ public class RootPermissionsTests
         Assert.True(rechte.CanDelete);
         Assert.False(rechte.CanUpload);
         Assert.True(rechte.CanDownload);
-        Assert.False(rechte.CanShare);
     }
 }

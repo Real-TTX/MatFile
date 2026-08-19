@@ -147,7 +147,7 @@ public class IndexModel : PageModel
             "Root.Name", "Root.Type", "Root.Path", "Root.Status", "Root.Available", "Root.Missing",
             "Root.Disabled", "Root.Roles", "Root.Access", "Root.AccessHint", "Root.Empty",
             "Access.CanRead", "Access.CanWrite", "Access.CanDelete",
-            "Access.CanUpload", "Access.CanDownload", "Access.CanShare"
+            "Access.CanUpload", "Access.CanDownload"
         ];
 
         // Explorer-Schlüssel behalten ihre kurze Form, alle anderen bleiben wie sie sind.

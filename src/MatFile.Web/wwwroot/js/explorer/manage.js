@@ -721,8 +721,7 @@ const RIGHTS = [
     ['canDownload', 'Access.CanDownload'],
     ['canUpload', 'Access.CanUpload'],
     ['canWrite', 'Access.CanWrite'],
-    ['canDelete', 'Access.CanDelete'],
-    ['canShare', 'Access.CanShare']
+    ['canDelete', 'Access.CanDelete']
 ];
 
 /**

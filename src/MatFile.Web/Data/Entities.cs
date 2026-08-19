@@ -133,7 +133,6 @@ public class RootAccess : EntityBase
     public bool CanDelete { get; set; }
     public bool CanUpload { get; set; }
     public bool CanDownload { get; set; } = true;
-    public bool CanShare { get; set; }
 }
 
 // ---------------------------------------------------------------- Explorer-Zustand
