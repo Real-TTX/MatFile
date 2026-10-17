@@ -80,6 +80,15 @@
   <data name="Login.PasswordRequired"><value>Bitte das Kennwort eingeben.</value></data>
   <data name="Login.Invalid"><value>Benutzername oder Kennwort ist falsch.</value></data>
   <data name="Login.Locked"><value>Das Konto ist gesperrt. Bitte in {0} Minute(n) erneut versuchen.</value></data>
+  <data name="Login.LinkExplain"><value>Du hast dich über MatIdentity angemeldet, und hier gibt es schon ein Konto mit deiner E-Mail-Adresse oder deinem Benutzernamen.</value></data>
+  <data name="Login.LinkHow"><value>Melde dich einmal mit Benutzername und Kennwort dieses Kontos an, um es mit MatIdentity zu verbinden. Danach meldet dich MatIdentity direkt an. Ein anderes Konto verbindet nichts.</value></data>
+  <data name="Login.LinkSubmit"><value>Anmelden und verbinden</value></data>
+  <data name="Login.LinkCancel"><value>Abbrechen</value></data>
+  <data name="Login.LinkExpired"><value>Die Verbindung mit MatIdentity ist abgelaufen oder wurde abgebrochen. Melde dich erneut über MatIdentity an, um neu zu beginnen.</value></data>
+  <data name="Login.SsoError"><value>Die Anmeldung über MatIdentity hat nicht geklappt. Hier kannst du dich mit deinem lokalen Konto anmelden.</value></data>
+  <data name="Login.Denied"><value>Mit diesem MatIdentity-Konto kann MatFile dich nicht hereinlassen: das Konto hier ist deaktiviert, oder mehrere Konten passen. Bitte wende dich an einen Administrator.</value></data>
+  <data name="Login.SignedOut"><value>Du bist abgemeldet.</value></data>
+  <data name="Login.WithIdentity"><value>Mit MatIdentity anmelden</value></data>
 
   <data name="ChangePassword.Title"><value>Kennwort ändern</value></data>
   <data name="ChangePassword.Forced"><value>Bitte vergib ein eigenes Kennwort, bevor du weiterarbeitest.</value></data>
@@ -502,6 +511,11 @@
   <data name="Explorer.ActionCompress"><value>Komprimiert</value></data>
   <data name="Explorer.ActionExtract"><value>Entpackt</value></data>
   <data name="Explorer.ActionEdit"><value>Bearbeitet</value></data>
+  <data name="Explorer.ActionLoginMatIdentity"><value>Über MatIdentity angemeldet</value></data>
+  <data name="Explorer.ActionLinkedMatIdentity"><value>Mit MatIdentity verknüpft</value></data>
+  <data name="Explorer.ActionUserCreatedMatIdentity"><value>Benutzer über MatIdentity angelegt</value></data>
+  <data name="Explorer.ActionSettingsChanged"><value>Einstellungen geändert</value></data>
+  <data name="Explorer.ActionJobsCancelled"><value>Alle Aufträge abgebrochen</value></data>
   <data name="Explorer.Online"><value>erreichbar</value></data>
   <data name="Explorer.Offline"><value>nicht erreichbar</value></data>
   <data name="Explorer.NotAvailable"><value>Nicht erreichbar</value></data>

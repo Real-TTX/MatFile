@@ -10,12 +10,39 @@
         <h1>@L["Login.Title"]</h1>
         <p class="mf-muted">@L["Login.Subtitle"]</p>
 
+        @if (Model.PendingLink is not null)
+        {
+            <div class="mf-alert mf-alert-warning" role="status" id="login-link">
+                <p>@L["Login.LinkExplain"]</p>
+                <p>@L["Login.LinkHow"]</p>
+            </div>
+        }
+        else if (Model.LinkExpired)
+        {
+            <div class="mf-alert mf-alert-warning" role="status" id="login-link-expired">@L["Login.LinkExpired"]</div>
+        }
+
+        @if (Model.SsoError)
+        {
+            <div class="mf-alert mf-alert-error" role="alert" id="login-sso-error">@L["Login.SsoError"]</div>
+        }
+
+        @if (Model.Denied)
+        {
+            <div class="mf-alert mf-alert-error" role="alert" id="login-denied">@L["Login.Denied"]</div>
+        }
+
+        @if (Model.SignedOut)
+        {
+            <div class="mf-alert mf-alert-success" role="status">@L["Login.SignedOut"]</div>
+        }
+
         @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
             <div class="mf-alert mf-alert-error" role="alert">@Model.ErrorMessage</div>
         }
 
-        <form method="post" class="mf-form">
+        <form method="post" class="mf-form" id="login-form">
             <input type="hidden" asp-for="ReturnUrl" />
 
             <div class="mf-field">
@@ -31,7 +58,15 @@
             </div>
 
             <div class="mf-actions">
-                <button type="submit" class="mf-btn mf-btn-primary">@L["Login.Submit"]</button>
+                <button type="submit" class="mf-btn mf-btn-primary">@(Model.PendingLink is not null ? L["Login.LinkSubmit"] : L["Login.Submit"])</button>
+                @if (Model.PendingLink is not null)
+                {
+                    <button type="submit" class="mf-btn" asp-page-handler="CancelLink" formnovalidate id="login-link-cancel">@L["Login.LinkCancel"]</button>
+                }
+                else if (Model.IdentityEnabled)
+                {
+                    <a class="mf-btn mf-btn-quiet" href="@Model.IdentitySignInUrl" id="login-identity">@L["Login.WithIdentity"]</a>
+                }
             </div>
         </form>
     </div>

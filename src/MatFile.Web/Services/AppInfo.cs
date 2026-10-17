@@ -9,6 +9,11 @@ public sealed class AppInfo
 {
     public const string ProductName = "MatFile";
 
+    private static readonly Lazy<string> Current = new(() => new AppInfo().Version);
+
+    /// <summary>Die Version dieses Builds, ohne Instanz (für die Beschreibung der App im Plattformvertrag).</summary>
+    public static string CurrentVersion => Current.Value;
+
     public string Version { get; }
     public string Channel { get; }
     public DateTimeOffset StartedAt { get; } = DateTimeOffset.UtcNow;

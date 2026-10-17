@@ -83,6 +83,8 @@ public class IndexModel : PageModel
             "Explorer.ActionCreateFolder", "Explorer.ActionRename", "Explorer.ActionDelete",
             "Explorer.ActionCopy", "Explorer.ActionMove", "Explorer.ActionCompress", "Explorer.ActionExtract",
             "Explorer.ActionEdit", "Explorer.ActionPermissions",
+            "Explorer.ActionLoginMatIdentity", "Explorer.ActionLinkedMatIdentity", "Explorer.ActionUserCreatedMatIdentity",
+            "Explorer.ActionSettingsChanged", "Explorer.ActionJobsCancelled",
 
             // Texteditor
             "Explorer.Edit", "Explorer.Revert", "Explorer.UnsavedTitle", "Explorer.UnsavedQuestion",

@@ -8,7 +8,8 @@ using Microsoft.Extensions.Localization;
 
 namespace MatFile.Web.Services;
 
-public record LoginResult(bool Success, string? Error = null, bool MustChangePassword = false);
+/// <summary>Ergebnis einer Kennwortprüfung oder Anmeldung; <see cref="UserId"/> ist bei Erfolg das angemeldete Konto.</summary>
+public record LoginResult(bool Success, string? Error = null, bool MustChangePassword = false, long UserId = 0);
 
 public record PasswordChangeResult(bool Success, string? Error = null);
 
@@ -38,7 +39,23 @@ public sealed class AuthService
         _logger = logger;
     }
 
+    /// <summary>Lokale Anmeldung: Kennwort prüfen und, wenn es stimmt, die Sitzung beginnen.</summary>
     public async Task<LoginResult> SignInAsync(HttpContext http, string username, string password)
+    {
+        var result = await CheckPasswordAsync(http, username, password);
+        if (result.Success)
+        {
+            await StartSessionAsync(http, result.UserId);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Prüft Benutzername und Kennwort samt Kontosperre, beginnt aber noch keine Sitzung (<see cref="StartSessionAsync"/>):
+    /// dazwischen verknüpft die Anmeldeseite ein Konto mit MatIdentity, wenn genau dieses Konto auf die Verknüpfung wartet.
+    /// </summary>
+    public async Task<LoginResult> CheckPasswordAsync(HttpContext http, string username, string password)
     {
         var settings = _config.Settings;
         var now = DateTime.UtcNow;
@@ -74,6 +91,22 @@ public sealed class AuthService
 
         user.FailedLoginCount = 0;
         user.LockoutUntil = null;
+        await _db.SaveChangesAsync();
+
+        return new LoginResult(true, MustChangePassword: user.MustChangePassword, UserId: user.Id);
+    }
+
+    /// <summary>
+    /// Beginnt die Sitzung eines Kontos und setzt das Cookie. <paramref name="identityToken"/>: das ID-Token von MatIdentity, mit der
+    /// Sitzung gespeichert für die Abmeldung dort. <paramref name="throughIdentity"/>: die Person kam über MatIdentity und hat kein
+    /// Kennwort eingegeben - dann gilt auch kein erzwungener Kennwortwechsel.
+    /// </summary>
+    public async Task StartSessionAsync(HttpContext http, long userId, string? identityToken = null, bool throughIdentity = false)
+    {
+        var settings = _config.Settings;
+        var now = DateTime.UtcNow;
+        var user = await _db.User.FirstAsync(u => u.Id == userId);
+
         user.LastLoginDate = now;
 
         var session = new UserSession
@@ -84,6 +117,7 @@ public sealed class AuthService
             LastActivityDate = now,
             IpAddress = http.Connection.RemoteIpAddress?.ToString(),
             UserAgent = Truncate(http.Request.Headers.UserAgent.ToString(), 512),
+            IdToken = string.IsNullOrEmpty(identityToken) ? null : identityToken,
             CreateUserId = user.Id,
             UpdateUserId = user.Id
         };
@@ -91,7 +125,7 @@ public sealed class AuthService
         _db.UserSession.Add(session);
         await _db.SaveChangesAsync();
 
-        var principal = await BuildPrincipalAsync(user, session.Token);
+        var principal = await BuildPrincipalAsync(user, session.Token, throughIdentity);
         await http.SignInAsync(MatFileClaims.AuthenticationScheme, principal, new AuthenticationProperties
         {
             IsPersistent = true,
@@ -99,8 +133,8 @@ public sealed class AuthService
             ExpiresUtc = session.ExpiresDate
         });
 
-        await LogAsync(user.Id, "Login", http);
-        _logger.LogInformation("Benutzer '{Username}' angemeldet", user.Username);
+        await LogAsync(user.Id, throughIdentity ? "LoginMatIdentity" : "Login", http);
+        _logger.LogInformation("Benutzer '{Username}' angemeldet{Via}", user.Username, throughIdentity ? " (über MatIdentity)" : string.Empty);
 
         // Gespeicherte Sprachwahl des Benutzers übernehmen.
         var language = await _db.UserSetting
@@ -112,25 +146,31 @@ public sealed class AuthService
         {
             MatFileCultures.SetCookie(http.Response, language!);
         }
-
-        return new LoginResult(true, MustChangePassword: user.MustChangePassword);
     }
 
-    public async Task SignOutAsync(HttpContext http)
+    /// <summary>
+    /// Beendet die Sitzung. Antwortet mit dem ID-Token von MatIdentity, wenn die Sitzung über MatIdentity begann
+    /// (oder bei der Anmeldung verknüpft wurde) - dann meldet die Abmeldeseite die Person auch dort ab.
+    /// </summary>
+    public async Task<string?> SignOutAsync(HttpContext http)
     {
+        string? identityToken = null;
         var token = http.User.GetSessionToken();
         if (token is { } value)
         {
             var session = await _db.UserSession.FirstOrDefaultAsync(s => s.Token == value);
             if (session is not null)
             {
+                identityToken = session.IdToken;
                 session.IsRevoked = true;
+                session.IdToken = null;
                 await _db.SaveChangesAsync();
                 await LogAsync(session.UserId, "Logout", http);
             }
         }
 
         await http.SignOutAsync(MatFileClaims.AuthenticationScheme);
+        return identityToken;
     }
 
     public async Task<PasswordChangeResult> ChangePasswordAsync(HttpContext http, string currentPassword, string newPassword)
@@ -188,7 +228,7 @@ public sealed class AuthService
         return new PasswordChangeResult(true);
     }
 
-    public async Task<ClaimsPrincipal> BuildPrincipalAsync(User user, Guid sessionToken)
+    public async Task<ClaimsPrincipal> BuildPrincipalAsync(User user, Guid sessionToken, bool throughIdentity = false)
     {
         var roles = await _db.UserRole
             .Where(ur => ur.UserId == user.Id)
@@ -204,7 +244,8 @@ public sealed class AuthService
             new(MatFileClaims.SessionTokenClaim, sessionToken.ToString())
         };
 
-        if (user.MustChangePassword)
+        // Wer über MatIdentity kam, hat hier kein Kennwort eingegeben: der erzwungene Wechsel gilt der lokalen Anmeldung.
+        if (user.MustChangePassword && !throughIdentity)
         {
             claims.Add(new Claim(MatFileClaims.MustChangePasswordClaim, "true"));
         }

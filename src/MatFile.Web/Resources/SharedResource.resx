@@ -80,6 +80,15 @@
   <data name="Login.PasswordRequired"><value>Please enter your password.</value></data>
   <data name="Login.Invalid"><value>Username or password is incorrect.</value></data>
   <data name="Login.Locked"><value>The account is locked. Please try again in {0} minute(s).</value></data>
+  <data name="Login.LinkExplain"><value>You signed in with MatIdentity, and an account with your e-mail address or user name already exists here.</value></data>
+  <data name="Login.LinkHow"><value>Sign in once with the user name and password of that account to connect it with MatIdentity. After that MatIdentity signs you in directly. Another account connects nothing.</value></data>
+  <data name="Login.LinkSubmit"><value>Sign in and connect</value></data>
+  <data name="Login.LinkCancel"><value>Cancel</value></data>
+  <data name="Login.LinkExpired"><value>The connection with MatIdentity has expired or was cancelled. Sign in with MatIdentity again to start over.</value></data>
+  <data name="Login.SsoError"><value>The sign-in through MatIdentity did not work. You can sign in with your local account here.</value></data>
+  <data name="Login.Denied"><value>MatFile cannot let you in with this MatIdentity account: the account here is disabled, or several accounts match. Please ask an administrator.</value></data>
+  <data name="Login.SignedOut"><value>You are signed out.</value></data>
+  <data name="Login.WithIdentity"><value>Sign in with MatIdentity</value></data>
 
   <data name="ChangePassword.Title"><value>Change password</value></data>
   <data name="ChangePassword.Forced"><value>Please choose your own password before you continue.</value></data>
@@ -502,6 +511,11 @@
   <data name="Explorer.ActionCompress"><value>Compressed</value></data>
   <data name="Explorer.ActionExtract"><value>Extracted</value></data>
   <data name="Explorer.ActionEdit"><value>Edited</value></data>
+  <data name="Explorer.ActionLoginMatIdentity"><value>Signed in through MatIdentity</value></data>
+  <data name="Explorer.ActionLinkedMatIdentity"><value>Linked with MatIdentity</value></data>
+  <data name="Explorer.ActionUserCreatedMatIdentity"><value>User created through MatIdentity</value></data>
+  <data name="Explorer.ActionSettingsChanged"><value>Settings changed</value></data>
+  <data name="Explorer.ActionJobsCancelled"><value>All jobs cancelled</value></data>
   <data name="Explorer.Online"><value>reachable</value></data>
   <data name="Explorer.Offline"><value>not reachable</value></data>
   <data name="Explorer.NotAvailable"><value>Not reachable</value></data>

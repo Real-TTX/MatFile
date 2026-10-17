@@ -4,6 +4,7 @@ using System.Threading.RateLimiting;
 using MatFile.Web;
 using MatFile.Web.Api;
 using MatFile.Web.Data;
+using MatFile.Web.Platform;
 using MatFile.Web.Security;
 using MatFile.Web.Services;
 using MatFile.Web.Storage;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.WebEncoders;
+using MatPlatform;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,8 @@ builder.Services.AddScoped<UploadService>();
 builder.Services.AddSingleton<JobService>();
 builder.Services.AddHostedService<JobRunner>();
 builder.Services.AddSingleton<SearchService>();
+builder.Services.AddScoped<SystemStatusService>();
+builder.Services.AddSingleton<StorageSurveyCache>();
 // Offene Verbindungen zu SFTP und FTP wiederverwenden - das Anmelden kostet
 // bei SSH mehrere hundert Millisekunden je Anfrage.
 builder.Services.AddSingleton(_ => new ConnectionPool<Renci.SshNet.SftpClient>(
@@ -65,6 +69,11 @@ builder.Services.AddHttpClient(StorageProviderFactory.WebDavClient, client =>
     // verwirft HttpClient den Authorization-Header.
     AllowAutoRedirect = false
 });
+
+// Der Plattformvertrag der Mat-Apps (MatDesign docs/PLATFORM.md): /api, /api/health, /api/state, /api/configure, /api/actions
+// aus dem Paket MatPlatform (eine Kopie in MatPlatform/); MatFilePlatform beschreibt MatFile und liefert die Werte.
+// MAT_API_KEY schützt den Teil mit Werten, MATIDENTITY_* schaltet die Anmeldung über MatIdentity ein (ohne: alles wie bisher).
+var platform = builder.AddMatPlatform<MatFilePlatform>(MatFilePlatform.Describe);
 
 // Schlüssel im Volume -> Cookies und damit Sitzungen überleben einen Container-Neustart.
 builder.Services.AddDataProtection()
@@ -111,6 +120,14 @@ builder.Services.AddAuthentication(MatFileClaims.AuthenticationScheme)
             context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
         };
+    })
+    // Anmeldung über MatIdentity, nur mit MATIDENTITY_AUTHORITY (ohne ändert sich nichts).
+    // Ein abgelehntes Konto (deaktiviert, mehrdeutig) landet mit einer Meldung auf der lokalen Anmeldung.
+    .AddMatIdentitySignIn<MatFileIdentityUsers>(platform, options =>
+    {
+        options.CookieScheme = MatFileClaims.AuthenticationScheme;
+        options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/Login?local=1&denied=1";
     });
 
 builder.Services.AddAuthorizationBuilder()
@@ -203,8 +220,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/Error", "?code={0}");
-app.UseRateLimiter();
 app.UseRouting();
+// Nach UseRouting: die Grenze der anonymen Plattform-Endpunkte (/api, /api/health) hängt am Endpunkt.
+app.UseRateLimiter();
 app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -218,6 +236,8 @@ app.Use(async (context, next) =>
         var allowed = path.StartsWith("/Account/ChangePassword", StringComparison.OrdinalIgnoreCase)
                       || path.StartsWith("/Logout", StringComparison.OrdinalIgnoreCase)
                       || path.StartsWith("/Login", StringComparison.OrdinalIgnoreCase)
+                      || path.StartsWith(MatIdentitySignIn.CallbackPath, StringComparison.OrdinalIgnoreCase)
+                      || path.StartsWith(MatIdentitySignIn.SignedOutCallbackPath, StringComparison.OrdinalIgnoreCase)
                       || path.StartsWith("/SetLanguage", StringComparison.OrdinalIgnoreCase)
                       || path.StartsWith("/css", StringComparison.OrdinalIgnoreCase)
                       || path.StartsWith("/js", StringComparison.OrdinalIgnoreCase)
@@ -246,6 +266,9 @@ app.MapSearchEndpoints();
 app.MapAdminEndpoints();
 app.MapSystemEndpoints();
 app.MapActivityEndpoints();
+// Neben MatFiles eigener API unter /api/...: keine Route überschneidet sich (/api/fs, /api/jobs, /api/settings, ... gegen
+// /api, /api/health, /api/state, /api/configure, /api/actions).
+app.MapMatPlatform();
 
 app.MapGet("/healthz", (AppInfo info, MatFilePaths matFilePaths, MatFileDbContext db) =>
 {

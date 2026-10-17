@@ -3498,3 +3498,12 @@ el.listing.addEventListener('drop', event => {
 onTransfersFinished(() => reload());
 
 init();
+
+// ?admin=activity (oder users, roles, roots, system) öffnet gleich die Verwaltung in diesem Bereich - so verlinkt Mattiverse
+// das Aktivitätsprotokoll und die Einstellungen. Ohne das Recht dazu zeigt sie den ersten erlaubten Bereich, ohne jedes Verwaltungsrecht
+// nichts; die Adresse wird danach wieder sauber.
+const adminSection = new URLSearchParams(window.location.search).get('admin');
+if (adminSection) {
+    window.history.replaceState(null, '', window.location.pathname);
+    openAdministration(adminSection);
+}
