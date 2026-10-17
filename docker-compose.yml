@@ -19,6 +19,12 @@ services:
       TZ: Europe/Berlin
       # PUID: "1000"
       # PGID: "1000"
+      # Plattformvertrag und Anmeldung über MatIdentity - alles optional (Mattiverse setzt es):
+      # MAT_API_KEY: ""                    # der Schlüssel für /api/state, /api/configure, /api/actions
+      # MATIDENTITY_AUTHORITY: ""          # https://id.example.com: Anmeldung über MatIdentity
+      # MATIDENTITY_CLIENT_ID: "matfile"
+      # MATIDENTITY_CLIENT_SECRET: ""
+      # MATIDENTITY_INTERNAL_URL: ""       # http://matidentity:2300 innerhalb von Docker
     volumes:
       # Konfiguration, SQLite-Datenbank, Session-Keys, Thumbnails
       - matfile-data:/data

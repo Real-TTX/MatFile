@@ -136,7 +136,7 @@ docker compose up -d
 ```
 
 Open **http://localhost:2222** and sign in with **`admin` / `admin`**
-(health check: `/healthz`). The `matfile-data` volume keeps the database, the
+(health check: `/api/health`; the older `/healthz` still answers). The `matfile-data` volume keeps the database, the
 configuration and the session keys, so an update is just `docker compose pull &&
 docker compose up -d`.
 
@@ -224,6 +224,11 @@ docker compose -f docker-compose.dev.yml up -d --build    # development stack
 | `PUID` / `PGID` | – | Optional: run as an unprivileged user |
 | `MATFILE_ADMIN_PASSWORD` | `admin` | Initial password for `admin` on first start |
 | `TZ` | `Europe/Berlin` | Time zone |
+| `MAT_API_KEY` | – | Optional: the key for the platform API (`X-Api-Key` on `/api/state`, `/api/configure`, `/api/actions`). Without it only a token of MatIdentity is accepted there. Mattiverse sets it |
+| `MATIDENTITY_AUTHORITY` | – | Optional: the address of MatIdentity (`https://id.example.com`). Set = sign-in through MatIdentity |
+| `MATIDENTITY_CLIENT_ID` | `matfile` | The client of MatFile in MatIdentity |
+| `MATIDENTITY_CLIENT_SECRET` | – | Its secret |
+| `MATIDENTITY_INTERNAL_URL` | – | Optional: where MatFile reaches MatIdentity from inside Docker (`http://matidentity:2300`); the browser keeps using the authority |
 
 ### After the first sign-in
 
@@ -253,6 +258,41 @@ Language…*) switches to German – the choice stays with the user account.
 
 OS-level mounts (NFS, or SMB as an alternative) need `cap_add: [SYS_ADMIN]`; the in-process
 providers for SMB, SFTP, FTP and WebDAV work without extra privileges.
+
+## Mat platform: API and sign-in through MatIdentity
+
+MatFile follows the platform contract of the Mat apps (MatDesign `docs/PLATFORM.md`, through the shared package
+MatPlatform in `src/MatFile.Web/MatPlatform/`, a copy that is never edited here), so Mattiverse can show it, watch it,
+set it up and act on it. MatFile's own API under `/api/fs`, `/api/jobs`, `/api/settings` ... stays as it is; the
+contract lives next to it.
+
+| Endpoint | Access | What it is |
+|---|---|---|
+| `GET /api` | anonymous | the description: pages *Overview* and *Settings*, tiles, fields, actions, roles (German or English by `Accept-Language`) |
+| `GET /api/health` | anonymous | `ok` / `degraded` / `down` with the checks `database`, `data` (the data directory is writable) and, after a check of the storage locations, `storage`; 503 only for `down`. The Docker `HEALTHCHECK` calls it |
+| `GET /api/state[/{key}]` | key or token | the tiles: storage locations, not reachable, storage used / total / free (each file system once; local, SFTP and SMB report it), running jobs, failed jobs in 24 h, active users, last activity |
+| `GET` / `PUT /api/configure` | key or token | six settings of the system dialog: session lifetime, failed attempts until lockout, lockout duration, minimum password length, HTTPS-only cookie, maximum upload size. Same file, same limits; each change goes to the activity log with who made it |
+| `POST /api/actions/{id}` | key or token | `checkStorage` (checks every storage location now), `cancelJobs` (cancels every waiting and running job, 409 when there is none) |
+
+The links of the description are `/` (open MatFile), `/?admin=activity` (the activity log) and `/?admin=system` (all
+settings): `?admin=<users|roles|roots|system|activity>` opens the administration in that section. The roles are `admin`
+(the system role *Administrator*) and `user` (the system role *User*).
+
+**Sign-in through MatIdentity** is on when `MATIDENTITY_AUTHORITY` is set; without it nothing changes. Then `/Login`
+goes straight to MatIdentity (authorization code with PKCE) and comes back signed in; the local form stays at
+`/Login?local=1` (the way in when MatIdentity is down). Register MatFile in MatIdentity with the redirect address
+`https://<matfile>/signin-oidc` and the signed-out address `https://<matfile>/signout-callback-oidc`.
+
+- The person is found by the claim `sub`. Without a match, a new account is created (user name, display name and
+  e-mail from the claims, no local password).
+- **An existing account is never linked by its address alone.** When exactly one active, not yet linked account with a
+  password has the same e-mail address (or, without one, the same user name), MatFile shows `/Login?local=1&link=1`:
+  sign in once with that account's password to connect it, or cancel. Only that account gets linked (written to the
+  activity log as *Linked with MatIdentity*); another account signing in links nothing. Several matches, a disabled
+  account or a match linked to another person are refused.
+- The claim `role` (`admin` or `user`) is followed at every sign-in; the last active administrator keeps the role.
+  Without the claim MatFile keeps managing the roles itself (a new account gets *User*).
+- Signing out ends the session at MatIdentity too.
 
 ## Status
 

@@ -60,6 +60,8 @@ public sealed class MatFilePlatform(SystemStatusService system, ILogger<MatFileP
             Min = 1,
             Max = 365,
             Hint = T("So lange bleibt eine Anmeldung gültig; jede Nutzung verlängert sie.", "How long a sign-in stays valid; every use extends it."),
+            // Das Cookie nimmt seine Lebensdauer beim Start mit (wie im Systemdialog beschrieben).
+            Restart = true,
         });
         o.Field(new MatField("loginMaxFailedAttempts", T("Fehlversuche bis zur Sperre", "Failed attempts before lock-out"), "number")
         {
