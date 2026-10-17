@@ -61,6 +61,8 @@ public class MatFileDbContext : DbContext
             e.Property(x => x.DisplayName).HasMaxLength(128).IsRequired();
             e.Property(x => x.Email).HasMaxLength(256);
             e.Property(x => x.PasswordHash).HasMaxLength(256).IsRequired();
+            e.Property(x => x.ExternalSubject).HasMaxLength(256);
+            e.HasIndex(x => x.ExternalSubject).IsUnique();
         });
 
         model.Entity<Role>(e =>

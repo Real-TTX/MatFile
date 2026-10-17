@@ -43,6 +43,12 @@ public class User : EntityBase
     public int FailedLoginCount { get; set; }
     public DateTime? LockoutUntil { get; set; }
 
+    /// <summary>
+    /// Die Kennung (sub) der Person in MatIdentity, wenn das Konto mit der Anmeldung über MatIdentity verknüpft ist.
+    /// Ein Konto, dessen E-Mail-Adresse oder Benutzername passt, bekommt sie erst nach einer Anmeldung mit seinem Kennwort.
+    /// </summary>
+    public string? ExternalSubject { get; set; }
+
     public List<UserRole> UserRoles { get; set; } = [];
     public List<UserSession> Sessions { get; set; } = [];
 }
@@ -80,6 +86,9 @@ public class UserSession : EntityBase
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
     public bool IsRevoked { get; set; }
+
+    /// <summary>Das ID-Token von MatIdentity, wenn die Sitzung über MatIdentity begann - für die Abmeldung dort (id_token_hint).</summary>
+    public string? IdToken { get; set; }
 }
 
 // ---------------------------------------------------------------- Speicherorte

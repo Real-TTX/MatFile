@@ -15,7 +15,7 @@ namespace MatFile.Web.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
 
             modelBuilder.Entity("MatFile.Web.Data.ActivityLog", b =>
                 {
@@ -405,6 +405,10 @@ namespace MatFile.Web.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ExternalSubject")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("INTEGER");
 
@@ -437,6 +441,9 @@ namespace MatFile.Web.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalSubject")
+                        .IsUnique();
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -491,6 +498,9 @@ namespace MatFile.Web.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("ExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdToken")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IpAddress")
