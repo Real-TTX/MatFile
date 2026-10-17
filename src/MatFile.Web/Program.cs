@@ -39,6 +39,7 @@ builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<StorageRootService>();
 builder.Services.AddScoped<ExplorerStateService>();
 builder.Services.AddScoped<FileOperationService>();
+builder.Services.AddScoped<ActivityLogService>();
 builder.Services.AddScoped<UploadService>();
 builder.Services.AddSingleton<JobService>();
 builder.Services.AddHostedService<JobRunner>();

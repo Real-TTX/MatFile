@@ -4,7 +4,6 @@ using MatFile.Web.Data;
 using MatFile.Web.Security;
 using MatFile.Web.Services;
 using MatFile.Web.Storage;
-using Microsoft.EntityFrameworkCore;
 
 namespace MatFile.Web.Api;
 
@@ -109,9 +108,9 @@ public static class RootManagementEndpoints
         });
 
         group.MapGet("/{id:long}", async (
-            long id, MatFileDbContext db, SecretProtector protector, StorageRootService roots) =>
+            long id, SecretProtector protector, StorageRootService roots) =>
         {
-            var root = await db.StorageRoot.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
+            var root = await roots.GetAsync(id);
 
             return root is null
                 ? Results.NotFound()

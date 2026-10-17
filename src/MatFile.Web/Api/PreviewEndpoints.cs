@@ -4,7 +4,6 @@ using MatFile.Web.Data;
 using MatFile.Web.Security;
 using MatFile.Web.Services;
 using MatFile.Web.Storage;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace MatFile.Web.Api;
@@ -15,8 +14,6 @@ public static class PreviewEndpoints
     public record TextResponse(string Content, bool Truncated, long Size, DateTime Modified, bool Editable);
 
     public record SaveTextRequest(long RootId, string Path, string? Content, DateTime? IfModified);
-
-    public record ActivityResponse(string Action, DateTime Date, string? User);
 
     public static IEndpointRouteBuilder MapPreviewEndpoints(this IEndpointRouteBuilder app)
     {
@@ -213,7 +210,7 @@ public static class PreviewEndpoints
         group.MapGet("/activity", async (
             long rootId,
             string path,
-            MatFileDbContext db,
+            ActivityLogService activity,
             ClaimsPrincipal user) =>
         {
             if (user.GetUserId() is not { } userId)
@@ -221,20 +218,8 @@ public static class PreviewEndpoints
                 return Results.Unauthorized();
             }
 
-            var query = db.ActivityLog.AsNoTracking()
-                .Where(a => a.StorageRootId == rootId && a.TargetPath == path);
-
             // Ohne das Recht "Protokoll einsehen" sieht man nur die eigenen Aktionen.
-            if (!user.HasPermission(Permission.ViewActivityLog))
-            {
-                query = query.Where(a => a.UserId == userId);
-            }
-
-            var entries = await query
-                .OrderByDescending(a => a.Id)
-                .Take(20)
-                .Select(a => new ActivityResponse(a.ActionType, a.CreateDate, a.User!.DisplayName))
-                .ToListAsync();
+            var entries = await activity.ForEntryAsync(rootId, path, userId, user.HasPermission(Permission.ViewActivityLog));
 
             return Results.Ok(entries);
         });

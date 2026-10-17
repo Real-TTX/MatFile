@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using MatFile.Web.Data;
 using MatFile.Web.Storage;
+using Microsoft.EntityFrameworkCore;
 
 namespace MatFile.Web.Services;
 
@@ -177,6 +178,46 @@ public sealed class FileOperationService
         await RequireAsync(userId, rootId, p => p.CanRead && p.CanWrite);
         return await _jobs.CreateAsync(_db, userId, JobType.Unzip,
             new JobPayload(rootId, [path], rootId, targetPath));
+    }
+
+    // ---------------------------------------------------------------- Jobs abfragen
+
+    /// <summary>Jobs des Benutzers, neueste zuerst.</summary>
+    public async Task<List<JobView>> RecentJobsAsync(long userId, int take = 20)
+    {
+        var jobs = await _db.JobTask.AsNoTracking()
+            .Where(j => j.UserId == userId)
+            .OrderByDescending(j => j.Id)
+            .Take(take)
+            .ToListAsync();
+
+        return jobs.Select(JobService.ToView).ToList();
+    }
+
+    /// <summary>
+    /// Bricht einen Job des Benutzers ab: ein wartender wird verworfen, ein laufender angehalten.
+    /// False, wenn es diesen Job für den Benutzer nicht gibt.
+    /// </summary>
+    public async Task<bool> CancelJobAsync(long userId, Guid token)
+    {
+        var job = await _db.JobTask.FirstOrDefaultAsync(j => j.Token == token && j.UserId == userId);
+        if (job is null)
+        {
+            return false;
+        }
+
+        if (job.Status == JobStatus.Pending)
+        {
+            job.Status = JobStatus.Cancelled;
+            job.FinishedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+        else
+        {
+            _jobs.Cancel(job.Id);
+        }
+
+        return true;
     }
 
     // ---------------------------------------------------------------- Jobs ausführen

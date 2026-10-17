@@ -95,12 +95,4 @@ public sealed class JobService
         job.ErrorMessage,
         job.CreateDate,
         job.FinishedDate);
-
-    /// <summary>Jobs des Benutzers, neueste zuerst.</summary>
-    public static Task<List<JobTask>> RecentAsync(MatFileDbContext db, long userId, int take = 20)
-        => db.JobTask.AsNoTracking()
-            .Where(j => j.UserId == userId)
-            .OrderByDescending(j => j.Id)
-            .Take(take)
-            .ToListAsync();
 }

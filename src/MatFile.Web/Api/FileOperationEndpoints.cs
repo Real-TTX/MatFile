@@ -5,7 +5,6 @@ using MatFile.Web.Security;
 using MatFile.Web.Services;
 using MatFile.Web.Storage;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace MatFile.Web.Api;
@@ -264,42 +263,26 @@ public static class FileOperationEndpoints
 
         var jobGroup = app.MapGroup("/api/jobs").RequireAuthorization(MatFilePolicies.UseExplorer);
 
-        jobGroup.MapGet("/", async (MatFileDbContext db, ClaimsPrincipal user) =>
+        jobGroup.MapGet("/", async (FileOperationService operations, ClaimsPrincipal user) =>
         {
             if (user.GetUserId() is not { } userId)
             {
                 return Results.Unauthorized();
             }
 
-            var jobs = await JobService.RecentAsync(db, userId);
-            return Results.Ok(jobs.Select(JobService.ToView));
+            return Results.Ok(await operations.RecentJobsAsync(userId));
         });
 
-        jobGroup.MapPost("/{token:guid}/cancel", async (Guid token, MatFileDbContext db, JobService jobs, ClaimsPrincipal user) =>
+        jobGroup.MapPost("/{token:guid}/cancel", async (Guid token, FileOperationService operations, ClaimsPrincipal user) =>
         {
             if (user.GetUserId() is not { } userId)
             {
                 return Results.Unauthorized();
             }
 
-            var job = await db.JobTask.FirstOrDefaultAsync(j => j.Token == token && j.UserId == userId);
-            if (job is null)
-            {
-                return Results.NotFound();
-            }
-
-            if (job.Status == JobStatus.Pending)
-            {
-                job.Status = JobStatus.Cancelled;
-                job.FinishedDate = DateTime.UtcNow;
-                await db.SaveChangesAsync();
-            }
-            else
-            {
-                jobs.Cancel(job.Id);
-            }
-
-            return Results.NoContent();
+            return await operations.CancelJobAsync(userId, token)
+                ? Results.NoContent()
+                : Results.NotFound();
         });
 
         return app;
