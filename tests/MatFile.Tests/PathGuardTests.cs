@@ -82,9 +82,17 @@ public class PathGuardTests
     public void TryResolve_blockiert_absolute_pfade()
     {
         var root = CreateDirectory();
-        var absolute = OperatingSystem.IsWindows() ? "C:/Windows" : "/etc";
 
-        Assert.False(PathGuard.TryResolve(root, absolute, out _));
+        if (OperatingSystem.IsWindows())
+        {
+            // Ein Laufwerkspfad ist absolut und wird abgelehnt.
+            Assert.False(PathGuard.TryResolve(root, "C:/Windows", out _));
+            return;
+        }
+
+        // Die Pfade der Oberfläche beginnen mit "/": Normalize entfernt ihn, also ist "/etc" der Ordner "etc" im Speicherort, nie das /etc des Systems.
+        Assert.True(PathGuard.TryResolve(root, "/etc", out var full));
+        Assert.Equal(Path.Combine(Path.TrimEndingDirectorySeparator(Path.GetFullPath(root)), "etc"), full);
     }
 
     [Fact]
