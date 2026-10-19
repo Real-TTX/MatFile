@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MatFile.Web.Data;
 
-/// <summary>Legt Systemrollen und - bei leerer Datenbank - den ersten Administrator an.</summary>
+/// <summary>Entfernt eine verwaiste Migrationssperre, migriert und legt Systemrollen und - bei leerer Datenbank - den ersten Administrator an.</summary>
 public static class DbSeeder
 {
     // Rollennamen sind Daten und werden nicht übersetzt.
@@ -19,6 +19,11 @@ public static class DbSeeder
         var db = scope.ServiceProvider.GetRequiredService<MatFileDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        if (await MigrationLock.ReleaseStaleAsync(db.Database))
+        {
+            logger.LogWarning("Verwaiste Migrationssperre entfernt: ein Prozess wurde während der Migration der Datenbank gestoppt.");
+        }
 
         await db.Database.MigrateAsync();
 
