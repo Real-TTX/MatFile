@@ -87,6 +87,8 @@ public class MatFileDbContext : DbContext
             e.HasOne(x => x.User).WithMany(x => x.Sessions).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.IpAddress).HasMaxLength(64);
             e.Property(x => x.UserAgent).HasMaxLength(512);
+            e.Property(x => x.IdentitySessionId).HasMaxLength(256);
+            e.HasIndex(x => x.IdentitySessionId);
         });
 
         model.Entity<StorageRoot>(e =>

@@ -503,6 +503,10 @@ namespace MatFile.Web.Data.Migrations
                     b.Property<string>("IdToken")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IdentitySessionId")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
@@ -530,6 +534,8 @@ namespace MatFile.Web.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IdentitySessionId");
 
                     b.HasIndex("Token")
                         .IsUnique();

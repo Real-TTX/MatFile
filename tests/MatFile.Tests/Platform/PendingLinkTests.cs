@@ -62,6 +62,7 @@ public sealed partial class PendingLinkTests
         Assert.Equal("sub-victim", Claimed(site, claimedId).ExternalSubject);
         Assert.Contains("Administrator", SignIn.Roles(site, claimedId));
         Assert.Equal("id-token-victim", site.Db(db => db.UserSession.Single(s => s.UserId == claimedId).IdToken));
+        Assert.Equal("sid-victim", site.Db(db => db.UserSession.Single(s => s.UserId == claimedId).IdentitySessionId));
         Assert.True(site.Db(db => db.ActivityLog.Any(a => a.UserId == claimedId && a.ActionType == "LinkedMatIdentity")));
 
         // Ab jetzt findet MatIdentity das Konto über die Kennung und meldet direkt an.
@@ -154,7 +155,7 @@ public sealed partial class PendingLinkTests
         return site;
     }
 
-    private static MatIdentityPerson Person() => new("sub-victim", ClaimedAddress, "Victim", "victim", "admin", "id-token-victim", new());
+    private static MatIdentityPerson Person() => new("sub-victim", ClaimedAddress, "Victim", "victim", "admin", "id-token-victim", new()) { SessionId = "sid-victim" };
 
     /// <summary>Die Person meldet sich bei MatIdentity an (der Callback ohne laufendes MatIdentity); ein Browser, der behält, was der Callback gesetzt hat.</summary>
     private static async Task<(string Target, string SetCookie, HttpClient Browser)> MatIdentitySignInAsync(IdentityFactory site, MatIdentityPerson person)

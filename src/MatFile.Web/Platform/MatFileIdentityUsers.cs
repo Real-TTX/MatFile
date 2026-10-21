@@ -11,8 +11,10 @@ namespace MatFile.Web.Platform;
 /// Ein noch nicht verknüpftes Konto mit derselben E-Mail-Adresse (oder demselben Benutzernamen) wird nicht betreten: die Antwort ist
 /// <see cref="MatIdentitySignInResult.LinkRequired"/>, die Person meldet sich einmal mit dessen Kennwort an (<c>/Login?local=1&amp;link=1</c>),
 /// und die Anmeldeseite verknüpft es (<see cref="UserService.LinkExternalAsync"/>).
+/// Meldet MatIdentity die Person ab (Back-Channel-Logout, <see cref="IMatIdentitySessions"/>), beendet <see cref="AuthService.EndIdentitySessionsAsync"/>
+/// ihre Sitzungen hier.
 /// </summary>
-public sealed class MatFileIdentityUsers(UserService users, AuthService auth) : IMatIdentityUsers
+public sealed class MatFileIdentityUsers(UserService users, AuthService auth) : IMatIdentityUsers, IMatIdentitySessions
 {
     public async Task<MatIdentitySignInResult> SignInAsync(MatIdentityPerson person, HttpContext http, CancellationToken ct)
     {
@@ -29,7 +31,10 @@ public sealed class MatFileIdentityUsers(UserService users, AuthService auth) : 
             return MatIdentitySignInResult.Refused(result.Error ?? "refused");
         }
 
-        await auth.StartSessionAsync(http, userId, person.IdToken, throughIdentity: true);
+        await auth.StartSessionAsync(http, userId, person.IdToken, throughIdentity: true, identitySessionId: person.SessionId);
         return MatIdentitySignInResult.Success();
     }
+
+    public Task EndSessionsAsync(string? subject, string? sessionId, CancellationToken ct)
+        => auth.EndIdentitySessionsAsync(subject, sessionId, ct);
 }

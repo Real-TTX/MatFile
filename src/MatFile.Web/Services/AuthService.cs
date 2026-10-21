@@ -99,9 +99,11 @@ public sealed class AuthService
     /// <summary>
     /// Beginnt die Sitzung eines Kontos und setzt das Cookie. <paramref name="identityToken"/>: das ID-Token von MatIdentity, mit der
     /// Sitzung gespeichert für die Abmeldung dort. <paramref name="throughIdentity"/>: die Person kam über MatIdentity und hat kein
-    /// Kennwort eingegeben - dann gilt auch kein erzwungener Kennwortwechsel.
+    /// Kennwort eingegeben - dann gilt auch kein erzwungener Kennwortwechsel. <paramref name="identitySessionId"/>: die Sitzung bei
+    /// MatIdentity (<c>sid</c>), damit eine Abmeldung dort genau diese Sitzung beendet (<see cref="EndIdentitySessionsAsync"/>).
     /// </summary>
-    public async Task StartSessionAsync(HttpContext http, long userId, string? identityToken = null, bool throughIdentity = false)
+    public async Task StartSessionAsync(
+        HttpContext http, long userId, string? identityToken = null, bool throughIdentity = false, string? identitySessionId = null)
     {
         var settings = _config.Settings;
         var now = DateTime.UtcNow;
@@ -118,6 +120,7 @@ public sealed class AuthService
             IpAddress = http.Connection.RemoteIpAddress?.ToString(),
             UserAgent = Truncate(http.Request.Headers.UserAgent.ToString(), 512),
             IdToken = string.IsNullOrEmpty(identityToken) ? null : identityToken,
+            IdentitySessionId = string.IsNullOrEmpty(identitySessionId) ? null : identitySessionId,
             CreateUserId = user.Id,
             UpdateUserId = user.Id
         };
@@ -171,6 +174,52 @@ public sealed class AuthService
 
         await http.SignOutAsync(MatFileClaims.AuthenticationScheme);
         return identityToken;
+    }
+
+    /// <summary>
+    /// MatIdentity hat eine Person abgemeldet (Back-Channel-Logout). <paramref name="identitySessionId"/> gesetzt: nur die Sitzungen, die mit
+    /// dieser Sitzung bei MatIdentity begannen; sonst jede Sitzung des Kontos, das mit <paramref name="subject"/> verknüpft ist. Eine unbekannte
+    /// Sitzung oder Person beendet nichts (kein Fehler). Die nächste Anfrage einer beendeten Sitzung ist abgemeldet (<see cref="ValidatePrincipalAsync"/>).
+    /// Antwortet mit der Zahl der beendeten Sitzungen.
+    /// </summary>
+    public async Task<int> EndIdentitySessionsAsync(string? subject, string? identitySessionId, CancellationToken cancellationToken = default)
+    {
+        IQueryable<UserSession> query;
+        if (!string.IsNullOrEmpty(identitySessionId))
+        {
+            query = _db.UserSession.Where(s => s.IdentitySessionId == identitySessionId);
+        }
+        else if (!string.IsNullOrEmpty(subject))
+        {
+            query = _db.UserSession.Where(s => s.User!.ExternalSubject == subject);
+        }
+        else
+        {
+            return 0;
+        }
+
+        var sessions = await query.Where(s => !s.IsRevoked).ToListAsync(cancellationToken);
+        foreach (var session in sessions)
+        {
+            session.IsRevoked = true;
+            session.IdToken = null;
+        }
+
+        foreach (var userId in sessions.Select(s => s.UserId).Distinct())
+        {
+            _db.ActivityLog.Add(new ActivityLog
+            {
+                UserId = userId,
+                ActionType = "LogoutMatIdentity",
+                CreateUserId = userId,
+                UpdateUserId = userId
+            });
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation(
+            "MatIdentity hat {Count} Sitzung(en) beendet (sub {Subject}, sid {SessionId})", sessions.Count, subject, identitySessionId);
+        return sessions.Count;
     }
 
     public async Task<PasswordChangeResult> ChangePasswordAsync(HttpContext http, string currentPassword, string newPassword)

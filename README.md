@@ -281,7 +281,8 @@ settings): `?admin=<users|roles|roots|system|activity>` opens the administration
 **Sign-in through MatIdentity** is on when `MATIDENTITY_AUTHORITY` is set; without it nothing changes. Then `/Login`
 goes straight to MatIdentity (authorization code with PKCE) and comes back signed in; the local form stays at
 `/Login?local=1` (the way in when MatIdentity is down). Register MatFile in MatIdentity with the redirect address
-`https://<matfile>/signin-oidc` and the signed-out address `https://<matfile>/signout-callback-oidc`.
+`https://<matfile>/signin-oidc`, the signed-out address `https://<matfile>/signout-callback-oidc` and the back-channel
+logout address `https://<matfile>/signout-backchannel`.
 
 - The person is found by the claim `sub`. Without a match, a new account is created (user name, display name and
   e-mail from the claims, no local password).
@@ -292,7 +293,10 @@ goes straight to MatIdentity (authorization code with PKCE) and comes back signe
   account or a match linked to another person are refused.
 - The claim `role` (`admin` or `user`) is followed at every sign-in; the last active administrator keeps the role.
   Without the claim MatFile keeps managing the roles itself (a new account gets *User*).
-- Signing out ends the session at MatIdentity too.
+- Signing out ends the session at MatIdentity too. The other way round, MatIdentity posts a signed logout token to
+  `POST /signout-backchannel` when the person signs out there (or an administrator ends their sessions): MatFile ends
+  the sessions that began with that MatIdentity session (`sid`), or with the subject alone every session of the linked
+  account, and their next request is signed out (activity log: *Signed out by MatIdentity*).
 
 ## Status
 

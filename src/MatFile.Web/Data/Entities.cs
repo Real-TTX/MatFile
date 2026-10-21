@@ -89,6 +89,12 @@ public class UserSession : EntityBase
 
     /// <summary>Das ID-Token von MatIdentity, wenn die Sitzung über MatIdentity begann - für die Abmeldung dort (id_token_hint).</summary>
     public string? IdToken { get; set; }
+
+    /// <summary>
+    /// Die Sitzung bei MatIdentity (Claim <c>sid</c>), wenn die Sitzung über MatIdentity begann oder bei der Anmeldung verknüpft wurde:
+    /// meldet MatIdentity sie ab (Back-Channel-Logout), endet genau diese Sitzung hier.
+    /// </summary>
+    public string? IdentitySessionId { get; set; }
 }
 
 // ---------------------------------------------------------------- Speicherorte

@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -28,6 +29,10 @@ namespace MatFile.Tests.Platform;
 public class MatFileFactory : WebApplicationFactory<Program>
 {
     public const string ApiKey = "test-key-0123456789";
+
+    /// <summary>Der Schlüssel, mit dem das gedachte MatIdentity signiert (in der festen OpenID-Konfiguration): für die Logout-Tokens der Tests.</summary>
+    public static readonly SigningCredentials IdentityCredentials = new(
+        new RsaSecurityKey(System.Security.Cryptography.RSA.Create(2048)) { KeyId = "test-key" }, SecurityAlgorithms.RsaSha256);
 
     private readonly string _data = Path.Combine(Path.GetTempPath(), "matfile-tests-" + Guid.NewGuid().ToString("N"));
     private readonly string? _authority;
@@ -73,6 +78,7 @@ public class MatFileFactory : WebApplicationFactory<Program>
                     TokenEndpoint = _authority + "/connect/token",
                     EndSessionEndpoint = _authority + "/connect/logout",
                 };
+                configuration.SigningKeys.Add(IdentityCredentials.Key);
 
                 services.PostConfigure<OpenIdConnectOptions>(MatIdentitySignIn.Scheme, options =>
                 {

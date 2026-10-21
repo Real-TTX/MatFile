@@ -512,6 +512,7 @@
   <data name="Explorer.ActionExtract"><value>Entpackt</value></data>
   <data name="Explorer.ActionEdit"><value>Bearbeitet</value></data>
   <data name="Explorer.ActionLoginMatIdentity"><value>Über MatIdentity angemeldet</value></data>
+  <data name="Explorer.ActionLogoutMatIdentity"><value>Von MatIdentity abgemeldet</value></data>
   <data name="Explorer.ActionLinkedMatIdentity"><value>Mit MatIdentity verknüpft</value></data>
   <data name="Explorer.ActionUserCreatedMatIdentity"><value>Benutzer über MatIdentity angelegt</value></data>
   <data name="Explorer.ActionSettingsChanged"><value>Einstellungen geändert</value></data>

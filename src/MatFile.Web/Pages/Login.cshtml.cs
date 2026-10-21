@@ -125,6 +125,7 @@ public class LoginModel : PageModel
 
         // Eine wartende Verknüpfung gilt nur für genau das Konto, das gepasst hat; gelöscht wird sie in jedem Fall.
         string? identityToken = null;
+        string? identitySessionId = null;
         if (MatIdentityPendingLink.TakeFor(HttpContext, result.UserId.ToString(CultureInfo.InvariantCulture)) is { } pending)
         {
             var link = await _users.LinkExternalAsync(
@@ -135,6 +136,7 @@ public class LoginModel : PageModel
             if (link.Success)
             {
                 identityToken = pending.IdToken;
+                identitySessionId = pending.SessionId;
             }
             else
             {
@@ -142,7 +144,7 @@ public class LoginModel : PageModel
             }
         }
 
-        await _auth.StartSessionAsync(HttpContext, result.UserId, identityToken);
+        await _auth.StartSessionAsync(HttpContext, result.UserId, identityToken, identitySessionId: identitySessionId);
 
         if (result.MustChangePassword)
         {
